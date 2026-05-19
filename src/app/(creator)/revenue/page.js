@@ -20,7 +20,7 @@ export default function RevenuePage() {
       jobTitle: "Video Review trải nghiệm không gian trà đạo",
       shopName: "An Nhiên Trà Quán",
       grossAmount: 1800000,
-      fee: 54000 (1800000 * 0.03), // 3% phí hệ thống
+      fee: 1800000 * 0.03,
       netAmount: 1746000,
       type: "RECEIVE", // Nhận tiền từ Job
       status: "SUCCESS",
