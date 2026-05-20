@@ -15,6 +15,7 @@ export default function ShopLayout({ children }) {
   const menuItems = [
     { name: "📊 Tổng quan Shop", path: "/shop-dashboard" },
     { name: "📢 Quản lý Casting", path: "/my-casting" },
+    { name: "💬 Tin nhắn", path: "/messages" },
     { name: "💳 Lịch sử giao dịch", path: "/transactions" },
   ];
 

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function JobCard({ job, role = "koc", onAction }) {
+export default function JobCard({ job, role = "koc", onAction, actionLabel }) {
   const isShop = role === "shop";
 
   return (
@@ -33,11 +33,20 @@ export default function JobCard({ job, role = "koc", onAction }) {
             </span>
           )}
 
-          {/* Số lượng ứng viên chỉ hiện cho Shop */}
-          {isShop && job.applicantsCount !== undefined && (
-            <span className="text-xs font-bold px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
-              👥 {job.applicantsCount} Ứng viên
-            </span>
+          {/* Số lượng ứng viên và KOC đang làm việc chỉ hiện cho Shop */}
+          {isShop && (
+            <div className="flex gap-2">
+              {job.applicantsCount !== undefined && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+                  👥 {job.applicantsCount} Ứng viên
+                </span>
+              )}
+              {job.activeWorkersCount !== undefined && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200">
+                  🏃‍♂️ {job.activeWorkersCount} KOC
+                </span>
+              )}
+            </div>
           )}
         </div>
 
@@ -81,7 +90,7 @@ export default function JobCard({ job, role = "koc", onAction }) {
           }`}
         >
           {isShop ? (
-            <>⚙️ Quản Lý Ứng Viên</>
+            <>⚙️ {actionLabel || "Quản Lý Bài Tuyển"}</>
           ) : (
             <>
               ⚡ Gửi Connect
