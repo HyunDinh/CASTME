@@ -24,6 +24,13 @@ enum TransactionStatus {
   FAILED
 }
 
+enum JobStatus {
+  DRAFT
+  RECRUITING
+  IN_PROGRESS
+  COMPLETED
+}
+
 model User {
   id             String           @id @default(cuid())
   name           String
@@ -68,7 +75,9 @@ model Job {
   title        String
   description  String        // Nội dung tuyển dụng gốc
   aiSummary    String?       // Đoạn tóm tắt ngầm do AI xử lý
-  budget       Float
+  budget       String        // Sửa Float thành String nếu bạn muốn lưu định dạng "5,000,000đ - 10,000,000đ" (Hoặc giữ Float và format ở Frontend)
+  status       JobStatus     @default(DRAFT) // Trạng thái bài post
+  vibeTags     String[]      // Mảng lưu các tags: ["GenZ", "Thời trang"]
   createdAt    DateTime      @default(now())
   applications Application[]
 }

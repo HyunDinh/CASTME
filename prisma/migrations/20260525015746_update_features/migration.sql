@@ -1,0 +1,7 @@
+-- CreateEnum
+CREATE TYPE "JobStatus" AS ENUM ('DRAFT', 'RECRUITING', 'IN_PROGRESS', 'COMPLETED');
+
+-- AlterTable
+ALTER TABLE "Job" ADD COLUMN     "status" "JobStatus" NOT NULL DEFAULT 'DRAFT',
+ADD COLUMN     "vibeTags" TEXT[],
+ALTER COLUMN "budget" SET DATA TYPE TEXT;

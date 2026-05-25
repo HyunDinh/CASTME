@@ -96,6 +96,18 @@ export default function ShopLayout({ children }) {
             );
           })}
           
+          {/* NÚT ĐĂNG XUẤT ĐƯỢC THÊM VÀO ĐÂY */}
+          <button
+            onClick={() => {
+              // TODO: Gọi logic xóa token/cookie hoặc signOut() tại đây
+              console.log("Shop đang đăng xuất...");
+              router.push("/login");
+            }}
+            className="flex items-center px-4 py-3 text-sm font-medium rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700 transition cursor-pointer mt-2"
+          >
+            🚪 Đăng xuất
+          </button>
+
           {/* Ví Số dư (Thay cho Quỹ trái tim của Creator) */}
           <div className="mt-auto bg-blue-50 rounded-2xl p-4 border border-blue-100">
             <div className="flex items-center justify-between mb-2">

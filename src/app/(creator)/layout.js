@@ -25,7 +25,7 @@ export default function CreatorLayout({ children }) {
           <Link href="/creator-dashboard" className="text-2xl font-black text-purple-600 tracking-wider">
             castme.
           </Link>
-          
+
           {/* Thanh tìm kiếm theo Vibe */}
           <div className="hidden md:flex items-center bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 w-80 focus-within:border-purple-500 focus-within:bg-white transition-all">
             <span className="text-gray-400 text-sm mr-2">🔮</span>
@@ -48,7 +48,7 @@ export default function CreatorLayout({ children }) {
           </button>
 
           {/* Cài đặt tài khoản */}
-          <button 
+          <button
             onClick={() => router.push("/portfolio")}
             className="p-2 hover:bg-gray-100 rounded-xl text-xl cursor-pointer transition"
             title="Cài đặt tài khoản & Portfolio"
@@ -82,17 +82,28 @@ export default function CreatorLayout({ children }) {
               <Link
                 key={item.path}
                 href={item.path}
-                className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition ${
-                  isActive
-                    ? "bg-purple-600 text-white font-bold shadow-md shadow-purple-100"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }`}
+                className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition ${isActive
+                  ? "bg-purple-600 text-white font-bold shadow-md shadow-purple-100"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
               >
                 {item.name}
               </Link>
             );
           })}
-          
+
+          {/* Nút Logout ở Sidebar */}
+          <button
+            onClick={() => {
+              // Thêm logic xử lý đăng xuất ở đây (ví dụ: xóa token, gọi API)
+              console.log("Đăng xuất...");
+              router.push("/login");
+            }}
+            className="flex items-center px-4 py-3 text-sm font-medium rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700 transition cursor-pointer mt-2"
+          >
+            🚪 Đăng xuất
+          </button>
+
           {/* Ví Trái tim */}
           <div className="mt-auto bg-purple-50 rounded-2xl p-4 border border-purple-100">
             <div className="flex items-center justify-between mb-2">

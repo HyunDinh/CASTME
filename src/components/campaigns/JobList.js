@@ -1,56 +1,43 @@
-import React, { useState } from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import JobCard from "#/components/JobCard";
 import CreateJobModal from "./CreateJobModal";
-
-// MOCK DATA: JobList
-const mockJobs = [
-  {
-    id: "job-1",
-    title: "Review Bộ Sưu Tập Mùa Hè 2026",
-    description: "Cần tìm 3 KOC phong cách GenZ năng động, quay video unbox và phối đồ với 3 sản phẩm mới nhất của shop.",
-    budget: "5,000,000đ - 10,000,000đ",
-    vibeTags: ["GenZ", "Thời trang", "Mùa hè"],
-    applicantsCount: 24,
-    activeWorkersCount: 5,
-    status: "recruiting",
-  },
-  {
-    id: "job-2",
-    title: "Quay Video TikTok Dance Challenge",
-    description: "KOC tham gia nhảy cover trên nền nhạc độc quyền của brand. Yêu cầu follower > 100k, vũ đạo tốt.",
-    budget: "3,000,000đ",
-    vibeTags: ["Dance", "Giải trí", "Trendy"],
-    applicantsCount: 8,
-    activeWorkersCount: 2,
-    status: "in-progress",
-  },
-  {
-    id: "job-3",
-    title: "Chụp Lookbook BST Mùa Thu",
-    description: "Tìm 2 bạn mẫu ảnh nữ, chiều cao > 1m60. Chụp tại studio Quận 1 trong 1 ngày.",
-    budget: "8,000,000đ",
-    vibeTags: ["Lookbook", "Chụp ảnh", "Minimalism"],
-    applicantsCount: 0,
-    activeWorkersCount: 0,
-    status: "draft",
-  },
-];
+import { getMyCastingJobs } from "#/app/(shop)/my-casting/actions";
 
 const tabs = [
   { id: "all", label: "Tất cả" },
-  { id: "draft", label: "Bản nháp" },
-  { id: "recruiting", label: "Đang tuyển" },
-  { id: "in-progress", label: "Đang thực hiện" },
-  { id: "completed", label: "Đã kết thúc" },
+  { id: "DRAFT", label: "Bản nháp" },
+  { id: "RECRUITING", label: "Đang tuyển" },
+  { id: "IN_PROGRESS", label: "Đang thực hiện" },
+  { id: "COMPLETED", label: "Đã kết thúc" },
 ];
 
 export default function JobList({ onViewDetails }) {
   const [activeTab, setActiveTab] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredJobs = mockJobs.filter((job) =>
-    activeTab === "all" ? true : job.status === activeTab
+  // Hàm load danh sách job từ Server
+  const fetchJobs = async () => {
+    setLoading(true);
+    const result = await getMyCastingJobs(); 
+    if (result.success) {
+      setJobs(result.data);
+    } else {
+      console.error("Lỗi khi tải dữ liệu:", result.error);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  // Lọc job theo tab (đảm bảo id của tab khớp với giá trị status trong Database)
+  const filteredJobs = jobs.filter((job) =>
+    activeTab === "all" ? true : job.status?.toLowerCase() === activeTab.toLowerCase()
   );
 
   return (
@@ -60,12 +47,13 @@ export default function JobList({ onViewDetails }) {
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Tuyển dụng của tôi</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Bạn đang có <span className="font-bold text-gray-700">{mockJobs.length}</span> bài tuyển dụng
+            Bạn đang có <span className="font-bold text-gray-700">{filteredJobs.length}</span> bài tuyển dụng 
+            {activeTab !== "all" && ` trong trạng thái ${activeTab}`}
           </p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md shadow-blue-200 transition-all flex items-center justify-center gap-2 cursor-pointer"
+          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
         >
           <Plus size={18} />
           Tạo bài tuyển dụng mới
@@ -73,7 +61,7 @@ export default function JobList({ onViewDetails }) {
       </div>
 
       {/* TABS */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide border-b border-gray-100">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-gray-100">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -81,7 +69,7 @@ export default function JobList({ onViewDetails }) {
             className={`px-4 py-2.5 text-sm font-bold rounded-t-xl border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
               activeTab === tab.id
                 ? "border-blue-600 text-blue-600 bg-blue-50/50"
-                : "border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                : "border-transparent text-gray-500 hover:text-gray-900"
             }`}
           >
             {tab.label}
@@ -89,8 +77,12 @@ export default function JobList({ onViewDetails }) {
         ))}
       </div>
 
-      {/* GRID */}
-      {filteredJobs.length > 0 ? (
+      {/* GRID & LOADING */}
+      {loading ? (
+        <div className="py-20 text-center flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : filteredJobs.length > 0 ? (
         <div className="flex flex-col gap-6">
           {filteredJobs.map((job) => (
             <JobCard
@@ -99,19 +91,25 @@ export default function JobList({ onViewDetails }) {
               role="shop"
               actionLabel="Xem chi tiết ứng viên & Tiến độ"
               onAction={() => onViewDetails(job)}
+              // Quan trọng: Truyền hàm fetchJobs vào để JobCard có thể gọi lại sau khi đổi trạng thái
+              onRefresh={fetchJobs}
             />
           ))}
         </div>
       ) : (
-        <div className="py-20 text-center flex flex-col items-center justify-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-3xl mb-4">📭</div>
+        <div className="py-20 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+          <div className="text-3xl mb-4">📭</div>
           <h3 className="text-lg font-bold text-gray-900">Không có bài tuyển dụng nào</h3>
-          <p className="text-gray-500 mt-1 text-sm">Chưa có bài tuyển dụng nào trong trạng thái này.</p>
+          <p className="text-gray-500 text-sm">Hãy tạo bài đăng mới để bắt đầu tuyển dụng!</p>
         </div>
       )}
 
       {/* MODAL */}
-      <CreateJobModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <CreateJobModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={fetchJobs} 
+      />
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
+import { createJobAction } from "#/app/(shop)/my-casting/actions";
 
-export default function CreateJobModal({ isOpen, onClose }) {
+export default function CreateJobModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     title: "",
     vibe: "",
@@ -11,10 +12,32 @@ export default function CreateJobModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Tạo bài tuyển dụng thành công!");
-    onClose();
+
+    // Tạm thời hardcode ID giống như trong JobList của bạn. 
+    // (Thực tế bạn phải lấy ID thật của user đang đăng nhập nhé)
+    const currentShopId = "shop-user-id-123";
+
+    // 4. GỌI SERVER ACTION Ở ĐÂY
+    const result = await createJobAction({
+      ...formData,
+      shopId: currentShopId
+    });
+
+    if (result.success) {
+      alert("Tạo bài tuyển dụng thành công thật rồi nhé!");
+
+      // Reset form sau khi tạo
+      setFormData({ title: "", vibe: "", budget: "", description: "" });
+
+      // Báo cho JobList biết để gọi lại Database
+      if (onSuccess) onSuccess();
+
+      onClose();
+    } else {
+      alert("Tạo thất bại: " + result.error);
+    }
   };
 
   return (
