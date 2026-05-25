@@ -106,7 +106,7 @@ export default function MessagesPage() {
 
   return (
     // Sử dụng chiều cao 100vh trừ đi header/topbar nếu có (VD: h-[calc(100vh-80px)])
-    <div className="flex h-[calc(100vh-theme(spacing.16))] w-full bg-white overflow-hidden animate-in fade-in duration-500">
+    <div className="flex h-full w-full bg-white overflow-hidden animate-in fade-in duration-500">
       
       {/* Cột trái: Chat List */}
       <ChatList 

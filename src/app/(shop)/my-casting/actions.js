@@ -28,7 +28,7 @@ export async function createJobAction(data) {
     const newJob = await prisma.job.create({
       data: {
         title: data.title,
-        vibeTags: [data.vibe],
+        vibeTags: data.vibeTags || [],
         budget: data.budget,
         description: data.description,
         shopId: user.id, // Dùng ID chuẩn lấy từ cookie đã parse

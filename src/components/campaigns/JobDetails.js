@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import ApplicantTable from "./ApplicantTable";
-import KanbanBoard from "./KanbanBoard";
+import JobProgressStepper from "./JobProgressStepper";
 
 export default function JobDetails({ job, onBack }) {
   const [currentTab, setCurrentTab] = useState("applicants"); // 'applicants' | 'pipeline'
@@ -26,8 +26,17 @@ export default function JobDetails({ job, onBack }) {
             <h1 className="text-2xl font-extrabold text-gray-900">{job.title}</h1>
             <p className="text-sm text-gray-500 mt-1 max-w-2xl line-clamp-1">{job.description}</p>
           </div>
-          <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black uppercase tracking-wider rounded-lg w-max shrink-0">
-            {job.status === "recruiting" ? "Đang mở tuyển" : job.status === "in-progress" ? "Đang thực hiện" : "Trạng thái khác"}
+          <span className={`px-3 py-1 text-xs font-black uppercase tracking-wider rounded-lg w-max shrink-0 border ${
+            job.status === "RECRUITING" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+            job.status === "IN_PROGRESS" ? "bg-blue-50 text-blue-700 border-blue-200" :
+            job.status === "COMPLETED" ? "bg-gray-100 text-gray-700 border-gray-300" :
+            job.status === "DRAFT" ? "bg-amber-50 text-amber-700 border-amber-200" :
+            "bg-gray-50 text-gray-700 border-gray-200"
+          }`}>
+            {job.status === "RECRUITING" ? "Đang mở tuyển" : 
+             job.status === "IN_PROGRESS" ? "Đang thực hiện" : 
+             job.status === "COMPLETED" ? "Đã kết thúc" :
+             job.status === "DRAFT" ? "Bản nháp" : job.status}
           </span>
         </div>
       </div>
@@ -54,16 +63,15 @@ export default function JobDetails({ job, onBack }) {
           }`}
         >
           Tiến độ công việc
-          <span className="ml-2 bg-gray-100 text-gray-600 text-[10px] font-black px-1.5 py-0.5 rounded-full">{job.activeWorkersCount || 0}</span>
         </button>
       </div>
 
       {/* CONTENT PORTAL */}
       <div className="pt-2">
         {currentTab === "applicants" ? (
-          <ApplicantTable />
+          <ApplicantTable job={job} onActionComplete={onBack} />
         ) : (
-          <KanbanBoard />
+          <JobProgressStepper job={job} />
         )}
       </div>
 

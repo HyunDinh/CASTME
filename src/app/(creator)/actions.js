@@ -207,3 +207,84 @@ export async function getUserHearts() {
     return { success: false, error: "Không thể lấy số Tim" };
   }
 }
+
+// ==================== MY JOBS ====================
+export async function getMyAppliedJobs() {
+  const user = await getAuthCreator();
+  if (!user || user.role !== "CREATOR") {
+    return { success: false, error: "Chưa đăng nhập" };
+  }
+
+  try {
+    const applications = await prisma.application.findMany({
+      where: { creatorId: user.id },
+      include: {
+        job: {
+          include: { shop: true }
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+
+    const formattedJobs = applications.map((app) => {
+      const job = app.job;
+      let uiStatus = "APPLYING";
+
+      if (app.status === "ACCEPTED") {
+        if (job.status === "IN_PROGRESS") uiStatus = "PROCESSING";
+        else if (job.status === "COMPLETED") uiStatus = "COMPLETED";
+      } else if (app.status === "REJECTED") {
+        uiStatus = "REJECTED"; // Hoặc ẩn đi
+      }
+
+      return {
+        id: job.id,
+        applicationId: app.id,
+        shopName: job.shop.name,
+        title: job.title,
+        budget: job.budget,
+        uiStatus: uiStatus, // APPLYING | PROCESSING | COMPLETED | REJECTED
+        jobStatus: job.status,
+        appStatus: app.status,
+        notes: job.description,
+        deadline: "N/A"
+      };
+    });
+
+    return { success: true, data: formattedJobs };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: "Lỗi hệ thống khi tải danh sách công việc" };
+  }
+}
+
+// Nộp bài cho Milestone
+export async function submitMilestone(milestoneId, submissionText) {
+  const user = await getAuthCreator();
+  if (!user || user.role !== "CREATOR") {
+    return { success: false, error: "Chưa đăng nhập" };
+  }
+
+  try {
+    const milestone = await prisma.milestone.findUnique({
+      where: { id: milestoneId },
+      include: { job: { include: { applications: true } } }
+    });
+
+    if (!milestone) return { success: false, error: "Không tìm thấy Milestone" };
+
+    // Update milestone
+    await prisma.milestone.update({
+      where: { id: milestoneId },
+      data: {
+        submission: submissionText,
+        status: "REVIEWING" // Chờ Shop duyệt
+      }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: "Lỗi khi nộp bài" };
+  }
+}

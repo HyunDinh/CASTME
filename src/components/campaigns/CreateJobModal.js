@@ -1,14 +1,33 @@
 import React, { useState } from "react";
-import { X } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { createJobAction } from "#/app/(shop)/my-casting/actions";
 
 export default function CreateJobModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     title: "",
-    vibe: "",
+    vibeTags: [],
     budget: "",
     description: "",
   });
+  const [tagInput, setTagInput] = useState("");
+
+  const handleAddTag = () => {
+    const trimmed = tagInput.trim();
+    if (trimmed) {
+      const cleanTag = trimmed.replace(/^#+/, ""); // Xoá dấu # nếu người dùng lỡ nhập
+      if (!formData.vibeTags.includes(cleanTag)) {
+        setFormData((prev) => ({ ...prev, vibeTags: [...prev.vibeTags, cleanTag] }));
+      }
+    }
+    setTagInput("");
+  };
+
+  const handleRemoveTag = (tagToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      vibeTags: prev.vibeTags.filter((tag) => tag !== tagToRemove),
+    }));
+  };
 
   if (!isOpen) return null;
 
@@ -29,7 +48,8 @@ export default function CreateJobModal({ isOpen, onClose, onSuccess }) {
       alert("Tạo bài tuyển dụng thành công thật rồi nhé!");
 
       // Reset form sau khi tạo
-      setFormData({ title: "", vibe: "", budget: "", description: "" });
+      setFormData({ title: "", vibeTags: [], budget: "", description: "" });
+      setTagInput("");
 
       // Báo cho JobList biết để gọi lại Database
       if (onSuccess) onSuccess();
@@ -69,14 +89,45 @@ export default function CreateJobModal({ isOpen, onClose, onSuccess }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-1.5">
               <label className="text-sm font-bold text-gray-700">Vibe yêu cầu (Tags)</label>
-              <input
-                type="text"
-                required
-                placeholder="VD: #GenZ, #Streetwear..."
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm font-medium"
-                value={formData.vibe}
-                onChange={(e) => setFormData({ ...formData, vibe: e.target.value })}
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="VD: GenZ, Streetwear..."
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm font-medium"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddTag}
+                  className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-xl transition cursor-pointer flex items-center justify-center shrink-0"
+                  title="Thêm Tag"
+                >
+                  <Plus size={20} />
+                </button>
+              </div>
+              {formData.vibeTags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {formData.vibeTags.map((tag, idx) => (
+                    <span key={idx} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs font-bold">
+                      #{tag}
+                      <button 
+                        type="button" 
+                        onClick={() => handleRemoveTag(tag)} 
+                        className="hover:text-red-500 cursor-pointer text-blue-400 p-0.5 transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-bold text-gray-700">Ngân sách dự kiến</label>

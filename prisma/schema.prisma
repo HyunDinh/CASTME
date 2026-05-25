@@ -80,6 +80,7 @@ model Job {
   vibeTags     String[]      // Mảng lưu các tags: ["GenZ", "Thời trang"]
   createdAt    DateTime      @default(now())
   applications Application[]
+  milestones   Milestone[]
 }
 
 model Application {
@@ -102,4 +103,18 @@ model Transaction {
   type        String            // "DEPOSIT" (Nạp tiền), "WITHDRAW" (Rút tiền), "PAY_JOB" (Trả tiền job)
   status      TransactionStatus @default(PENDING)
   createdAt   DateTime          @default(now())
+}
+
+model Milestone {
+  id          String   @id @default(cuid())
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  title       String   // Tên bước: "Lên kịch bản", "Quay video", "Chỉnh sửa"
+  type        String   @default("SCRIPT") // SCRIPT, VIDEO, LINK, PAYMENT
+  status      String   @default("PENDING") // PENDING, IN_PROGRESS, REVIEWING, COMPLETED, REJECTED
+  submission  String?  // Nội dung Creator nộp (Text kịch bản, Link Google Drive, Link TikTok...)
+  feedback    String?  // Chỗ để Shop note lại yêu cầu chỉnh sửa
+  order       Int      @default(0) // Thứ tự hiển thị
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 }
