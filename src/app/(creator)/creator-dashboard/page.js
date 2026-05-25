@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { getAvailableJobs, applyToJobAction } from "#/app/(creator)/creator-dashboard/actions";
+import { getAvailableJobs, applyToJobAction } from "#/app/(creator)/actions";
 
 export default function CreatorDashboard() {
   const [jobs, setJobs] = useState([]);

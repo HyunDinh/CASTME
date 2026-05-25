@@ -1,16 +1,37 @@
-// src/app/(creator)/portfolio/page.js
 "use client";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { getCreatorProfile, updateCreatorProfile } from "#/app/(creator)/profile/actions";
 
 export default function PortfolioPage() {
-  const [bio, setBio] = useState(
-    "Mình là một KOC mảng thời trang đường phố (Streetwear). Thế mạnh là tự phối đồ phối cảnh, có gu chụp ảnh ngoại cảnh đô thị bụi bặm và làm short-video reels TikTok bắt trend cực nhanh."
-  );
-  const [selectedStyles, setSelectedStyles] = useState(["Streetwear", "Y2K", "Cá tính"]);
-  const [portfolioUrl, setPortfolioUrl] = useState("instagram.com/koc_savage_9x");
+  const [bio, setBio] = useState("");
+  const [selectedStyles, setSelectedStyles] = useState([]);
+  const [portfolioUrl, setPortfolioUrl] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const stylePool = ["Streetwear", "Y2K", "Vintage", "Retro", "Minimalism", "Chữa lành", "Mộc mạc", "Unisex", "Hàn Quốc"];
+  const stylePool = [
+    "Streetwear", "Y2K", "Vintage", "Retro", "Minimalism", 
+    "Chữa lành", "Mộc mạc", "Unisex", "Hàn Quốc", "Cá tính", "GenZ"
+  ];
+
+  // Lấy dữ liệu profile từ backend
+  const fetchProfile = async () => {
+    setIsLoading(true);
+    const result = await getCreatorProfile();
+    
+    if (result.success) {
+      setBio(result.data.bio || "");
+      setSelectedStyles(result.data.styles || []);
+      setPortfolioUrl(result.data.portfolioUrl || "");
+    } else {
+      console.error(result.error);
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
 
   const toggleStyle = (style) => {
     if (selectedStyles.includes(style)) {
@@ -20,42 +41,64 @@ export default function PortfolioPage() {
     }
   };
 
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      alert("Hồ sơ phong cách đã được lưu! Hệ thống AI đang cập nhật lại tỷ lệ Matching của bạn với tất cả các Job hiện hành.");
-    }, 1000);
+
+    const result = await updateCreatorProfile({
+      bio,
+      styles: selectedStyles,
+      portfolioUrl,
+    });
+
+    if (result.success) {
+      alert("✅ Hồ sơ đã được cập nhật! Hệ thống AI đang đồng bộ lại Matching.");
+    } else {
+      alert(`❌ ${result.error}`);
+    }
+
+    setIsSaving(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-3xl py-20 text-center">
+        <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <p className="mt-4 text-gray-500">Đang tải hồ sơ...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl space-y-8">
       <div>
         <h1 className="text-2xl font-black text-gray-950">Hồ sơ năng lực (Portfolio)</h1>
-        <p className="text-xs text-gray-500">Cập nhật gu thời trang, mạng xã hội để AI tối ưu hóa tỷ lệ phân phối công việc tương thích.</p>
+        <p className="text-xs text-gray-500">Cập nhật gu thời trang và mạng xã hội để AI tối ưu hóa việc matching công việc.</p>
       </div>
 
       <form onSubmit={handleSaveProfile} className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 shadow-xs space-y-6">
-        {/* Phần 1: Giới thiệu bản thân */}
+        {/* Mô tả bản thân */}
         <div className="space-y-2">
-          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">Mô tả bản thân & Gu sáng tạo</label>
+          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">
+            Mô tả bản thân & Gu sáng tạo
+          </label>
           <textarea
-            rows={4}
+            rows={5}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 bg-gray-50/50"
-            placeholder="Hãy viết một đoạn ngắn giới thiệu phong cách độc bản của bạn để AI đọc..."
+            placeholder="Hãy viết đoạn giới thiệu phong cách của bạn..."
             required
           />
         </div>
 
-        {/* Phần 2: Gắn thẻ phong cách chủ đạo (AI MATCH DATA) */}
+        {/* Phong cách */}
         <div className="space-y-3">
-          <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">Định hình phong cách (Vibe của bạn)</label>
-            <p className="text-xs text-gray-400 mt-0.5">Chọn các tag thể hiện đúng bản sắc của bạn nhất (AI dùng để matching với Shop).</p>
-          </div>
+          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">
+            Định hình phong cách (Vibe của bạn)
+          </label>
+          <p className="text-xs text-gray-400">Chọn các tag thể hiện đúng bản sắc nhất</p>
+          
           <div className="flex flex-wrap gap-2">
             {stylePool.map((style) => {
               const isSelected = selectedStyles.includes(style);
@@ -64,9 +107,9 @@ export default function PortfolioPage() {
                   key={style}
                   type="button"
                   onClick={() => toggleStyle(style)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition cursor-pointer ${
+                  className={`px-4 py-2 text-sm font-medium rounded-2xl border transition cursor-pointer ${
                     isSelected
-                      ? "bg-purple-600 border-purple-600 text-white font-bold shadow-xs shadow-purple-200"
+                      ? "bg-purple-600 border-purple-600 text-white"
                       : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
                   }`}
                 >
@@ -77,48 +120,47 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        {/* Phần 3: Liên kết Portfolio thực tế */}
+        {/* Portfolio URL */}
         <div className="space-y-2">
-          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">Link Kênh MXH hoặc Portfolio (Instagram / TikTok)</label>
-          <div className="flex bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-purple-500 focus-within:bg-white transition">
-            <span className="text-gray-400 text-sm mr-2 select-none">🔗</span>
+          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">
+            Link Portfolio / Kênh MXH
+          </label>
+          <div className="flex bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus-within:border-purple-500 focus-within:bg-white transition">
+            <span className="text-gray-400 mr-2">🔗</span>
             <input
               type="text"
               value={portfolioUrl}
               onChange={(e) => setPortfolioUrl(e.target.value)}
-              className="bg-transparent text-sm w-full focus:outline-none"
-              placeholder="instagram.com/username"
+              className="bg-transparent w-full focus:outline-none text-sm"
+              placeholder="instagram.com/username hoặc tiktok.com/@username"
               required
             />
           </div>
         </div>
 
-        <hr className="border-gray-100" />
-
-        {/* Phần 4: Đánh giá (Feedback) từ các Shop (Chế độ chỉ đọc) */}
-        <div className="space-y-3">
-          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">Đánh giá từ đối tác (Feedback)</label>
-          <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-sm font-bold text-gray-800">🏪 Savage Studio</span>
-              <span className="text-xs text-amber-500 font-bold">⭐⭐⭐⭐⭐ 5/5</span>
+        {/* Feedback (tạm giữ mock) */}
+        <div className="space-y-3 pt-4 border-t border-gray-100">
+          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">
+            Đánh giá từ đối tác
+          </label>
+          <div className="bg-gray-50 border border-gray-100 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-bold">🏪 Savage Studio</span>
+              <span className="text-amber-500 font-bold">⭐⭐⭐⭐⭐</span>
             </div>
-            <p className="text-xs text-gray-600 italic leading-relaxed">
-              "KOL làm việc cực kỳ đúng giờ, sản phẩm hình ảnh nét và lên đồ chuẩn phong cách Y2K bụi bặm bên mình yêu cầu. Sẽ tiếp tục booking dài hạn!"
+            <p className="text-sm text-gray-600 italic">
+              "KOL làm việc rất chuyên nghiệp, hình ảnh đẹp và đúng deadline."
             </p>
           </div>
         </div>
 
-        {/* Nút bấm lưu cấu hình */}
-        <div className="pt-2">
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="w-full md:w-auto px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm rounded-xl shadow-md shadow-purple-100 transition cursor-pointer disabled:bg-gray-400"
-          >
-            {isSaving ? "Đang xử lý AI..." : "Cập nhật hồ sơ & Đồng bộ AI"}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={isSaving}
+          className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl transition disabled:bg-gray-400"
+        >
+          {isSaving ? "Đang cập nhật & Đồng bộ AI..." : "Cập nhật hồ sơ & Đồng bộ AI"}
+        </button>
       </form>
     </div>
   );
