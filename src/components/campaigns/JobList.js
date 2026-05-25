@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import JobCard from "#/components/JobCard";
 import CreateJobModal from "./CreateJobModal";
@@ -35,10 +36,22 @@ export default function JobList({ onViewDetails }) {
     fetchJobs();
   }, []);
 
+  const searchParams = useSearchParams();
+  const jobIdFromQuery = searchParams.get("jobId");
+
   // Lọc job theo tab (đảm bảo id của tab khớp với giá trị status trong Database)
   const filteredJobs = jobs.filter((job) =>
-    activeTab === "all" ? true : job.status?.toLowerCase() === activeTab.toLowerCase()
+    activeTab === "all" ? true : job.status?.toLowerCase().replace('-', '_') === activeTab.toLowerCase()
   );
+
+  useEffect(() => {
+    if (jobs.length > 0 && jobIdFromQuery) {
+      const targetJob = jobs.find(j => j.id === jobIdFromQuery);
+      if (targetJob) {
+        onViewDetails(targetJob);
+      }
+    }
+  }, [jobs, jobIdFromQuery, onViewDetails]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -62,19 +75,32 @@ export default function JobList({ onViewDetails }) {
 
       {/* TABS */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-gray-100">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2.5 text-sm font-bold rounded-t-xl border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
-              activeTab === tab.id
-                ? "border-blue-600 text-blue-600 bg-blue-50/50"
-                : "border-transparent text-gray-500 hover:text-gray-900"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const count = tab.id === "all" 
+            ? jobs.length 
+            : jobs.filter(j => j.status?.toLowerCase().replace('-', '_') === tab.id.toLowerCase()).length;
+            
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2.5 text-sm font-bold rounded-t-xl border-b-2 transition-colors whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+                activeTab === tab.id
+                  ? "border-blue-600 text-blue-600 bg-blue-50/50"
+                  : "border-transparent text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              {tab.label}
+              <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                activeTab === tab.id 
+                  ? "bg-blue-600 text-white" 
+                  : "bg-gray-100 text-gray-600"
+              }`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* GRID & LOADING */}

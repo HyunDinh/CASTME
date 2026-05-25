@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import JobCard from "#/components/JobCard";
 import { useRouter } from "next/navigation";
+import { getMyCastingJobs } from "#/app/(shop)/my-casting/actions";
 
 export default function ShopDashboard() {
   const router = useRouter();
@@ -46,45 +47,22 @@ export default function ShopDashboard() {
     },
   ];
 
-  // MOCK DATA: Recent Applications
-  const recentApplications = [
-    {
-      id: "app-1",
-      kocName: "Linh Đan",
-      kocAvatar: "👱🏻‍♀️",
-      campaign: "Tuyển KOC chụp lookbook bộ sưu tập Hè Y2K",
-      proposedBudget: "3,500,000đ",
-      time: "2 giờ trước",
-    },
-    {
-      id: "app-2",
-      kocName: "Minh Hiếu",
-      kocAvatar: "👨🏻",
-      campaign: "Video Review trải nghiệm không gian trà đạo tĩnh lặng",
-      proposedBudget: "2,000,000đ",
-      time: "5 giờ trước",
-    },
-  ];
+  const [inProgressJobs, setInProgressJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // MOCK DATA: Active Campaigns
-  const activeCampaigns = [
-    {
-      id: "job-1",
-      title: "Tuyển KOC chụp lookbook bộ sưu tập Hè Y2K",
-      description: "Cần tìm 2 bạn mẫu ảnh phong cách năng động, cá tính, chụp mẫu quần jean bách khoa và áo croptop theo phong cách đường phố những năm 2000. Chụp tại studio Quận 3.",
-      budget: "3,500,000đ",
-      vibeTags: ["Y2K", "Streetwear", "Cá tính"],
-      applicantsCount: 12,
-    },
-    {
-      id: "job-2",
-      title: "Video Review trải nghiệm không gian trà đạo tĩnh lặng",
-      description: "Cần tìm KOL mảng chữa lành, phong cách mộc mạc, nhẹ nhàng, quay 1 video ngắn Reels/TikTok thời lượng dưới 1 phút review không gian quán và sản phẩm trà sen mới.",
-      budget: "1,800,000đ",
-      vibeTags: ["Vintage", "Mộc mạc", "Chữa lành"],
-      applicantsCount: 5,
-    },
-  ];
+  useEffect(() => {
+    async function fetchJobs() {
+      setLoading(true);
+      const res = await getMyCastingJobs();
+      if (res.success) {
+        // filter only jobs with "in-progress" status
+        const filtered = res.data.filter(job => job.status === "in-progress");
+        setInProgressJobs(filtered);
+      }
+      setLoading(false);
+    }
+    fetchJobs();
+  }, []);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -111,53 +89,33 @@ export default function ShopDashboard() {
         {/* CỘT TRÁI (Rộng hơn - Chiếm 2/3) */}
         <div className="lg:col-span-2 space-y-8">
           
-          {/* 3. KHỐI DANH SÁCH ỨNG TUYỂN MỚI */}
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-extrabold text-gray-900">Ứng tuyển mới nhất</h2>
-              <button className="text-sm font-bold text-blue-600 hover:underline cursor-pointer">Xem tất cả</button>
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
-              {recentApplications.map((app, idx) => (
-                <div key={app.id} className={`p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${idx !== recentApplications.length - 1 ? 'border-b border-gray-50' : ''}`}>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-2xl border border-gray-200">
-                      {app.kocAvatar}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-                        {app.kocName}
-                        <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{app.time}</span>
-                      </h4>
-                      <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">Ứng tuyển: <span className="font-medium text-gray-700">{app.campaign}</span></p>
-                      <p className="text-xs font-bold text-purple-600 mt-1">Đề xuất: {app.proposedBudget}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <button className="flex-1 sm:flex-none px-3 py-1.5 bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 font-bold text-xs rounded-xl transition cursor-pointer">Từ chối</button>
-                    <button className="flex-1 sm:flex-none px-3 py-1.5 bg-blue-600 text-white hover:bg-blue-700 font-bold text-xs rounded-xl shadow-sm transition cursor-pointer">Duyệt nhanh</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
 
           {/* 4. KHỐI CHIẾN DỊCH ĐANG TUYỂN (Active Campaigns) */}
           <section>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-extrabold text-gray-900">Chiến dịch đang mở tuyển</h2>
+              <h2 className="text-xl font-extrabold text-gray-900">Dự án đang thực hiện</h2>
               <button onClick={() => router.push('/my-casting')} className="text-sm font-bold text-blue-600 hover:underline cursor-pointer">Quản lý tất cả</button>
             </div>
-            <div className="space-y-4">
-              {activeCampaigns.map((campaign) => (
-                <JobCard 
-                  key={campaign.id} 
-                  job={campaign} 
-                  role="shop"
-                  onAction={(id) => alert(`Chuyển đến trang quản lý ứng viên cho chiến dịch ${id}`)}
-                />
-              ))}
-            </div>
+            {loading ? (
+              <div className="py-10 text-center">
+                <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : inProgressJobs.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-8 text-center text-gray-400 text-sm">
+                Chưa có dự án nào đang thực hiện.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {inProgressJobs.map((campaign) => (
+                  <JobCard 
+                    key={campaign.id} 
+                    job={campaign} 
+                    role="shop"
+                    onAction={(job) => router.push(`/my-casting?jobId=${job.id}`)}
+                  />
+                ))}
+              </div>
+            )}
           </section>
 
         </div>

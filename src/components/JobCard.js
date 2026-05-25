@@ -26,11 +26,20 @@ export default function JobCard({
           {isShop ? (
             <span className={`text-sm font-bold px-2.5 py-0.5 rounded-lg border flex items-center gap-1.5 ${
               job.status === "RECRUITING" ? "text-emerald-800 bg-emerald-50 border-emerald-200" :
+              job.status === "IN_PROGRESS" ? "text-blue-800 bg-blue-50 border-blue-200" :
+              job.status === "COMPLETED" ? "text-gray-800 bg-gray-100 border-gray-300" :
               job.status === "DRAFT" ? "text-amber-800 bg-amber-50 border-amber-200" :
               "text-gray-600 bg-gray-50 border-gray-200"
             }`}>
-              <span className={`w-2 h-2 rounded-full ${job.status === "RECRUITING" ? "bg-emerald-500 animate-pulse" : "bg-gray-400"}`}></span>
+              <span className={`w-2 h-2 rounded-full ${
+                job.status === "RECRUITING" ? "bg-emerald-500 animate-pulse" :
+                job.status === "IN_PROGRESS" ? "bg-blue-500 animate-pulse" :
+                job.status === "COMPLETED" ? "bg-gray-500" :
+                "bg-gray-400"
+              }`}></span>
               {job.status === "RECRUITING" ? "Đang tuyển" :
+               job.status === "IN_PROGRESS" ? "Đang thực hiện" :
+               job.status === "COMPLETED" ? "Đã kết thúc" :
                job.status === "DRAFT" ? "Bản nháp" : job.status}
             </span>
           ) : (

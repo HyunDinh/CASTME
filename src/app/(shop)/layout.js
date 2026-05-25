@@ -124,7 +124,13 @@ export default function ShopLayout({ children }) {
         </aside>
 
         {/* Nội dung trang con thay đổi */}
-        <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full overflow-y-auto">
+        <main 
+          className={`flex-1 w-full ${
+            pathname.startsWith("/messages")
+              ? "overflow-hidden flex flex-col"
+              : "p-6 md:p-8 max-w-7xl mx-auto overflow-y-auto"
+          }`}
+        >
           {children}
         </main>
       </div>
