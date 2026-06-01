@@ -93,21 +93,30 @@ export async function approveApplicant(applicationId, jobId) {
       data: { status: "REJECTED" }
     });
 
-    // 4 & 5. Cập nhật trạng thái Job và tự động tạo 4 Milestones chuẩn
-    await prisma.job.update({
-      where: { id: jobId },
-      data: { 
-        status: "IN_PROGRESS",
-        milestones: {
-          create: [
-            { title: "Nộp kịch bản", type: "SCRIPT", order: 1, status: "IN_PROGRESS" }, // Bước 1 được tự động bật IN_PROGRESS
-            { title: "Nộp video mẫu", type: "VIDEO", order: 2, status: "PENDING" },
-            { title: "Đăng video lên kênh", type: "LINK", order: 3, status: "PENDING" },
-            { title: "Nghiệm thu & Thanh toán", type: "PAYMENT", order: 4, status: "PENDING" },
-          ]
+    // 4 & 5. Cập nhật trạng thái Job và tự động tạo 4 Milestones chuẩn (nếu chưa có)
+    const existingMilestonesCount = await prisma.milestone.count({ where: { jobId } });
+    
+    if (existingMilestonesCount === 0) {
+      await prisma.job.update({
+        where: { id: jobId },
+        data: { 
+          status: "IN_PROGRESS",
+          milestones: {
+            create: [
+              { title: "Nộp kịch bản", type: "SCRIPT", order: 1, status: "IN_PROGRESS" }, // Bước 1 được tự động bật IN_PROGRESS
+              { title: "Nộp video mẫu", type: "VIDEO", order: 2, status: "PENDING" },
+              { title: "Đăng video lên kênh", type: "LINK", order: 3, status: "PENDING" },
+              { title: "Nghiệm thu & Thanh toán", type: "PAYMENT", order: 4, status: "PENDING" },
+            ]
+          }
         }
-      }
-    });
+      });
+    } else {
+      await prisma.job.update({
+        where: { id: jobId },
+        data: { status: "IN_PROGRESS" }
+      });
+    }
 
     return { success: true };
   } catch (error) {
