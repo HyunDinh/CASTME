@@ -40,6 +40,11 @@ export async function GET(request) {
             gallery: true,
           },
         },
+        receivedReviews: {
+          select: {
+            rating: true,
+          }
+        },
       },
       take: 20, 
       orderBy: {
@@ -47,15 +52,24 @@ export async function GET(request) {
       },
     });
 
-    const formattedCreators = creators.map((creator) => ({
-      id: creator.id,
-      name: creator.name,
-      avatar: creator.creatorProfile?.mainImage || creator.name.charAt(0).toUpperCase(),
-      bio: creator.creatorProfile?.bio || "",
-      styles: creator.creatorProfile?.styles || [],
-      portfolioUrl: creator.creatorProfile?.portfolioUrl || "",
-      gallery: creator.creatorProfile?.gallery || [],
-    }));
+    const formattedCreators = creators.map((creator) => {
+      const reviewCount = creator.receivedReviews?.length || 0;
+      const averageRating = reviewCount > 0 
+        ? (creator.receivedReviews.reduce((sum, rev) => sum + rev.rating, 0) / reviewCount).toFixed(1) 
+        : 0;
+
+      return {
+        id: creator.id,
+        name: creator.name,
+        avatar: creator.creatorProfile?.mainImage || creator.name.charAt(0).toUpperCase(),
+        bio: creator.creatorProfile?.bio || "",
+        styles: creator.creatorProfile?.styles || [],
+        portfolioUrl: creator.creatorProfile?.portfolioUrl || "",
+        gallery: creator.creatorProfile?.gallery || [],
+        averageRating: Number(averageRating),
+        reviewCount: reviewCount,
+      };
+    });
 
     return NextResponse.json({ success: true, data: formattedCreators });
   } catch (error) {

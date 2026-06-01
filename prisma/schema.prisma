@@ -80,8 +80,13 @@ model CreatorProfile {
   styles      String[] // ["Streetwear", "Vintage", "Minimalism"...]
   portfolioUrl String?
   feedback    String?
-  mainImage   String?  // Ảnh chính của Creator
-  gallery     String[] // Danh sách các ảnh phụ
+  mainImage       String?  // Ảnh chính của Creator
+  gallery         String[] // Danh sách các ảnh phụ
+  coverImage      String?  // Ảnh bìa
+  location        String?  // Địa điểm
+  priceRange      String?  // Ngân sách tham khảo
+  followersCount  String?  // Số lượt theo dõi
+  socialLinks     Json?    // Các MXH
 }
 
 model Job {

@@ -95,9 +95,18 @@ function SearchContent() {
               </div>
               
               <div className="pt-12 p-6 flex-1 flex flex-col">
-                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                  {creator.name}
-                </h3>
+                <div className="flex items-start justify-between gap-4">
+                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                    {creator.name}
+                  </h3>
+                  {creator.reviewCount > 0 && (
+                    <div className="flex items-center gap-1 shrink-0 bg-yellow-50 px-2 py-0.5 rounded-md border border-yellow-100">
+                      <span className="text-xs">⭐</span>
+                      <span className="text-xs font-bold text-yellow-700">{creator.averageRating}</span>
+                      <span className="text-[10px] text-yellow-600">({creator.reviewCount})</span>
+                    </div>
+                  )}
+                </div>
                 
                 {/* Styles Badges */}
                 <div className="flex flex-wrap gap-2 mt-3">
