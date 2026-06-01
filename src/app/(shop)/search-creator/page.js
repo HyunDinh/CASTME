@@ -75,73 +75,77 @@ function SearchContent() {
           <p className="text-gray-500 font-medium">Đang tải dữ liệu...</p>
         </div>
       ) : creators.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="flex flex-col gap-6">
           {creators.map((creator) => (
             <div 
               key={creator.id} 
-              className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl hover:border-blue-200 transition-all duration-300 transform hover:-translate-y-1 flex flex-col"
+              className="group bg-white rounded-3xl p-6 shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-200 transition-all flex flex-col sm:flex-row items-start sm:items-center gap-6"
             >
-              <div className="h-24 bg-gradient-to-r from-blue-100 to-indigo-100 relative">
-                {/* Avatar */}
-                <div className="absolute -bottom-8 left-6 w-16 h-16 bg-white rounded-2xl p-1 shadow-md">
-                  <div className="w-full h-full bg-blue-600 text-white rounded-xl flex items-center justify-center text-2xl font-black overflow-hidden">
-                    {creator.avatar && creator.avatar.length > 1 ? (
-                      <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" />
-                    ) : (
-                      creator.avatar
-                    )}
-                  </div>
+              {/* Avatar Box */}
+              <div className="relative shrink-0">
+                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center text-3xl font-black text-gray-400 shadow-sm border border-gray-100">
+                  {creator.avatar && creator.avatar.length > 1 ? (
+                    <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" />
+                  ) : (
+                    creator.avatar
+                  )}
                 </div>
+                {/* Online Indicator */}
+                <div className="absolute bottom-1 right-3 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
               </div>
               
-              <div className="pt-12 p-6 flex-1 flex flex-col">
-                <div className="flex items-start justify-between gap-4">
-                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
-                    {creator.name}
-                  </h3>
-                  {creator.reviewCount > 0 && (
-                    <div className="flex items-center gap-1 shrink-0 bg-yellow-50 px-2 py-0.5 rounded-md border border-yellow-100">
-                      <span className="text-xs">⭐</span>
-                      <span className="text-xs font-bold text-yellow-700">{creator.averageRating}</span>
-                      <span className="text-[10px] text-yellow-600">({creator.reviewCount})</span>
-                    </div>
-                  )}
+              {/* Content Box */}
+              <div className="flex-1 w-full flex flex-col sm:flex-row gap-4 justify-between sm:items-center">
+                
+                {/* Info (Left) */}
+                <div className="flex flex-col gap-3 max-w-2xl">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+                      {creator.name}
+                    </h3>
+                    {creator.reviewCount > 0 && (
+                      <div className="flex items-center gap-1 bg-yellow-50 px-2.5 py-0.5 rounded-full border border-yellow-200">
+                        <span className="text-xs">⭐</span>
+                        <span className="text-xs font-bold text-yellow-700">{creator.averageRating}</span>
+                        <span className="text-[10px] text-yellow-600">({creator.reviewCount})</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Styles Badges */}
+                  <div className="flex flex-wrap gap-2">
+                    {creator.styles && creator.styles.length > 0 ? (
+                      creator.styles.map((s, idx) => (
+                        <span key={idx} className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600 rounded-full">
+                          {s}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">Chưa cập nhật phong cách</span>
+                    )}
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
+                    {creator.bio || "Creator này chưa cập nhật mô tả bản thân. Hãy nhấp để xem chi tiết hơn."}
+                  </p>
                 </div>
                 
-                {/* Styles Badges */}
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {creator.styles && creator.styles.length > 0 ? (
-                    creator.styles.slice(0, 3).map((s, idx) => (
-                      <span key={idx} className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide bg-blue-50 text-blue-600 rounded-lg">
-                        {s}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-xs text-gray-400 italic">Chưa cập nhật phong cách</span>
-                  )}
-                  {creator.styles && creator.styles.length > 3 && (
-                    <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide bg-gray-100 text-gray-600 rounded-lg">
-                      +{creator.styles.length - 3}
-                    </span>
-                  )}
-                </div>
-                
-                <p className="text-sm text-gray-500 mt-4 line-clamp-3 leading-relaxed flex-1">
-                  {creator.bio || "Creator này chưa cập nhật mô tả bản thân. Bạn có thể xem hồ sơ chi tiết để biết thêm."}
-                </p>
-                
-                {/* Actions */}
-                <div className="mt-6 pt-4 border-t border-gray-50 flex items-center justify-between">
+                {/* Actions (Right) */}
+                <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between gap-6 shrink-0 mt-2 sm:mt-0">
+                  <button className="text-gray-300 hover:text-red-500 transition-colors flex items-center justify-center cursor-pointer" title="Lưu Creator">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                    </svg>
+                  </button>
+                  
                   <Link 
                     href={`/creator/${creator.id}`}
-                    className="text-sm font-bold text-blue-600 hover:text-blue-700"
+                    className="flex items-center gap-1.5 text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
                   >
-                    Xem hồ sơ →
+                    Xem hồ sơ <span className="text-lg">→</span>
                   </Link>
-                  <button className="w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors cursor-pointer" title="Lưu Creator">
-                    ❤️
-                  </button>
                 </div>
+                
               </div>
             </div>
           ))}

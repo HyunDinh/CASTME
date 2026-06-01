@@ -55,6 +55,7 @@ export default function CreatorProfilePage() {
         </button>
       </div>
     );
+  }
 
   return (
     <div className="w-full max-w-5xl mx-auto pb-20">

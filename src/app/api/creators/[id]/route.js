@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../../../lib/prisma";
+import { prisma } from "#/lib/prisma";
 
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
-      return NextResponse.json({ success: false, error: "Creator ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Creator ID is required" },
+        { status: 400 },
+      );
     }
 
     const creator = await prisma.user.findUnique({
@@ -42,43 +45,56 @@ export async function GET(request, { params }) {
                 name: true,
                 shopProfile: {
                   select: {
-                    shopName: true
-                  }
-                }
-              }
-            }
+                    shopName: true,
+                  },
+                },
+              },
+            },
           },
           orderBy: {
-            createdAt: "desc"
-          }
+            createdAt: "desc",
+          },
         },
         _count: {
           select: {
             applications: {
               where: {
-                status: "ACCEPTED" // Or whatever status implies completed jobs
-              }
-            }
-          }
-        }
+                status: "ACCEPTED", // Or whatever status implies completed jobs
+              },
+            },
+          },
+        },
       },
     });
 
     if (!creator) {
-      return NextResponse.json({ success: false, error: "Creator not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "Creator not found" },
+        { status: 404 },
+      );
     }
 
     // Prepare data
     const profile = creator.creatorProfile || {};
     const reviewCount = creator.receivedReviews?.length || 0;
-    const averageRating = reviewCount > 0 
-      ? Number((creator.receivedReviews.reduce((sum, rev) => sum + rev.rating, 0) / reviewCount).toFixed(1)) 
-      : 0;
+    const averageRating =
+      reviewCount > 0
+        ? Number(
+            (
+              creator.receivedReviews.reduce(
+                (sum, rev) => sum + rev.rating,
+                0,
+              ) / reviewCount
+            ).toFixed(1),
+          )
+        : 0;
 
     const formattedCreator = {
       id: creator.id,
       name: creator.name,
-      coverImage: profile.coverImage || "https://images.unsplash.com/photo-1498661694102-0a3793edbe74?q=80&w=2000&auto=format&fit=crop", // Fallback
+      coverImage:
+        profile.coverImage ||
+        "https://images.unsplash.com/photo-1498661694102-0a3793edbe74?q=80&w=2000&auto=format&fit=crop", // Fallback
       avatar: profile.mainImage || creator.name.charAt(0).toUpperCase(),
       bio: profile.bio || "Creator này chưa cập nhật tiểu sử.",
       location: profile.location || "Chưa cập nhật",
@@ -88,23 +104,30 @@ export async function GET(request, { params }) {
         followers: profile.followersCount || "0",
         jobsCompleted: creator._count.applications || 0,
         averageRating: averageRating,
-        reviewCount: reviewCount
+        reviewCount: reviewCount,
       },
       socials: Array.isArray(profile.socialLinks) ? profile.socialLinks : [],
       gallery: profile.gallery || [],
-      reviews: creator.receivedReviews.map(review => ({
+      reviews: creator.receivedReviews.map((review) => ({
         id: review.id,
-        shopName: review.shop?.shopProfile?.shopName || review.shop?.name || "Ẩn danh",
-        shopAvatar: (review.shop?.shopProfile?.shopName || review.shop?.name || "A").charAt(0).toUpperCase(),
+        shopName:
+          review.shop?.shopProfile?.shopName || review.shop?.name || "Ẩn danh",
+        shopAvatar: (
+          review.shop?.shopProfile?.shopName ||
+          review.shop?.name ||
+          "A"
+        )
+          .charAt(0)
+          .toUpperCase(),
         rating: review.rating,
         content: review.content,
         // Dùng toLocaleDateString() ở frontend hoặc map đơn giản
-        createdAt: new Date(review.createdAt).toLocaleDateString('vi-VN', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        })
-      }))
+        createdAt: new Date(review.createdAt).toLocaleDateString("vi-VN", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }),
+      })),
     };
 
     return NextResponse.json({ success: true, data: formattedCreator });
@@ -112,7 +135,7 @@ export async function GET(request, { params }) {
     console.error("Error fetching creator details:", error);
     return NextResponse.json(
       { success: false, error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

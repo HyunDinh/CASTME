@@ -6,17 +6,17 @@ import { usePathname, useRouter } from "next/navigation";
 
 // Static styles for suggestion
 const STATIC_STYLES = [
-  { type: 'style', name: 'Food Review', icon: '🍔' },
-  { type: 'style', name: 'Model', icon: '👗' },
-  { type: 'style', name: 'Beauty', icon: '💄' },
-  { type: 'style', name: 'Tech', icon: '💻' },
-  { type: 'style', name: 'Travel', icon: '✈️' },
+  { type: "style", name: "Food Review", icon: "🍔" },
+  { type: "style", name: "Model", icon: "👗" },
+  { type: "style", name: "Beauty", icon: "💄" },
+  { type: "style", name: "Tech", icon: "💻" },
+  { type: "style", name: "Travel", icon: "✈️" },
 ];
 
 export default function ShopLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
-  
+
   const [searchCreator, setSearchCreator] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -33,14 +33,21 @@ export default function ShopLayout({ children }) {
 
       setLoading(true);
       try {
-        const res = await fetch(`/api/creators/search?q=${encodeURIComponent(searchCreator)}`);
+        const res = await fetch(
+          `/api/creators/search?q=${encodeURIComponent(searchCreator)}`,
+        );
         const result = await res.json();
         if (result.success) {
-          setCreatorSuggestions(result.data.map(creator => ({
-            ...creator,
-            type: 'creator',
-            style: creator.styles?.length > 0 ? creator.styles.join(', ') : 'Chưa cập nhật'
-          })));
+          setCreatorSuggestions(
+            result.data.map((creator) => ({
+              ...creator,
+              type: "creator",
+              style:
+                creator.styles?.length > 0
+                  ? creator.styles.join(", ")
+                  : "Chưa cập nhật",
+            })),
+          );
         }
       } catch (error) {
         console.error("Error fetching creators:", error);
@@ -56,17 +63,21 @@ export default function ShopLayout({ children }) {
     return () => clearTimeout(debounceTimer);
   }, [searchCreator]);
 
-  const styleSuggestions = searchCreator.trim() === "" 
-    ? [] 
-    : STATIC_STYLES.filter(item => 
-        item.name.toLowerCase().includes(searchCreator.toLowerCase())
-      );
+  const styleSuggestions =
+    searchCreator.trim() === ""
+      ? []
+      : STATIC_STYLES.filter((item) =>
+          item.name.toLowerCase().includes(searchCreator.toLowerCase()),
+        );
 
   const filteredSuggestions = [...styleSuggestions, ...creatorSuggestions];
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target)
+      ) {
         setShowDropdown(false);
       }
     }
@@ -77,17 +88,21 @@ export default function ShopLayout({ children }) {
   const handleSelectSuggestion = (suggestion) => {
     setSearchCreator(suggestion.name);
     setShowDropdown(false);
-    if (suggestion.type === 'style') {
-      router.push(`/search-creator?style=${encodeURIComponent(suggestion.name)}`);
+    if (suggestion.type === "style") {
+      router.push(
+        `/search-creator?style=${encodeURIComponent(suggestion.name)}`,
+      );
     } else {
       router.push(`/search-creator?q=${encodeURIComponent(suggestion.name)}`);
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && searchCreator.trim() !== "") {
+    if (e.key === "Enter" && searchCreator.trim() !== "") {
       setShowDropdown(false);
-      router.push(`/search-creator?q=${encodeURIComponent(searchCreator.trim())}`);
+      router.push(
+        `/search-creator?q=${encodeURIComponent(searchCreator.trim())}`,
+      );
     }
   };
 
@@ -95,7 +110,7 @@ export default function ShopLayout({ children }) {
   const menuItems = [
     { name: "📊 Tổng quan Shop", path: "/shop-dashboard" },
     { name: "📝 Hồ sơ Cửa Hàng", path: "/shop-profile" },
-    { name: "�📢 Quản lý Casting", path: "/my-casting" },
+    { name: "📢 Quản lý Casting", path: "/my-casting" },
     { name: "💬 Tin nhắn", path: "/messages" },
     { name: "💳 Lịch sử giao dịch", path: "/transactions" },
   ];
@@ -106,12 +121,18 @@ export default function ShopLayout({ children }) {
       <header className="sticky top-0 z-40 w-full bg-white border-b border-gray-100 px-6 py-3 flex items-center justify-between shadow-xs">
         {/* Logo */}
         <div className="flex items-center gap-8">
-          <Link href="/shop-dashboard" className="text-2xl font-black text-blue-600 tracking-wider">
+          <Link
+            href="/shop-dashboard"
+            className="text-2xl font-black text-blue-600 tracking-wider"
+          >
             castme.
           </Link>
-          
+
           {/* Thanh tìm kiếm Creator */}
-          <div ref={searchContainerRef} className="relative hidden md:block w-80 z-50">
+          <div
+            ref={searchContainerRef}
+            className="relative hidden md:block w-80 z-50"
+          >
             <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 focus-within:border-blue-500 focus-within:bg-white transition-all">
               <span className="text-gray-400 text-sm mr-2">🔍</span>
               <input
@@ -129,7 +150,7 @@ export default function ShopLayout({ children }) {
                 onKeyDown={handleKeyDown}
               />
               {searchCreator && (
-                <button 
+                <button
                   onClick={() => {
                     setSearchCreator("");
                     setShowDropdown(false);
@@ -152,58 +173,77 @@ export default function ShopLayout({ children }) {
                 ) : filteredSuggestions.length > 0 ? (
                   <div className="py-2">
                     {/* Phân nhóm gợi ý Style */}
-                    {filteredSuggestions.filter(s => s.type === 'style').length > 0 && (
+                    {filteredSuggestions.filter((s) => s.type === "style")
+                      .length > 0 && (
                       <div className="mb-2">
                         <div className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50">
                           Phong cách / Ngành hàng
                         </div>
-                        {filteredSuggestions.filter(s => s.type === 'style').map((item, idx) => (
-                          <div 
-                            key={`style-${idx}`}
-                            onClick={() => handleSelectSuggestion(item)}
-                            className="px-4 py-2.5 hover:bg-blue-50 flex items-center gap-3 cursor-pointer transition-colors"
-                          >
-                            <span className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-lg">
-                              {item.icon}
-                            </span>
-                            <span className="text-sm font-medium text-gray-700">{item.name}</span>
-                          </div>
-                        ))}
+                        {filteredSuggestions
+                          .filter((s) => s.type === "style")
+                          .map((item, idx) => (
+                            <div
+                              key={`style-${idx}`}
+                              onClick={() => handleSelectSuggestion(item)}
+                              className="px-4 py-2.5 hover:bg-blue-50 flex items-center gap-3 cursor-pointer transition-colors"
+                            >
+                              <span className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-lg">
+                                {item.icon}
+                              </span>
+                              <span className="text-sm font-medium text-gray-700">
+                                {item.name}
+                              </span>
+                            </div>
+                          ))}
                       </div>
                     )}
-                    
+
                     {/* Phân nhóm gợi ý Creator */}
-                    {filteredSuggestions.filter(s => s.type === 'creator').length > 0 && (
+                    {filteredSuggestions.filter((s) => s.type === "creator")
+                      .length > 0 && (
                       <div>
                         <div className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50 border-t border-gray-50">
                           Creator / KOL
                         </div>
-                        {filteredSuggestions.filter(s => s.type === 'creator').map((item, idx) => (
-                          <div 
-                            key={`creator-${idx}`}
-                            onClick={() => handleSelectSuggestion(item)}
-                            className="px-4 py-2.5 hover:bg-blue-50 flex items-center gap-3 cursor-pointer transition-colors"
-                          >
-                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">
-                              {item.avatar && item.avatar.length > 1 ? (
-                                <img src={item.avatar} alt={item.name} className="w-full h-full object-cover" />
-                              ) : (
-                                item.avatar
-                              )}
+                        {filteredSuggestions
+                          .filter((s) => s.type === "creator")
+                          .map((item, idx) => (
+                            <div
+                              key={`creator-${idx}`}
+                              onClick={() => handleSelectSuggestion(item)}
+                              className="px-4 py-2.5 hover:bg-blue-50 flex items-center gap-3 cursor-pointer transition-colors"
+                            >
+                              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">
+                                {item.avatar && item.avatar.length > 1 ? (
+                                  <img
+                                    src={item.avatar}
+                                    alt={item.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  item.avatar
+                                )}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium text-gray-900">
+                                  {item.name}
+                                </span>
+                                <span className="text-[11px] text-gray-500 line-clamp-1">
+                                  {item.style}
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex flex-col">
-                              <span className="text-sm font-medium text-gray-900">{item.name}</span>
-                              <span className="text-[11px] text-gray-500 line-clamp-1">{item.style}</span>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     )}
                   </div>
                 ) : (
                   <div className="px-4 py-8 text-center text-gray-500 text-sm flex flex-col items-center">
                     <span className="text-3xl mb-3">🤔</span>
-                    Không tìm thấy kết quả nào phù hợp với <br/> <strong className="text-gray-900 mt-1">"{searchCreator}"</strong>
+                    Không tìm thấy kết quả nào phù hợp với <br />{" "}
+                    <strong className="text-gray-900 mt-1">
+                      "{searchCreator}"
+                    </strong>
                   </div>
                 )}
               </div>
@@ -220,7 +260,7 @@ export default function ShopLayout({ children }) {
           </button>
 
           {/* Cài đặt tài khoản Shop */}
-          <button 
+          <button
             onClick={() => router.push("/shop-settings")}
             className="p-2 hover:bg-gray-100 rounded-xl text-xl cursor-pointer transition"
             title="Cài đặt thông tin Shop"
@@ -247,7 +287,9 @@ export default function ShopLayout({ children }) {
       <div className="flex flex-1">
         {/* Sidebar */}
         <aside className="w-64 bg-white border-r border-gray-100 p-4 flex flex-col gap-1 hidden lg:flex">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 px-3 mb-2">Menu Shop</p>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 px-3 mb-2">
+            Menu Shop
+          </p>
           {menuItems.map((item) => {
             const isActive = pathname === item.path;
             return (
@@ -264,7 +306,7 @@ export default function ShopLayout({ children }) {
               </Link>
             );
           })}
-          
+
           {/* NÚT ĐĂNG XUẤT ĐƯỢC THÊM VÀO ĐÂY */}
           <button
             onClick={() => {
@@ -280,11 +322,14 @@ export default function ShopLayout({ children }) {
           {/* Ví Số dư (Thay cho Quỹ trái tim của Creator) */}
           <div className="mt-auto bg-blue-50 rounded-2xl p-4 border border-blue-100">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-blue-800">Số dư ví</span>
+              <span className="text-xs font-semibold text-blue-800">
+                Số dư ví
+              </span>
               <span className="text-sm font-black text-blue-700">💎 1.5M</span>
             </div>
             <p className="text-[11px] text-blue-600/80 mb-3 leading-relaxed">
-              Dùng để đăng thêm chiến dịch Casting hoặc mở khóa thông tin liên hệ KOL.
+              Dùng để đăng thêm chiến dịch Casting hoặc mở khóa thông tin liên
+              hệ KOL.
             </p>
             <button className="w-full py-2 bg-white text-blue-600 hover:bg-blue-100 text-xs font-bold rounded-xl border border-blue-200 shadow-xs transition cursor-pointer text-center">
               + Nạp thêm tiền
@@ -293,7 +338,7 @@ export default function ShopLayout({ children }) {
         </aside>
 
         {/* Nội dung trang con thay đổi */}
-        <main 
+        <main
           className={`flex-1 w-full ${
             pathname.startsWith("/messages")
               ? "overflow-hidden flex flex-col"
