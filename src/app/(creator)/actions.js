@@ -288,3 +288,40 @@ export async function submitMilestone(milestoneId, submissionText) {
     return { success: false, error: "Lỗi khi nộp bài" };
   }
 }
+
+// Lấy profile cửa hàng công khai cho Creator xem (theo userId của Shop)
+export async function getPublicShopProfile(shopUserId) {
+  try {
+    const profile = await prisma.shopProfile.findUnique({
+      where: { userId: shopUserId },
+    });
+
+    const user_data = await prisma.user.findUnique({
+      where: { id: shopUserId },
+    });
+
+    if (!profile && !user_data) {
+      return { success: false, error: "Không tìm thấy cửa hàng" };
+    }
+
+    return {
+      success: true,
+      data: {
+        shopName: profile?.shopName || user_data?.name || "",
+        description: profile?.description || "",
+        categories: profile?.categories || [],
+        vibeText: profile?.vibeText || "",
+        website: profile?.website || "",
+        instagram: profile?.instagram || "",
+        phone: profile?.phone || "",
+        address: profile?.address || "",
+        averageRating: profile?.averageRating || 0,
+        totalJobs: profile?.totalJobs || 0,
+        ownerName: user_data?.name || "",
+      },
+    };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: "Không thể tải hồ sơ cửa hàng" };
+  }
+}

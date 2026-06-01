@@ -1,11 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { getAvailableJobs, applyToJobAction } from "#/app/(creator)/actions";
+import { getAvailableJobs, applyToJobAction, getPublicShopProfile } from "#/app/(creator)/actions";
 
 export default function CreatorDashboard() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [applyingId, setApplyingId] = useState(null);
+  const [shopModalOpen, setShopModalOpen] = useState(false);
+  const [shopProfile, setShopProfile] = useState(null);
+  const [loadingShop, setLoadingShop] = useState(false);
 
   const fetchJobs = async () => {
     setLoading(true);
@@ -13,6 +16,7 @@ export default function CreatorDashboard() {
       const data = await getAvailableJobs();
       const formatted = data.map((job) => ({
         id: job.id,
+          shopId: job.shop?.id || null,
         shopName: job.shop?.name || "Unknown Shop",
         title: job.title,
         description: job.description,
@@ -49,6 +53,23 @@ export default function CreatorDashboard() {
     }
 
     setApplyingId(null);
+  };
+
+  const viewShopProfile = async (shopId) => {
+    if (!shopId) return alert("Không tìm thấy cửa hàng");
+    setShopProfile(null);
+    setLoadingShop(true);
+    setShopModalOpen(true);
+
+    const result = await getPublicShopProfile(shopId);
+    if (result.success) {
+      setShopProfile(result.data);
+    } else {
+      alert(result.error || "Không thể tải hồ sơ cửa hàng");
+      setShopProfile(null);
+    }
+
+    setLoadingShop(false);
   };
 
   return (
@@ -97,18 +118,87 @@ export default function CreatorDashboard() {
                 </div>
                 <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-4">
                   <span className="text-sm font-bold text-amber-300">{aiJob.budget}</span>
-                  <button
-                    onClick={() => handleConnect(aiJob.id)}
-                    disabled={applyingId === aiJob.id}
-                    className="px-4 py-2 bg-white text-purple-900 font-bold text-sm rounded-xl hover:bg-purple-100 disabled:opacity-70"
-                  >
-                    {applyingId === aiJob.id ? "Đang xử lý..." : "Kết nối ngay"}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleConnect(aiJob.id)}
+                      disabled={applyingId === aiJob.id}
+                      className="px-4 py-2 bg-white text-purple-900 font-bold text-sm rounded-xl hover:bg-purple-100 disabled:opacity-70"
+                    >
+                      {applyingId === aiJob.id ? "Đang xử lý..." : "Kết nối ngay"}
+                    </button>
+                    <button
+                      onClick={() => viewShopProfile(aiJob.shopId)}
+                      className="px-3 py-2 bg-white/10 border border-white/20 text-white text-sm rounded-xl hover:bg-white/20"
+                    >
+                      Xem hồ sơ
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
         </div>
       </section>
+
+      {shopModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShopModalOpen(false)} />
+          <div className="relative max-w-2xl w-full bg-white rounded-2xl p-6 shadow-xl z-10">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">{shopProfile?.shopName || "Hồ sơ cửa hàng"}</h3>
+                <p className="text-sm text-gray-500">{shopProfile?.ownerName || ""}</p>
+              </div>
+              <div className="ml-4">
+                <button onClick={() => setShopModalOpen(false)} className="text-gray-500 hover:text-gray-800">Đóng</button>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {loadingShop ? (
+                <div className="py-6 text-center">
+                  <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <p className="mt-3 text-sm text-gray-500">Đang tải hồ sơ...</p>
+                </div>
+              ) : shopProfile ? (
+                <>
+                  <p className="text-sm text-gray-700">{shopProfile.description}</p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {(shopProfile.categories || []).map((c) => (
+                      <span key={c} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg">{c}</span>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm text-gray-600">
+                    <div>
+                      <div className="font-semibold text-gray-700">Vibe</div>
+                      <div className="mt-1">{shopProfile.vibeText || "Chưa có"}</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-700">Đánh giá trung bình</div>
+                      <div className="mt-1">{shopProfile.averageRating || 0} ⭐</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-700">Website</div>
+                      <div className="mt-1 text-purple-600">{shopProfile.website || "-"}</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-700">Instagram</div>
+                      <div className="mt-1">{shopProfile.instagram || "-"}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex justify-end gap-3">
+                    <button onClick={() => setShopModalOpen(false)} className="px-4 py-2 rounded-xl bg-gray-100">Đóng</button>
+                    <button onClick={() => { setShopModalOpen(false); }} className="px-4 py-2 rounded-xl bg-purple-600 text-white">OK</button>
+                  </div>
+                </>
+              ) : (
+                <div className="py-6 text-center text-sm text-gray-500">Không có dữ liệu hồ sơ.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* DANH SÁCH TIN TUYỂN DỤNG ĐANG MỞ */}
       <section className="space-y-4">
@@ -168,13 +258,22 @@ export default function CreatorDashboard() {
                     <span className="text-2xl font-black text-purple-600">{job.budget}</span>
                   </div>
 
-                  <button
-                    onClick={() => handleConnect(job.id)}
-                    disabled={applyingId === job.id}
-                    className="w-full md:w-auto px-6 py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition disabled:opacity-70 flex items-center justify-center gap-2"
-                  >
-                    ⚡ {applyingId === job.id ? "Đang ứng tuyển..." : "Kết nối ngay"}
-                  </button>
+                  <div className="w-full md:w-auto flex flex-col gap-2">
+                    <button
+                      onClick={() => viewShopProfile(job.shopId)}
+                      className="w-full md:w-auto px-4 py-2 bg-white border border-gray-200 text-gray-800 font-medium rounded-xl hover:bg-gray-50"
+                    >
+                      👀 Xem hồ sơ
+                    </button>
+
+                    <button
+                      onClick={() => handleConnect(job.id)}
+                      disabled={applyingId === job.id}
+                      className="w-full md:w-auto px-6 py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition disabled:opacity-70 flex items-center justify-center gap-2"
+                    >
+                      ⚡ {applyingId === job.id ? "Đang ứng tuyển..." : "Kết nối ngay"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
