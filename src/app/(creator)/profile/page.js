@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { getCreatorProfile, updateCreatorProfile } from "#/app/(creator)/profile/actions";
 import { Camera, Image as ImageIcon, Loader2, Plus, X, Save, CheckCircle2, AlertCircle } from "lucide-react";
+import { CldUploadWidget } from 'next-cloudinary';
 
 export default function CreatorProfileEditor() {
   const [activeTab, setActiveTab] = useState("portfolio");
@@ -223,21 +224,26 @@ export default function CreatorProfileEditor() {
                   <div className="h-px bg-gray-200 flex-1"></div>
                 </div>
                 
-                <label className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-sm font-bold py-3 rounded-xl cursor-pointer transition flex items-center justify-center gap-2">
-                  <Camera className="w-4 h-4" />
-                  <span>Tải ảnh từ máy (Cloudflare)</span>
-                  <input 
-                    type="file" 
-                    className="hidden" 
-                    accept="image/*"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        alert("Tính năng tải ảnh trực tiếp lên Cloudflare đang được phát triển! Tạm thời vui lòng dùng link ảnh nhé.");
-                        e.target.value = "";
-                      }
-                    }}
-                  />
-                </label>
+                <CldUploadWidget 
+                  onSuccess={(result) => { 
+                    if(result.info && result.info.secure_url) {
+                      setCoverInput(result.info.secure_url);
+                    }
+                  }}
+                  uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "default_preset"}
+                  options={{ maxFiles: 1, resourceType: "image" }}
+                >
+                  {({ open }) => (
+                    <button 
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); open(); }}
+                      className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-sm font-bold py-3 rounded-xl transition flex items-center justify-center gap-2"
+                    >
+                      <Camera className="w-4 h-4" />
+                      <span>Tải ảnh từ máy (Cloudinary)</span>
+                    </button>
+                  )}
+                </CldUploadWidget>
 
                 <div className="flex gap-2 mt-2">
                   <button onClick={() => setIsEditingCover(false)} className="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200 transition cursor-pointer">
@@ -504,20 +510,25 @@ export default function CreatorProfileEditor() {
                             <div className="h-px bg-gray-200 flex-1"></div>
                           </div>
                           
-                          <label className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-bold py-1.5 rounded-lg cursor-pointer transition flex items-center justify-center" onClick={e => e.stopPropagation()}>
-                            <span>Tải ảnh lên (Cloudflare)</span>
-                            <input 
-                              type="file" 
-                              className="hidden" 
-                              accept="image/*"
-                              onChange={(e) => {
-                                if (e.target.files && e.target.files.length > 0) {
-                                  alert("Tính năng tải ảnh trực tiếp lên Cloudflare đang được phát triển! Tạm thời vui lòng dùng link ảnh nhé.");
-                                  e.target.value = "";
-                                }
-                              }}
-                            />
-                          </label>
+                          <CldUploadWidget 
+                            onSuccess={(result) => { 
+                              if(result.info && result.info.secure_url) {
+                                setNewImageLink(result.info.secure_url);
+                              }
+                            }}
+                            uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "default_preset"}
+                            options={{ maxFiles: 1, resourceType: "image" }}
+                          >
+                            {({ open }) => (
+                              <button 
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); open(); }}
+                                className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-bold py-1.5 rounded-lg transition flex items-center justify-center"
+                              >
+                                <span>Tải ảnh lên (Cloudinary)</span>
+                              </button>
+                            )}
+                          </CldUploadWidget>
 
                           <div className="flex gap-2 w-full mt-1">
                             <button onClick={(e) => { e.stopPropagation(); handleAddGalleryImage(); }} className="flex-1 bg-blue-600 text-white text-xs font-bold py-1.5 rounded-lg hover:bg-blue-700 transition">Lưu link</button>
@@ -648,21 +659,26 @@ export default function CreatorProfileEditor() {
               <div className="h-px bg-gray-200 flex-1"></div>
             </div>
             
-            <label className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-sm font-bold py-3 rounded-xl cursor-pointer transition flex items-center justify-center gap-2 mb-6">
-              <Camera className="w-4 h-4" />
-              <span>Tải ảnh từ máy (Cloudflare)</span>
-              <input 
-                type="file" 
-                className="hidden" 
-                accept="image/*"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files.length > 0) {
-                    alert("Tính năng tải ảnh trực tiếp lên Cloudflare đang được phát triển! Tạm thời vui lòng dùng link ảnh nhé.");
-                    e.target.value = "";
-                  }
-                }}
-              />
-            </label>
+            <CldUploadWidget 
+              onSuccess={(result) => { 
+                if(result.info && result.info.secure_url) {
+                  setAvatarModal({...avatarModal, link: result.info.secure_url});
+                }
+              }}
+              uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "default_preset"}
+              options={{ maxFiles: 1, resourceType: "image" }}
+            >
+              {({ open }) => (
+                <button 
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); open(); }}
+                  className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-sm font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 mb-6"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span>Tải ảnh từ máy (Cloudinary)</span>
+                </button>
+              )}
+            </CldUploadWidget>
 
             <div className="flex gap-3">
               <button 
