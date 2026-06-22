@@ -45,7 +45,10 @@ export default function ShopProfilePage() {
       setShopName(result.data.shopName || "");
       setDescription(result.data.description || "");
       setSelectedCategories(result.data.categories || []);
-      vibeText && setVibeText(result.data.vibeText || "");
+      
+      // 👇 SỬA DÒNG NÀY: Bỏ đoạn "vibeText &&" ở đầu đi
+      setVibeText(result.data.vibeText || "");
+      
       setWebsite(result.data.website || "");
       setInstagram(result.data.instagram || "");
       setPhone(result.data.phone || "");
@@ -55,6 +58,7 @@ export default function ShopProfilePage() {
       setConnects(result.data.connects || 0);
       setAverageRating(result.data.averageRating || 0);
       setTotalJobs(result.data.totalJobs || 0);
+      
       // Đổ dữ liệu ảnh từ DB vào State
       setMainImage(result.data.mainImage || "");
       setCoverImage(result.data.coverImage || "");

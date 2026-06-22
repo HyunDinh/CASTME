@@ -71,7 +71,7 @@ function SearchResultsContent() {
         <p className="text-sm text-gray-500 mt-1">
           Tìm thấy <span className="font-bold text-purple-600">{jobs.length}</span> tin tuyển dụng và{" "}
           <span className="font-bold text-purple-600">{shops.length}</span> thương hiệu cho từ khóa "{query}"
-        </p>
+        </p> 
       </div>
 
       {/* Bộ lọc Tabs thanh nhã */}
@@ -133,7 +133,7 @@ function SearchResultsContent() {
                   </div>
                 </div>
               </div>
-            ))
+            ))  
           ) : (
             <p className="text-sm text-gray-500 italic py-8">Không tìm thấy tin tuyển dụng nào phù hợp.</p>
           )}
