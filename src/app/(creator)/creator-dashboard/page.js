@@ -16,7 +16,7 @@ export default function CreatorDashboard() {
       const data = await getAvailableJobs();
       const formatted = data.map((job) => ({
         id: job.id,
-          shopId: job.shop?.id || null,
+        shopId: job.shop?.id || null,
         shopName: job.shop?.name || "Unknown Shop",
         title: job.title,
         description: job.description,
@@ -141,61 +141,166 @@ export default function CreatorDashboard() {
 
       {shopModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShopModalOpen(false)} />
-          <div className="relative max-w-2xl w-full bg-white rounded-2xl p-6 shadow-xl z-10">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">{shopProfile?.shopName || "Hồ sơ cửa hàng"}</h3>
-                <p className="text-sm text-gray-500">{shopProfile?.ownerName || ""}</p>
-              </div>
-              <div className="ml-4">
-                <button onClick={() => setShopModalOpen(false)} className="text-gray-500 hover:text-gray-800">Đóng</button>
-              </div>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setShopModalOpen(false)} />
+          <div className="relative max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl z-10 max-h-[90vh] flex flex-col">
+
+            {/* TIÊU ĐỀ FIXED Ở TOP MODAL */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white z-20">
+              <h3 className="font-bold text-gray-900">Thông tin đối tác thương hiệu</h3>
+              <button
+                onClick={() => setShopModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-full font-bold text-sm transition cursor-pointer"
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="mt-4 space-y-3">
+            {/* VÙNG NỘI DUNG CHÍNH CÓ CUỘN (SCROLL) */}
+            <div className="flex-1 overflow-y-auto option-scroll">
               {loadingShop ? (
-                <div className="py-6 text-center">
+                <div className="py-20 text-center">
                   <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <p className="mt-3 text-sm text-gray-500">Đang tải hồ sơ...</p>
+                  <p className="mt-3 text-sm text-gray-500">Đang đồng bộ dữ liệu cửa hàng...</p>
                 </div>
               ) : shopProfile ? (
-                <>
-                  <p className="text-sm text-gray-700">{shopProfile.description}</p>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {(shopProfile.categories || []).map((c) => (
-                      <span key={c} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg">{c}</span>
-                    ))}
-                  </div>
+                <div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm text-gray-600">
-                    <div>
-                      <div className="font-semibold text-gray-700">Vibe</div>
-                      <div className="mt-1">{shopProfile.vibeText || "Chưa có"}</div>
+                  {/* Cấu trúc Ảnh bìa (Cover) & Ảnh đại diện (MainImage) */}
+                  <div className="relative bg-gray-100">
+                    <div className="h-40 w-full bg-slate-200 relative">
+                      {shopProfile.coverImage ? (
+                        <img src={shopProfile.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-linear-to-r from-purple-100 to-indigo-100" />
+                      )}
                     </div>
-                    <div>
-                      <div className="font-semibold text-gray-700">Đánh giá trung bình</div>
-                      <div className="mt-1">{shopProfile.averageRating || 0} ⭐</div>
-                    </div>
-                    <div>
-                      <div className="font-semibold text-gray-700">Website</div>
-                      <div className="mt-1 text-purple-600">{shopProfile.website || "-"}</div>
-                    </div>
-                    <div>
-                      <div className="font-semibold text-gray-700">Instagram</div>
-                      <div className="mt-1">{shopProfile.instagram || "-"}</div>
+
+                    {/* Avatar Logo thương hiệu nằm đè */}
+                    <div className="absolute -bottom-10 left-6 w-20 h-20 rounded-2xl border-4 border-white bg-gray-50 overflow-hidden shadow-md">
+                      {shopProfile.mainImage ? (
+                        <img src={shopProfile.mainImage} alt="Logo" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-purple-600 text-white font-bold text-xl">
+                          {shopProfile.shopName?.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <div className="mt-6 flex justify-end gap-3">
-                    <button onClick={() => setShopModalOpen(false)} className="px-4 py-2 rounded-xl bg-gray-100">Đóng</button>
-                    <button onClick={() => { setShopModalOpen(false); }} className="px-4 py-2 rounded-xl bg-purple-600 text-white">OK</button>
+                  {/* Thông tin chữ phía dưới khối ảnh */}
+                  <div className="pt-14 px-6 pb-6 space-y-6">
+                    <div>
+                      <h2 className="text-xl font-black text-gray-900">{shopProfile.shopName}</h2>
+                      <p className="text-xs text-gray-400 mt-0.5">Người đại diện: {shopProfile.ownerName || "Chưa cập nhật"}</p>
+                    </div>
+
+                    {/* Danh mục hoạt động */}
+                    {shopProfile.categories?.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {shopProfile.categories.map((c) => (
+                          <span key={c} className="text-[11px] bg-purple-50 text-purple-700 border border-purple-100 px-2.5 py-0.5 rounded-lg font-medium">
+                            {c}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Khối mô tả chi tiết */}
+                    <div className="bg-gray-50/50 rounded-2xl p-4 border border-gray-100">
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Giới thiệu thương hiệu</h4>
+                      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                        {shopProfile.description || "Cửa hàng chưa cập nhật phần mô tả."}
+                      </p>
+                    </div>
+
+                    {/* Các thông số khác */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                      <div className="space-y-1">
+                        <span className="block text-xs font-bold text-gray-400 uppercase">🎯 Định hướng Vibe sáng tạo</span>
+                        <p className="text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100 text-xs leading-relaxed">
+                          {shopProfile.vibeText || "Chưa có định hướng cụ thể từ AI"}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-3 text-center">
+                          <span className="block text-[10px] font-bold text-amber-600 uppercase">Đánh giá</span>
+                          <span className="text-base font-black text-amber-700 mt-1 block">
+                            {shopProfile.averageRating ? `${shopProfile.averageRating} ⭐` : "Chưa có"}
+                          </span>
+                        </div>
+                        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3 text-center">
+                          <span className="block text-[10px] font-bold text-blue-600 uppercase">Chiến dịch</span>
+                          <span className="text-base font-black text-blue-700 mt-1 block">{shopProfile.totalJobs || 0} đã mở</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 🌐 THÔNG TIN ĐƯỜNG LINK LIÊN HỆ */}
+                    <div className="border-t border-gray-100 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-600">
+                      <div className="flex items-center gap-2 bg-gray-50 p-2.5 rounded-xl border border-gray-100">
+                        <span className="text-base">🌐</span>
+                        <span className="font-semibold text-gray-400">Website:</span>
+                        {shopProfile.website ? (
+                          <a href={shopProfile.website} target="_blank" rel="noreferrer" className="text-purple-600 hover:underline font-medium truncate flex-1">
+                            {shopProfile.website}
+                          </a>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 bg-gray-50 p-2.5 rounded-xl border border-gray-100">
+                        <span className="text-base">📸</span>
+                        <span className="font-semibold text-gray-400">Instagram:</span>
+                        {shopProfile.instagram ? (
+                          <a
+                            href={shopProfile.instagram.startsWith('http') ? shopProfile.instagram : `https://instagram.com/${shopProfile.instagram.replace('@', '')}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-purple-600 hover:underline font-medium truncate flex-1"
+                          >
+                            {shopProfile.instagram}
+                          </a>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 🖼️ KHU VỰC BỘ SƯU TẬP ẢNH (GALLERY) */}
+                    <div className="border-t border-gray-100 pt-4 space-y-2">
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Không gian & Sản phẩm nổi bật</h4>
+                      {shopProfile.gallery?.length > 0 ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          {shopProfile.gallery.map((img, i) => (
+                            <a key={i} href={img} target="_blank" rel="noreferrer" className="aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200 block group relative">
+                              <img src={img} alt={`Gallery-${i}`} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400 italic">Thương hiệu chưa tải lên ảnh bộ sưu tập mẫu.</p>
+                      )}
+                    </div>
+
                   </div>
-                </>
+                </div>
               ) : (
-                <div className="py-6 text-center text-sm text-gray-500">Không có dữ liệu hồ sơ.</div>
+                <div className="py-12 text-center text-sm text-gray-500">Lỗi: Không tìm thấy dữ liệu hồ sơ này.</div>
               )}
             </div>
+
+            {/* THANH THAO TÁC FIXED Ở BOTTOM MODAL */}
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2">
+              <button
+                onClick={() => setShopModalOpen(false)}
+                className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition cursor-pointer"
+              >
+                Đóng lại
+              </button>
+            </div>
+
           </div>
         </div>
       )}

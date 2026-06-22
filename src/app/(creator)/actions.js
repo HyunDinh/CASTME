@@ -318,10 +318,76 @@ export async function getPublicShopProfile(shopUserId) {
         averageRating: profile?.averageRating || 0,
         totalJobs: profile?.totalJobs || 0,
         ownerName: user_data?.name || "",
+        
+        // ─── BỔ SUNG CÁC TRƯỜNG ẢNH MỚI ───
+        mainImage: profile?.mainImage || "",
+        coverImage: profile?.coverImage || "",
+        gallery: profile?.gallery || [],
+        // ──────────────────────────────────
       },
     };
   } catch (error) {
     console.error(error);
     return { success: false, error: "Không thể tải hồ sơ cửa hàng" };
+  }
+}
+
+// ==================== TÌM KIẾM NÂNG CAO ====================
+export async function AdvancedSearchAction(keyword) {
+  if (!keyword) return { success: true, jobs: [], shops: [] };
+
+  try {
+    const cleanKeyword = keyword.toLowerCase();
+
+    // 1. Tìm các Job phù hợp (Theo title, description hoặc mảng vibeTags)
+    const jobs = await prisma.job.findMany({
+      where: {
+        status: "RECRUITING",
+        OR: [
+          { title: { contains: cleanKeyword, mode: "insensitive" } },
+          { description: { contains: cleanKeyword, mode: "insensitive" } },
+          { vibeTags: { has: keyword } }, // Tìm tag chính xác tuyệt đối
+        ],
+      },
+      include: { shop: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // 2. Tìm các Shop phù hợp (Theo tên hoặc mô tả sản phẩm)
+    const shops = await prisma.shopProfile.findMany({
+      where: {
+        OR: [
+          { shopName: { contains: cleanKeyword, mode: "insensitive" } },
+          { description: { contains: cleanKeyword, mode: "insensitive" } },
+          { categories: { has: keyword } }
+        ],
+      },
+    });
+
+    return {
+      success: true,
+      jobs: jobs.map(j => ({
+        id: j.id,
+        shopId: j.shop?.id || null,
+        shopName: j.shop?.name || "Unknown Shop",
+        title: j.title,
+        description: j.description,
+        budget: j.budget,
+        vibeTags: j.vibeTags || [],
+        matchRate: Math.floor(Math.random() * 20) + 75
+      })),
+      shops: shops.map(s => ({
+        id: s.userId, // Dùng userId làm shopId để khớp với hàm viewShopProfile của bạn
+        shopName: s.shopName,
+        description: s.description,
+        categories: s.categories || [],
+        averageRating: s.averageRating || 0,
+        mainImage: s.mainImage || "",
+        coverImage: s.coverImage || ""
+      }))
+    };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: "Lỗi hệ thống khi tìm kiếm" };
   }
 }

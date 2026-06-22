@@ -12,6 +12,7 @@ export default function CreatorLayout({ children }) {
   const [hearts, setHearts] = useState(0);
   const [showRechargeModal, setShowRechargeModal] = useState(false);
   const [loadingHearts, setLoadingHearts] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchHearts = async () => {
     const result = await getUserHearts();
@@ -44,7 +45,14 @@ export default function CreatorLayout({ children }) {
             <span className="text-gray-400 text-sm mr-2">🔮</span>
             <input
               type="text"
-              placeholder="Tìm kiếm theo vibe (ví dụ: phố cổ, găng tơ...)"
+              placeholder="Tìm kiếm theo tên, tag, vibe..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && searchQuery.trim()) {
+                  router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
               className="bg-transparent text-sm w-full focus:outline-none"
             />
           </div>
@@ -65,7 +73,7 @@ export default function CreatorLayout({ children }) {
           </button>
 
           {/* Ví Trái Tim */}
-          <div 
+          <div
             onClick={() => setShowRechargeModal(true)}
             className="flex items-center gap-2 bg-purple-50 border border-purple-100 hover:bg-purple-100 px-4 py-2 rounded-2xl cursor-pointer transition"
           >
@@ -89,18 +97,17 @@ export default function CreatorLayout({ children }) {
         {/* Sidebar */}
         <aside className="w-64 bg-white border-r border-gray-100 p-4 flex flex-col gap-1 hidden lg:flex">
           <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 px-3 mb-2">Menu Creator</p>
-          
+
           {menuItems.map((item) => {
             const isActive = pathname === item.path;
             return (
               <Link
                 key={item.path}
                 href={item.path}
-                className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition ${
-                  isActive
+                className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition ${isActive
                     ? "bg-purple-600 text-white font-bold shadow-md shadow-purple-100"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 {item.name}
               </Link>
@@ -119,7 +126,7 @@ export default function CreatorLayout({ children }) {
           </button>
 
           {/* Ví Trái Tim trong Sidebar */}
-          <div 
+          <div
             onClick={() => setShowRechargeModal(true)}
             className="mt-auto bg-purple-50 rounded-2xl p-4 border border-purple-100 cursor-pointer hover:bg-purple-100 transition"
           >
@@ -143,12 +150,12 @@ export default function CreatorLayout({ children }) {
       </div>
 
       {/* Modal Nạp Tim */}
-      <RechargeHeartsModal 
-        isOpen={showRechargeModal} 
+      <RechargeHeartsModal
+        isOpen={showRechargeModal}
         onClose={() => {
           setShowRechargeModal(false);
           window.location.reload(); // Refresh để cập nhật số Tim
-        }} 
+        }}
       />
     </div>
   );
