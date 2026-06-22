@@ -6,7 +6,11 @@ async function getAuthShop() {
   const cookieStore = await cookies();
   const session = cookieStore.get("castme_session");
   if (!session) return null;
-  return JSON.parse(session.value);
+  try {
+    return JSON.parse(session.value);
+  } catch {
+    return null;
+  }
 }
 
 // Lấy profile Shop
@@ -17,13 +21,14 @@ export async function getShopProfile() {
   }
 
   try {
-    const profile = await prisma.shopProfile.findUnique({
-      where: { userId: user.id },
+    // Tối ưu hóa: Gộp 2 lệnh query cũ thành 1 lệnh bằng include liên kết
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { shopProfile: true }
     });
 
-    const user_data = await prisma.user.findUnique({
-      where: { id: user.id },
-    });
+    if (!dbUser) return { success: false, error: "Người dùng không tồn tại" };
+    const profile = dbUser.shopProfile;
 
     return {
       success: true,
@@ -38,53 +43,55 @@ export async function getShopProfile() {
         address: profile?.address || "",
         averageRating: profile?.averageRating || 0,
         totalJobs: profile?.totalJobs || 0,
-        plan: user_data?.plan || "FREE",
-        hearts: user_data?.hearts || 0,
-        connects: user_data?.connects || 0,
+        // Dữ liệu ảnh mới
+        mainImage: profile?.mainImage || "",
+        coverImage: profile?.coverImage || "",
+        gallery: profile?.gallery || [],
+        // Dữ liệu gói cước từ User
+        plan: dbUser.plan || "FREE",
+        hearts: dbUser.hearts || 0,
+        connects: dbUser.connects || 0,
       },
     };
   } catch (error) {
-    console.error(error);
+    console.error("Get shop profile error:", error);
     return { success: false, error: "Không thể tải hồ sơ" };
   }
 }
 
 // Cập nhật profile Shop
-export async function updateShopProfile(data) {
+export async function updateShopProfile(formData) {
   const user = await getAuthShop();
   if (!user || user.role !== "SHOP") {
     return { success: false, error: "Vui lòng đăng nhập" };
   }
 
+  // Đảm bảo bóc tách dữ liệu an toàn tránh injection trường lạ
+  const {
+    shopName, description, categories, vibeText,
+    website, instagram, phone, address,
+    mainImage, coverImage, gallery
+  } = formData;
+
+  const shopFields = {
+    shopName, description, categories, vibeText,
+    website, instagram, phone, address,
+    mainImage, coverImage, gallery
+  };
+
   try {
     await prisma.shopProfile.upsert({
       where: { userId: user.id },
-      update: {
-        shopName: data.shopName,
-        description: data.description,
-        categories: data.categories,
-        vibeText: data.vibeText,
-        website: data.website,
-        instagram: data.instagram,
-        phone: data.phone,
-        address: data.address,
-      },
+      update: shopFields,
       create: {
         userId: user.id,
-        shopName: data.shopName,
-        description: data.description,
-        categories: data.categories,
-        vibeText: data.vibeText,
-        website: data.website,
-        instagram: data.instagram,
-        phone: data.phone,
-        address: data.address,
+        ...shopFields
       },
     });
 
     return { success: true };
   } catch (error) {
-    console.error(error);
+    console.error("Update shop profile error:", error);
     return { success: false, error: "Không thể cập nhật hồ sơ" };
   }
 }

@@ -1,8 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { getShopProfile, updateShopProfile } from "#/app/(shop)/shop-profile/actions";
+import { CldUploadWidget } from "next-cloudinary";
 
 export default function ShopProfilePage() {
+  // State thông tin cơ bản
   const [shopName, setShopName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -11,29 +13,39 @@ export default function ShopProfilePage() {
   const [instagram, setInstagram] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+
+  // State thông số hệ thống
   const [plan, setPlan] = useState("FREE");
   const [hearts, setHearts] = useState(0);
   const [connects, setConnects] = useState(0);
   const [averageRating, setAverageRating] = useState(0);
   const [totalJobs, setTotalJobs] = useState(0);
+
+  // ─── STATE MỚI CHO HÌNH ẢNH ───
+  const [mainImage, setMainImage] = useState("");
+  const [coverImage, setCoverImage] = useState("");
+  const [gallery, setGallery] = useState([]);
+  const [newImageLink, setNewImageLink] = useState(""); // Dành cho input dán link thủ công
+  const [imageToDelete, setImageToDelete] = useState(null); // Quản lý index ảnh cần xóa
+  const [savingField, setSavingField] = useState(null); // Quản lý trạng thái đang lưu của từng phần ('cover', 'main', 'gallery')
+
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const categoryPool = [
-    "Thời trang", "Mỹ phẩm", "Phụ kiện", "Điện tử", 
+    "Thời trang", "Mỹ phẩm", "Phụ kiện", "Điện tử",
     "Gia dụng", "Thực phẩm", "Mẹ & Bé", "Thể thao", "Sách", "Khác"
   ];
 
-  // Lấy dữ liệu profile từ backend
   const fetchProfile = async () => {
     setIsLoading(true);
     const result = await getShopProfile();
-    
+
     if (result.success) {
       setShopName(result.data.shopName || "");
       setDescription(result.data.description || "");
       setSelectedCategories(result.data.categories || []);
-      setVibeText(result.data.vibeText || "");
+      vibeText && setVibeText(result.data.vibeText || "");
       setWebsite(result.data.website || "");
       setInstagram(result.data.instagram || "");
       setPhone(result.data.phone || "");
@@ -43,6 +55,10 @@ export default function ShopProfilePage() {
       setConnects(result.data.connects || 0);
       setAverageRating(result.data.averageRating || 0);
       setTotalJobs(result.data.totalJobs || 0);
+      // Đổ dữ liệu ảnh từ DB vào State
+      setMainImage(result.data.mainImage || "");
+      setCoverImage(result.data.coverImage || "");
+      setGallery(result.data.gallery || []);
     } else {
       console.error(result.error);
     }
@@ -53,6 +69,51 @@ export default function ShopProfilePage() {
     fetchProfile();
   }, []);
 
+  // Hàm tự động lưu riêng phần hình ảnh ngay khi upload xong
+  const handlePartialSave = async (fieldName, updates) => {
+    setSavingField(fieldName);
+
+    // Cập nhật State cục bộ ngay lập tức trước khi gửi để Form tổng đồng bộ
+    if (updates.mainImage) setMainImage(updates.mainImage);
+    if (updates.coverImage) setCoverImage(updates.coverImage);
+    if (updates.gallery) setGallery(updates.gallery);
+
+    const payload = {
+      shopName, description, categories: selectedCategories, vibeText, website, instagram, phone, address,
+      mainImage, coverImage, gallery, // State cũ
+      ...updates // Đè dữ liệu ảnh mới lên
+    };
+
+    const result = await updateShopProfile(payload);
+    if (!result.success) {
+      alert(`❌ Lỗi khi lưu ảnh: ${result.error}`);
+    } else {
+      // Nếu thành công, gọi lại fetchProfile() để nạp data chuẩn từ DB về Client State cho chắc chắn
+      await fetchProfile();
+    }
+    setSavingField(null);
+  };
+
+  // Thêm ảnh vào bộ sưu tập
+  const handleAddGalleryImage = async (url) => {
+    const cleanUrl = url || newImageLink.trim();
+    if (!cleanUrl) return;
+
+    const newGallery = [cleanUrl, ...gallery];
+    setGallery(newGallery);
+    setNewImageLink("");
+    await handlePartialSave("gallery", { gallery: newGallery });
+  };
+
+  // Xác nhận xóa ảnh trong bộ sưu tập
+  const handleDeleteGalleryImage = async () => {
+    if (imageToDelete === null) return;
+    const newGallery = gallery.filter((_, idx) => idx !== imageToDelete);
+    setGallery(newGallery);
+    setImageToDelete(null);
+    await handlePartialSave("gallery", { gallery: newGallery });
+  };
+
   const toggleCategory = (category) => {
     if (selectedCategories.includes(category)) {
       setSelectedCategories(selectedCategories.filter((c) => c !== category));
@@ -61,10 +122,13 @@ export default function ShopProfilePage() {
     }
   };
 
+  // Lưu form tổng (Cho các trường text/chữ thông thường)
+  // Sửa lại hàm này trong page.js của Shop:
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     setIsSaving(true);
 
+    // Gửi chính xác các State ảnh hiện tại lên để tránh bị ghi đè chuỗi rỗng
     const result = await updateShopProfile({
       shopName,
       description,
@@ -74,14 +138,18 @@ export default function ShopProfilePage() {
       instagram,
       phone,
       address,
+      mainImage,   // 👈 Đảm bảo truyền đúng State đang hiển thị
+      coverImage,  // 👈 Đảm bảo truyền đúng State đang hiển thị
+      gallery      // 👈 Đảm bảo truyền đúng State đang hiển thị
     });
 
     if (result.success) {
       alert("✅ Hồ sơ cửa hàng đã được cập nhật! Hệ thống AI đang đồng bộ lại Matching.");
+      // Tải lại dữ liệu chuẩn từ DB để đồng bộ hoàn toàn State
+      await fetchProfile();
     } else {
       alert(`❌ ${result.error}`);
     }
-
     setIsSaving(false);
   };
 
@@ -97,21 +165,73 @@ export default function ShopProfilePage() {
   const getRatingStars = (rating) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
-      if (i <= Math.round(rating)) {
-        stars.push("⭐");
-      } else if (i - rating < 1 && i - rating > 0) {
-        stars.push("✨");
-      }
+      if (i <= Math.round(rating)) stars.push("⭐");
     }
     return stars.join("") || "Chưa có đánh giá";
   };
 
   return (
-    <div className="max-w-4xl space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-black text-gray-950">Hồ sơ Cửa Hàng</h1>
-        <p className="text-sm text-gray-500 mt-2">Cập nhật thông tin cửa hàng để Creator tìm kiếm và đề xuất công việc phù hợp với phong cách của bạn.</p>
+    <div className="max-w-4xl space-y-8 relative pb-12">
+
+      {/* ─── KHU VỰC QUẢN LÝ ẢNH BÌA & ẢNH ĐẠI DIỆN ─── */}
+      <div className="relative rounded-2xl overflow-hidden border border-gray-100 bg-gray-100">
+        {/* Ảnh bìa */}
+        <div className="h-48 md:h-64 bg-slate-200 relative group">
+          {coverImage ? (
+            <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">Chưa có ảnh bìa</div>
+          )}
+
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
+            <CldUploadWidget
+              uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "default_preset"}
+              onSuccess={(result) => {
+                const url = result?.info?.secure_url;
+                setCoverImage(url);
+                handlePartialSave("cover", { coverImage: url });
+              }}
+            >
+              {({ open }) => (
+                <button type="button" onClick={() => open()} className="px-4 py-2 bg-white/90 hover:bg-white text-gray-800 font-semibold rounded-xl text-xs shadow-xs cursor-pointer">
+                  {savingField === "cover" ? "🔄 Đang lưu..." : "📷 Đổi ảnh bìa"}
+                </button>
+              )}
+            </CldUploadWidget>
+          </div>
+        </div>
+
+        {/* Khối chứa ảnh đại diện nằm đè lên góc ảnh bìa */}
+        <div className="px-6 pb-6 pt-16 relative flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white">
+          <div className="absolute -top-16 left-6 w-28 h-28 md:w-32 md:h-32 rounded-2xl border-4 border-white bg-gray-50 overflow-hidden shadow-md group">
+            {mainImage ? (
+              <img src={mainImage} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs text-center p-2 bg-gray-100">Chưa có Logo</div>
+            )}
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+              <CldUploadWidget
+                uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "default_preset"}
+                onSuccess={(result) => {
+                  const url = result?.info?.secure_url;
+                  setMainImage(url);
+                  handlePartialSave("main", { mainImage: url });
+                }}
+              >
+                {({ open }) => (
+                  <button type="button" onClick={() => open()} className="text-[10px] bg-white text-gray-900 px-2 py-1 rounded-md font-bold cursor-pointer">
+                    {savingField === "main" ? "..." : "Thay ảnh"}
+                  </button>
+                )}
+              </CldUploadWidget>
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-black text-gray-900">{shopName || "Tên Cửa Hàng Của Bạn"}</h2>
+            <p className="text-xs text-purple-600 font-semibold mt-0.5">{plan === "FREE" ? "🆓 Thành viên miễn phí" : "💎 Đối tác liên kết Premium"}</p>
+          </div>
+        </div>
       </div>
 
       {/* Stats Section */}
@@ -134,9 +254,65 @@ export default function ShopProfilePage() {
         </div>
       </div>
 
-      {/* Main Form */}
+      {/* ─── KHU VỰC BỘ SƯU TẬP ẢNH SHOP (GALLERY) ─── */}
+      <div className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 space-y-4">
+        <div>
+          <h3 className="text-base font-bold text-gray-900">Bộ Sưu Tập Không Gian & Sản Phẩm</h3>
+          <p className="text-xs text-gray-400 mt-1">Đăng tải hình ảnh về showroom, văn phòng làm việc hoặc sản phẩm mẫu để tạo uy tín với Creator.</p>
+        </div>
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newImageLink}
+            onChange={(e) => setNewImageLink(e.target.value)}
+            placeholder="Dán URL hình ảnh vào đây hoặc bấm Tải ảnh lên..."
+            className="flex-1 text-sm px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-500"
+          />
+          <button type="button" onClick={() => handleAddGalleryImage(null)} className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-xl text-sm font-semibold cursor-pointer">
+            Thêm Link
+          </button>
+
+          <CldUploadWidget
+            uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "default_preset"}
+            onSuccess={(result) => {
+              const url = result?.info?.secure_url;
+              handleAddGalleryImage(url);
+            }}
+          >
+            {({ open }) => (
+              <button type="button" onClick={() => open()} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold cursor-pointer">
+                {savingField === "gallery" ? "🔄 Đang lưu..." : "📤 Tải ảnh lên"}
+              </button>
+            )}
+          </CldUploadWidget>
+        </div>
+
+        {/* Lưới ảnh hiển thị bộ sưu tập */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 pt-2">
+          {gallery.map((imgUrl, index) => (
+            <div key={index} className="aspect-square rounded-xl bg-gray-50 border border-gray-100 overflow-hidden relative group">
+              <img src={imgUrl} alt={`Gallery-${index}`} className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={() => setImageToDelete(index)}
+                className="absolute top-2 right-2 w-7 h-7 bg-red-600 text-white font-bold rounded-full text-xs opacity-0 group-hover:opacity-100 transition shadow-md flex items-center justify-center cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          {gallery.length === 0 && (
+            <div className="col-span-full py-8 border border-dashed border-gray-200 rounded-xl text-center text-gray-400 text-sm">
+              Chưa có hình ảnh nào trong bộ sưu tập.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Main Form (Thông tin chữ cơ bản) */}
       <form onSubmit={handleSaveProfile} className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 shadow-xs space-y-6">
-        
+
         {/* Tên cửa hàng & Gói cước */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
@@ -152,7 +328,7 @@ export default function ShopProfilePage() {
               required
             />
           </div>
-          
+
           <div className="space-y-2">
             <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">
               Gói Cước
@@ -200,7 +376,7 @@ export default function ShopProfilePage() {
             Danh Mục Sản Phẩm
           </label>
           <p className="text-xs text-gray-400">Chọn danh mục để Creator dễ tìm kiếm công việc phù hợp</p>
-          
+
           <div className="flex flex-wrap gap-2">
             {categoryPool.map((category) => {
               const isSelected = selectedCategories.includes(category);
@@ -209,11 +385,10 @@ export default function ShopProfilePage() {
                   key={category}
                   type="button"
                   onClick={() => toggleCategory(category)}
-                  className={`px-4 py-2 text-sm font-medium rounded-2xl border transition cursor-pointer ${
-                    isSelected
-                      ? "bg-purple-600 border-purple-600 text-white"
-                      : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
-                  }`}
+                  className={`px-4 py-2 text-sm font-medium rounded-2xl border transition cursor-pointer ${isSelected
+                    ? "bg-purple-600 border-purple-600 text-white"
+                    : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
                 >
                   {isSelected ? `✓ ${category}` : category}
                 </button>
@@ -227,7 +402,7 @@ export default function ShopProfilePage() {
           <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">
             Thông Tin Liên Hệ & Liên Kết
           </label>
-          
+
           <div className="space-y-4">
             {/* Phone */}
             <div className="space-y-2">
@@ -285,7 +460,7 @@ export default function ShopProfilePage() {
           </div>
         </div>
 
-        {/* Nút lưu */}
+        {/* Nút lưu thông tin cơ bản */}
         <button
           type="submit"
           disabled={isSaving}
@@ -294,6 +469,24 @@ export default function ShopProfilePage() {
           {isSaving ? "Đang cập nhật & Đồng bộ AI..." : "Lưu Hồ Sơ & Đồng Bộ AI"}
         </button>
       </form>
+
+      {/* ─── MODAL XÁC NHẬN XÓA ẢNH TRONG GALLERY ─── */}
+      {imageToDelete !== null && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl space-y-4">
+            <h4 className="text-base font-bold text-gray-900">Xác nhận xóa hình ảnh?</h4>
+            <p className="text-xs text-gray-500">Hành động này không thể hoàn tác và ảnh sẽ bị xóa khỏi bộ sưu tập profile.</p>
+            <div className="flex justify-end gap-2 text-sm font-semibold">
+              <button type="button" onClick={() => setImageToDelete(null)} className="px-4 py-2 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 cursor-pointer">
+                Hủy
+              </button>
+              <button type="button" onClick={handleDeleteGalleryImage} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl cursor-pointer">
+                Xác nhận xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Thông tin bổ sung */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100 rounded-2xl p-6">

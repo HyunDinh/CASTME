@@ -1,2 +1,10 @@
 /* src/app/globals.css */
 @import "tailwindcss";
+
+body {
+  overflow: auto !important;
+}
+
+html, body {
+  scrollbar-gutter: stable;
+}

@@ -65,6 +65,11 @@ model ShopProfile {
   instagram       String?  // Instagram handle hoặc link
   phone           String?  // Số điện thoại liên hệ
   address         String?  // Địa chỉ cửa hàng
+
+  mainImage       String?  // Ảnh đại diện/Logo của Cửa hàng
+  coverImage      String?  // Ảnh bìa Cửa hàng
+  gallery         String[] // Danh sách các ảnh sản phẩm/không gian cửa hàng
+
   averageRating   Float    @default(0) // Đánh giá trung bình từ Creator
   totalJobs       Int      @default(0) // Tổng số công việc đã đăng
   feedback        String?  // Đánh giá đóng góp
