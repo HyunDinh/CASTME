@@ -1,0 +1,264 @@
+import { generateContractPDFBuffer } from "./pdfGenerator.js";
+
+const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+/**
+ * Upload Buffer lên Cloudinary dùng unsigned upload preset (giống cách app đang upload ảnh)
+ */
+async function uploadBufferToCloudinary(buffer, publicId) {
+  const formData = new FormData();
+  formData.append(
+    "file",
+    new Blob([buffer], { type: "application/pdf" }),
+    `${publicId}.pdf`,
+  );
+  formData.append("upload_preset", UPLOAD_PRESET);
+  formData.append("public_id", publicId);
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`,
+    { method: "POST", body: formData },
+  );
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Cloudinary upload failed: ${err}`);
+  }
+
+  const data = await res.json();
+  return data.secure_url;
+}
+
+// Mặc định trỏ về Production theo đúng API Key của bạn
+const API_BASE = process.env.SIGNNOW_BASE_URL || "https://api.signnow.com";
+const API_KEY = process.env.SIGNNOW_API_KEY;
+const CLIENT_ID = process.env.SIGNNOW_CLIENT_ID;
+const CLIENT_SECRET = process.env.SIGNNOW_CLIENT_SECRET;
+const USERNAME = process.env.SIGNNOW_USERNAME;
+const PASSWORD = process.env.SIGNNOW_PASSWORD;
+
+async function getAccessToken() {
+  if (API_KEY) return API_KEY;
+  if (!CLIENT_ID) return "MOCK_TOKEN";
+
+  const basicAuth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString(
+    "base64",
+  );
+
+  const formData = new URLSearchParams();
+  formData.append("grant_type", "password");
+  formData.append("username", USERNAME);
+  formData.append("password", PASSWORD);
+  formData.append("scope", "*");
+
+  const res = await fetch(`${API_BASE}/oauth2/token`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${basicAuth}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: formData.toString(),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Failed to get SignNow token: ${errText}`);
+  }
+  const data = await res.json();
+  return data.access_token;
+}
+
+export async function createSignatureRequest(
+  shopEmail,
+  kolEmail,
+  shopName = "Bên A",
+  kolName = "Bên B",
+  budget = "Thỏa thuận",
+) {
+  if (!API_KEY && !CLIENT_ID) {
+    console.log("Mocking SignNow (No credentials provided)");
+    return { success: true, documentId: `mock_signnow_${Date.now()}` };
+  }
+
+  try {
+    const token = await getAccessToken();
+    const authHeader = `Bearer ${token}`;
+
+    // Step 0: Generate PDF in RAM và upload lên Cloudinary
+    const filename = `contract_${Date.now()}`;
+    const pdfBuffer = await generateContractPDFBuffer(
+      shopName,
+      kolName,
+      budget,
+    );
+    const contractCloudUrl = await uploadBufferToCloudinary(
+      pdfBuffer,
+      filename,
+    );
+
+    // Dùng Buffer để upload lên SignNow
+    const blob = new Blob([pdfBuffer], { type: "application/pdf" });
+
+    const uploadForm = new FormData();
+    uploadForm.append("file", blob, "contract.pdf");
+
+    const uploadRes = await fetch(`${API_BASE}/document`, {
+      method: "POST",
+      headers: {
+        Authorization: authHeader,
+      },
+      body: uploadForm,
+    });
+
+    if (!uploadRes.ok)
+      throw new Error("Upload failed: " + (await uploadRes.text()));
+    const uploadData = await uploadRes.json();
+    const documentId = uploadData.id;
+
+    // Step 1: Add Fields for routing
+    const fieldsRes = await fetch(`${API_BASE}/document/${documentId}`, {
+      method: "PUT",
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fields: [
+          {
+            x: 75,
+            y: 675,
+            width: 150,
+            height: 50,
+            type: "signature",
+            page_number: 0,
+            role: "Shop",
+            required: true,
+            name: "shop_sig",
+          },
+          {
+            x: 370,
+            y: 675,
+            width: 150,
+            height: 50,
+            type: "signature",
+            page_number: 0,
+            role: "KOL",
+            required: true,
+            name: "kol_sig",
+          },
+        ],
+      }),
+    });
+    if (!fieldsRes.ok)
+      throw new Error("Add fields failed: " + (await fieldsRes.text()));
+
+    // Get document to retrieve role_ids
+    const docRes = await fetch(`${API_BASE}/document/${documentId}`, {
+      method: "GET",
+      headers: { Authorization: authHeader },
+    });
+    const docData = await docRes.json();
+    const roles = docData.roles || [];
+
+    const shopRole = roles.find((r) => r.name === "Shop");
+    const kolRole = roles.find((r) => r.name === "KOL");
+
+    // Step 2: Send Invite (Sequential signing)
+    const inviteRes = await fetch(`${API_BASE}/document/${documentId}/invite`, {
+      method: "POST",
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        to: [
+          {
+            email: shopEmail,
+            role_id: shopRole?.unique_id || "",
+            role: "Shop",
+            order: 1,
+            subject: "",
+            message: "",
+          },
+          {
+            email: kolEmail,
+            role_id: kolRole?.unique_id || "",
+            role: "KOL",
+            order: 1,
+            subject: "",
+            message: "",
+          },
+        ],
+        from: process.env.SIGNNOW_SENDER_EMAIL || process.env.SIGNNOW_USERNAME,
+      }),
+    });
+
+    if (!inviteRes.ok) {
+      throw new Error("Send invite failed: " + (await inviteRes.text()));
+    }
+
+    return { success: true, documentId, pdfUrl: contractCloudUrl };
+  } catch (err) {
+    console.error("SignNow Error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function checkDocumentStatus(documentId) {
+  if (!documentId) return { success: false };
+  if (documentId.startsWith("mock_"))
+    return { success: true, status: "fulfilled" };
+
+  try {
+    const token = await getAccessToken();
+    const res = await fetch(`${API_BASE}/document/${documentId}`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) throw new Error("Failed to check status");
+    const data = await res.json();
+
+    let isFulfilled = false;
+    if (data.status === "fulfilled") isFulfilled = true;
+    else if (data.signatures && data.signatures.length >= 2) isFulfilled = true;
+
+    return {
+      success: true,
+      status: isFulfilled ? "fulfilled" : "pending",
+      data,
+    };
+  } catch (e) {
+    console.error("SignNow check status error:", e);
+    return { success: false, error: e.message };
+  }
+}
+
+export async function downloadSignedDocument(documentId) {
+  if (!documentId || documentId.startsWith("mock_")) return null;
+
+  try {
+    const token = await getAccessToken();
+    const res = await fetch(
+      `${API_BASE}/document/${documentId}/download?type=collapsed`,
+      {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+
+    if (!res.ok) throw new Error("Failed to download signed document");
+
+    const buffer = Buffer.from(await res.arrayBuffer());
+    // Upload bản hoàn chỉnh (đã ký) lên Cloudinary
+    const completedUrl = await uploadBufferToCloudinary(
+      buffer,
+      `completed_${documentId}`,
+    );
+    return completedUrl;
+  } catch (err) {
+    console.error("SignNow Download Error:", err);
+    return null;
+  }
+}

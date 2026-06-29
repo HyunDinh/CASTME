@@ -118,6 +118,13 @@ model Application {
   creator     User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   matchRate   Int      @default(0) // Tỉ lệ % phù hợp do AI tính toán (Ví dụ: 85%)
   status      String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  
+  contractDocumentId String?
+  contractStatus     String? // "PENDING", "COMPLETED", "DECLINED"
+  contractUrl        String?
+  auditTrailUrl      String?
+  signUrl            String? // Link ký trực tiếp trên web
+
   createdAt   DateTime @default(now())
 }
 

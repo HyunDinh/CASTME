@@ -1,6 +1,7 @@
 "use server";
 import { prisma } from "#/lib/prisma";
 import { cookies } from "next/headers";
+import { createSignatureRequest, checkDocumentStatus, downloadSignedDocument } from "#/lib/signnow";
 
 // Helper lấy user
 async function getAuthenticatedUser() {
@@ -78,13 +79,38 @@ export async function approveApplicant(applicationId, jobId) {
       return { success: false, error: "Không tìm thấy chiến dịch hợp lệ" };
     }
 
-    // 2. Chuyển Application này thành ACCEPTED
-    await prisma.application.update({
+    const appRecord = await prisma.application.findUnique({
       where: { id: applicationId },
-      data: { status: "ACCEPTED" }
+      include: {
+        job: { include: { shop: true } },
+        creator: true
+      }
     });
 
-    // 3. Chuyển tất cả Application khác thành REJECTED
+    if (!appRecord) return { success: false, error: "Không tìm thấy ứng viên" };
+
+    // 2. Tạo yêu cầu chữ ký điện tử
+    const signQuickRes = await createSignatureRequest(
+      appRecord.job.shop.email,
+      appRecord.creator.email,
+      appRecord.job.shop.name,
+      appRecord.creator.name,
+      appRecord.job.budget
+    );
+
+    // 3. Chuyển Application này thành ACCEPTED và lưu trạng thái Hợp đồng
+    await prisma.application.update({
+      where: { id: applicationId },
+      data: { 
+        status: "ACCEPTED",
+        contractDocumentId: signQuickRes.success ? signQuickRes.documentId : null,
+        contractStatus: "PENDING",
+        contractUrl: signQuickRes.success ? signQuickRes.pdfUrl : null, // Lưu bản PDF xem trước
+        signUrl: signQuickRes.success ? signQuickRes.signUrl : null
+      }
+    });
+
+    // 4. Chuyển tất cả Application khác thành REJECTED
     await prisma.application.updateMany({
       where: {
         jobId: jobId,
@@ -93,7 +119,7 @@ export async function approveApplicant(applicationId, jobId) {
       data: { status: "REJECTED" }
     });
 
-    // 4 & 5. Cập nhật trạng thái Job và tự động tạo 4 Milestones chuẩn (nếu chưa có)
+    // 5 & 6. Cập nhật trạng thái Job và tự động tạo 4 Milestones chuẩn (nếu chưa có)
     const existingMilestonesCount = await prisma.milestone.count({ where: { jobId } });
     
     if (existingMilestonesCount === 0) {
@@ -140,6 +166,21 @@ export async function rejectApplicant(applicationId) {
   } catch (error) {
     console.error(error);
     return { success: false, error: "Lỗi server" };
+  }
+}
+
+export async function getAcceptedApplication(jobId) {
+  const user = await getAuthenticatedUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  try {
+    const application = await prisma.application.findFirst({
+      where: { jobId, status: "ACCEPTED" }
+    });
+    return { success: true, data: application };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: "Lỗi lấy thông tin ứng tuyển" };
   }
 }
 
@@ -211,5 +252,48 @@ export async function rejectMilestone(milestoneId, feedback) {
   } catch (error) {
     console.error(error);
     return { success: false, error: "Lỗi khi từ chối Milestone" };
+  }
+}
+
+// Cập nhật trạng thái hợp đồng (Polling / On Demand)
+export async function syncContractStatus(applicationId) {
+  const user = await getAuthenticatedUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  try {
+    const appRecord = await prisma.application.findUnique({
+      where: { id: applicationId }
+    });
+
+    if (!appRecord || !appRecord.contractDocumentId) {
+      return { success: false, error: "Không tìm thấy thông tin hợp đồng" };
+    }
+
+    if (appRecord.contractStatus === "COMPLETED") {
+      return { success: true, status: "COMPLETED" }; // Đã ký xong
+    }
+
+    // Gọi API SignNow để kiểm tra trạng thái
+    const statusRes = await checkDocumentStatus(appRecord.contractDocumentId);
+    
+    if (statusRes.success && statusRes.status === "fulfilled") {
+      // 1. Tải bản gốc (đã có đủ chữ ký của 2 bên) về máy chủ
+      const completedPdfUrl = await downloadSignedDocument(appRecord.contractDocumentId);
+
+      // 2. Cập nhật DB
+      await prisma.application.update({
+        where: { id: applicationId },
+        data: { 
+          contractStatus: "COMPLETED",
+          contractUrl: completedPdfUrl || appRecord.contractUrl
+        }
+      });
+      return { success: true, status: "COMPLETED" };
+    }
+
+    return { success: true, status: "PENDING" };
+  } catch (error) {
+    console.error("Lỗi đồng bộ trạng thái hợp đồng:", error);
+    return { success: false, error: "Lỗi server" };
   }
 }

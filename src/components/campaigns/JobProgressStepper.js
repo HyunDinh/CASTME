@@ -1,13 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { CheckCircle, Circle, Clock, MessageSquare, AlertCircle, FileText, Video, Link as LinkIcon, DollarSign, Send, Maximize2 } from "lucide-react";
-import { getJobMilestones, approveMilestone, rejectMilestone } from "#/app/(shop)/my-casting/applications.actions";
+import { getJobMilestones, approveMilestone, rejectMilestone, getAcceptedApplication, syncContractStatus } from "#/app/(shop)/my-casting/applications.actions";
 import { submitMilestone } from "#/app/(creator)/actions";
 import ScriptEditorModal from "./ScriptEditorModal";
 import ScriptViewerModal from "./ScriptViewerModal";
 
 export default function JobProgressStepper({ job, role = "shop" }) {
   const [milestones, setMilestones] = useState([]);
+  const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionValue, setSubmissionValue] = useState("");
@@ -26,7 +27,29 @@ export default function JobProgressStepper({ job, role = "shop" }) {
     if (res.success) {
       setMilestones(res.data);
     }
+    const appRes = await getAcceptedApplication(job.id);
+    if (appRes.success) {
+      setApplication(appRes.data);
+    }
     setLoading(false);
+  };
+
+  const handleCheckSignature = async () => {
+    if (!application?.id) return;
+    setIsSubmitting(true);
+    const res = await syncContractStatus(application.id);
+    setIsSubmitting(false);
+    
+    if (res.success) {
+      if (res.status === "COMPLETED") {
+        alert("Hợp đồng đã được các bên ký thành công!");
+        fetchMilestones();
+      } else {
+        alert("Hợp đồng vẫn đang chờ các bên hoàn tất chữ ký. Vui lòng kiểm tra lại sau.");
+      }
+    } else {
+      alert(res.error || "Lỗi khi kiểm tra trạng thái");
+    }
   };
 
   useEffect(() => {
@@ -97,7 +120,69 @@ export default function JobProgressStepper({ job, role = "shop" }) {
         <p className="text-sm text-gray-500 mt-1">Cập nhật và theo dõi tiến độ chi tiết của chiến dịch.</p>
       </div>
 
-      <div className="relative space-y-8 before:absolute before:inset-0 before:ml-[1.1rem] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
+      {/* KHỐI HIỂN THỊ HỢP ĐỒNG */}
+      {application?.contractStatus === "PENDING" && (
+        <div className="mb-8 p-6 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col items-center justify-center text-center">
+          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+            <FileText size={32} className="text-amber-600" />
+          </div>
+          <h3 className="text-lg font-bold text-amber-900 mb-2">Chờ ký hợp đồng điện tử</h3>
+          <p className="text-amber-700 text-sm max-w-lg mb-4">
+            Hệ thống đã gửi email yêu cầu ký hợp đồng điện tử đến Shop và KOC qua SignNow. Vui lòng kiểm tra hộp thư và hoàn tất chữ ký để bắt đầu công việc.
+          </p>
+          <div className="flex gap-3 flex-wrap justify-center">
+            {application.contractUrl && (
+              <a
+                href={`https://docs.google.com/viewer?url=${encodeURIComponent(application.contractUrl)}&embedded=true`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-5 py-2.5 bg-white border border-amber-300 text-amber-800 rounded-xl text-sm font-bold shadow-sm hover:bg-amber-100 transition flex items-center gap-2"
+              >
+                <FileText size={16} /> Xem hợp đồng nháp
+              </a>
+            )}
+             <button 
+               onClick={handleCheckSignature} 
+               disabled={isSubmitting}
+               className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-blue-700 transition cursor-pointer disabled:opacity-50 flex items-center gap-2"
+             >
+               {isSubmitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <CheckCircle size={16} />}
+               Cập nhật trạng thái ký
+             </button>
+          </div>
+        </div>
+      )}
+
+      {application?.contractStatus === "COMPLETED" && (
+        <div className="mb-8 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle size={24} className="text-emerald-600" />
+            <div>
+              <h4 className="font-bold text-emerald-900 text-sm">Hợp đồng điện tử đã hoàn tất</h4>
+              <p className="text-emerald-700 text-xs">Các bên đã ký xác nhận có giá trị pháp lý.</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+             {application.contractUrl && (
+               <a
+                 href={`https://docs.google.com/viewer?url=${encodeURIComponent(application.contractUrl)}&embedded=true`}
+                 target="_blank"
+                 rel="noreferrer"
+                 className="px-4 py-2 bg-white border border-emerald-200 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-100 transition shadow-sm"
+               >
+                 Xem hợp đồng
+               </a>
+             )}
+             {application.auditTrailUrl && (
+               <a href={application.auditTrailUrl} target="_blank" rel="noreferrer" className="px-4 py-2 bg-white border border-emerald-200 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-100 transition shadow-sm hidden sm:block">
+                 Biên bản Audit
+               </a>
+             )}
+          </div>
+        </div>
+      )}
+
+      <div className={`relative space-y-8 before:absolute before:inset-0 before:ml-[1.1rem] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent ${application?.contractStatus === 'PENDING' ? 'opacity-40 pointer-events-none select-none grayscale' : ''}`}>
         {milestones.map((milestone, idx) => {
           const isCompleted = milestone.status === "COMPLETED";
           const isInProgress = milestone.status === "IN_PROGRESS" || milestone.status === "REJECTED"; // KOC needs to act

@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { getMyCastingJobs } from "#/app/(shop)/my-casting/actions";
 
 export default function ShopDashboard() {
+  const router = useRouter();
+
   // MOCK DATA: Metrics
   const metrics = [
     {
