@@ -1,8 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { CheckCircle, Circle, Clock, MessageSquare, AlertCircle, FileText, Video, Link as LinkIcon, DollarSign, Send } from "lucide-react";
+import { CheckCircle, Circle, Clock, MessageSquare, AlertCircle, FileText, Video, Link as LinkIcon, DollarSign, Send, Maximize2 } from "lucide-react";
 import { getJobMilestones, approveMilestone, rejectMilestone } from "#/app/(shop)/my-casting/applications.actions";
 import { submitMilestone } from "#/app/(creator)/actions";
+import ScriptEditorModal from "./ScriptEditorModal";
+import ScriptViewerModal from "./ScriptViewerModal";
 
 export default function JobProgressStepper({ job, role = "shop" }) {
   const [milestones, setMilestones] = useState([]);
@@ -10,6 +12,12 @@ export default function JobProgressStepper({ job, role = "shop" }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionValue, setSubmissionValue] = useState("");
   const [feedbackValue, setFeedbackValue] = useState("");
+  const [isScriptModalOpen, setIsScriptModalOpen] = useState(false);
+  const [currentMilestoneId, setCurrentMilestoneId] = useState(null);
+  
+  // Viewer Modal State
+  const [isViewerModalOpen, setIsViewerModalOpen] = useState(false);
+  const [viewerContent, setViewerContent] = useState("");
 
   const fetchMilestones = async () => {
     if (!job?.id) return;
@@ -25,13 +33,15 @@ export default function JobProgressStepper({ job, role = "shop" }) {
     fetchMilestones();
   }, [job]);
 
-  const handleCreatorSubmit = async (milestoneId) => {
-    if (!submissionValue.trim()) return alert("Vui lòng nhập nội dung trước khi nộp!");
+  const handleCreatorSubmit = async (milestoneId, customContent = null) => {
+    const content = customContent !== null ? customContent : submissionValue;
+    if (!content.trim()) return alert("Vui lòng nhập nội dung trước khi nộp!");
     setIsSubmitting(true);
-    const res = await submitMilestone(milestoneId, submissionValue);
+    const res = await submitMilestone(milestoneId, content);
     setIsSubmitting(false);
     if (res.success) {
       setSubmissionValue("");
+      setIsScriptModalOpen(false);
       fetchMilestones();
     } else {
       alert(res.error || "Lỗi khi nộp bài");
@@ -137,10 +147,32 @@ export default function JobProgressStepper({ job, role = "shop" }) {
 
                 {/* Nội dung Creator đã nộp */}
                 {milestone.submission && (
-                  <div className="mt-3 p-3 bg-white rounded-lg text-sm text-gray-800 border border-gray-200 shadow-sm overflow-hidden break-words">
+                  <div className="mt-3 p-3 bg-white rounded-lg text-sm text-gray-800 border border-gray-200 shadow-sm overflow-hidden break-words tiptap-editor relative group/submission">
                     <span className="block text-[10px] font-bold text-gray-400 mb-1">NỘI DUNG ĐÃ NỘP:</span>
                     {milestone.type === "SCRIPT" ? (
-                      <p className="whitespace-pre-wrap">{milestone.submission}</p>
+                      <>
+                        <div className="max-h-24 overflow-hidden relative">
+                          {milestone.submission.startsWith('<') ? (
+                            <div dangerouslySetInnerHTML={{ __html: milestone.submission }} className="leading-relaxed opacity-70" />
+                          ) : milestone.submission.startsWith('http') ? (
+                             <a href={milestone.submission} target="_blank" rel="noreferrer" className="text-blue-600 font-medium underline break-all">
+                               {milestone.submission}
+                             </a>
+                          ) : (
+                            <p className="whitespace-pre-wrap opacity-70">{milestone.submission}</p>
+                          )}
+                          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            setViewerContent(milestone.submission);
+                            setIsViewerModalOpen(true);
+                          }}
+                          className="mt-2 w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold rounded-lg border border-gray-200 flex items-center justify-center gap-2 transition cursor-pointer"
+                        >
+                          <Maximize2 size={14} /> Xem kịch bản chi tiết
+                        </button>
+                      </>
                     ) : (
                       <a href={milestone.submission} target="_blank" rel="noreferrer" className="text-blue-600 font-medium underline break-all">
                         {milestone.submission}
@@ -164,29 +196,33 @@ export default function JobProgressStepper({ job, role = "shop" }) {
                 {role === "creator" && isInProgress && milestone.type !== "PAYMENT" && (
                   <div className="mt-4 flex flex-col gap-2">
                     {milestone.type === "SCRIPT" ? (
-                      <textarea
-                        className="w-full text-sm p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                        rows={4}
-                        placeholder="Nhập nội dung kịch bản vào đây..."
-                        value={submissionValue}
-                        onChange={(e) => setSubmissionValue(e.target.value)}
-                      />
+                      <button 
+                        onClick={() => {
+                          setCurrentMilestoneId(milestone.id);
+                          setIsScriptModalOpen(true);
+                        }}
+                        className="w-full text-sm p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition text-gray-600 font-bold flex justify-center items-center gap-2 cursor-pointer bg-gray-50/50"
+                      >
+                        <FileText size={18} className="text-blue-500" /> Nhấn để Soạn thảo hoặc Nộp Kịch Bản
+                      </button>
                     ) : (
-                      <input
-                        type="url"
-                        className="w-full text-sm p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                        placeholder="Dán link (Google Drive, TikTok...)"
-                        value={submissionValue}
-                        onChange={(e) => setSubmissionValue(e.target.value)}
-                      />
+                      <>
+                        <input
+                          type="url"
+                          className="w-full text-sm p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                          placeholder="Dán link (Google Drive, TikTok...)"
+                          value={submissionValue}
+                          onChange={(e) => setSubmissionValue(e.target.value)}
+                        />
+                        <button 
+                          onClick={() => handleCreatorSubmit(milestone.id)}
+                          disabled={isSubmitting}
+                          className="py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50"
+                        >
+                          <Send size={16} /> Nộp bài
+                        </button>
+                      </>
                     )}
-                    <button 
-                      onClick={() => handleCreatorSubmit(milestone.id)}
-                      disabled={isSubmitting}
-                      className="py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50"
-                    >
-                      <Send size={16} /> Nộp bài
-                    </button>
                   </div>
                 )}
 
@@ -245,6 +281,18 @@ export default function JobProgressStepper({ job, role = "shop" }) {
           );
         })}
       </div>
+      
+      <ScriptEditorModal 
+        isOpen={isScriptModalOpen} 
+        onClose={() => setIsScriptModalOpen(false)} 
+        onSubmit={(content) => handleCreatorSubmit(currentMilestoneId, content)} 
+      />
+
+      <ScriptViewerModal
+        isOpen={isViewerModalOpen}
+        onClose={() => setIsViewerModalOpen(false)}
+        content={viewerContent}
+      />
     </div>
   );
 }
