@@ -133,7 +133,7 @@ export default function JobProgressStepper({ job, role = "shop" }) {
           <div className="flex gap-3 flex-wrap justify-center">
             {application.contractUrl && (
               <a
-                href={`https://docs.google.com/viewer?url=${encodeURIComponent(application.contractUrl)}&embedded=true`}
+                href={application.contractUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="px-5 py-2.5 bg-white border border-amber-300 text-amber-800 rounded-xl text-sm font-bold shadow-sm hover:bg-amber-100 transition flex items-center gap-2"
@@ -165,7 +165,7 @@ export default function JobProgressStepper({ job, role = "shop" }) {
           <div className="flex gap-2">
              {application.contractUrl && (
                <a
-                 href={`https://docs.google.com/viewer?url=${encodeURIComponent(application.contractUrl)}&embedded=true`}
+                 href={application.contractUrl}
                  target="_blank"
                  rel="noreferrer"
                  className="px-4 py-2 bg-white border border-emerald-200 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-100 transition shadow-sm"

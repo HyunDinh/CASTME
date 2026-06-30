@@ -37,6 +37,35 @@ async function getAccessToken() {
   return data.access_token;
 }
 
+async function uploadToCloudinary(buffer, filename) {
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || process.env.CLOUDINARY_UPLOAD_PRESET;
+
+  if (!cloudName || !uploadPreset) {
+    console.error("Thiếu cấu hình Cloudinary (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME hoặc NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET)");
+    return null;
+  }
+
+  const blob = new Blob([buffer], { type: "application/pdf" });
+  const formData = new FormData();
+  formData.append("file", blob, filename);
+  formData.append("upload_preset", uploadPreset);
+  formData.append("resource_type", "raw");
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    console.error("Cloudinary Upload Error:", await res.text());
+    return null;
+  }
+
+  const data = await res.json();
+  return data.secure_url;
+}
+
 export async function createSignatureRequest(shopEmail, kolEmail, shopName = "Bên A", kolName = "Bên B", budget = "Thỏa thuận") {
   if (!API_KEY && !CLIENT_ID) {
     console.log("Mocking SignNow (No credentials provided)");
@@ -47,14 +76,10 @@ export async function createSignatureRequest(shopEmail, kolEmail, shopName = "B�
     const token = await getAccessToken();
     const authHeader = `Bearer ${token}`;
 
-    // Step 0: Tạo PDF trong RAM rồi lưu vào folder contracts
+    // Step 0: Tạo PDF trong RAM rồi upload lên Cloudinary thay vì lưu local
     const filename = `contract_${Date.now()}.pdf`;
-    const contractsDir = path.join(process.cwd(), "public", "contracts");
-    if (!fs.existsSync(contractsDir)) fs.mkdirSync(contractsDir, { recursive: true });
-
     const pdfBuffer = await generateContractPDFBuffer(shopName, kolName, budget);
-    const pdfFilePath = path.join(contractsDir, filename);
-    fs.writeFileSync(pdfFilePath, pdfBuffer);
+    const cloudinaryUrl = await uploadToCloudinary(pdfBuffer, filename);
 
     // Upload lên SignNow
     const blob = new Blob([pdfBuffer], { type: "application/pdf" });
@@ -107,7 +132,7 @@ export async function createSignatureRequest(shopEmail, kolEmail, shopName = "B�
     });
     if (!inviteRes.ok) throw new Error("Send invite failed: " + await inviteRes.text());
 
-    return { success: true, documentId, pdfUrl: `/contracts/${filename}` };
+    return { success: true, documentId, pdfUrl: cloudinaryUrl };
   } catch (err) {
     console.error("SignNow Error:", err);
     return { success: false, error: err.message };
@@ -153,11 +178,9 @@ export async function downloadSignedDocument(documentId) {
 
     const buffer = Buffer.from(await res.arrayBuffer());
     const filename = `completed_${documentId}.pdf`;
-    const contractsDir = path.join(process.cwd(), "public", "contracts");
-    if (!fs.existsSync(contractsDir)) fs.mkdirSync(contractsDir, { recursive: true });
-    fs.writeFileSync(path.join(contractsDir, filename), buffer);
-
-    return `/contracts/${filename}`;
+    
+    const cloudinaryUrl = await uploadToCloudinary(buffer, filename);
+    return cloudinaryUrl;
   } catch (err) {
     console.error("SignNow Download Error:", err);
     return null;
