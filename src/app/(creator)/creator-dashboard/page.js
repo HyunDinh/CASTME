@@ -1,6 +1,56 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { getAvailableJobs, applyToJobAction, getPublicShopProfile } from "#/app/(creator)/actions";
+import {
+  Sparkles,
+  Store,
+  Zap,
+  X,
+  ChevronRight,
+  SlidersHorizontal,
+  DollarSign,
+  ExternalLink,
+  Globe,
+  Instagram,
+  Star,
+  Briefcase,
+} from "lucide-react";
+
+/* ── Vibe Tag ── */
+function VibeTag({ tag }) {
+  return (
+    <span style={{
+      fontSize: "0.6875rem",
+      fontWeight: 600,
+      padding: "0.2rem 0.625rem",
+      background: "var(--primary-light)",
+      color: "var(--primary)",
+      borderRadius: "var(--radius-full)",
+      border: "1px solid var(--primary-muted)",
+    }}>
+      #{tag}
+    </span>
+  );
+}
+
+/* ── Match Badge ── */
+function MatchBadge({ rate, small }) {
+  const color = rate >= 90 ? "var(--success)" : rate >= 75 ? "var(--warning)" : "var(--muted)";
+  const bg = rate >= 90 ? "var(--success-light)" : rate >= 75 ? "var(--warning-light)" : "#F1F5F9";
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: "3px",
+      fontSize: small ? "0.625rem" : "0.75rem",
+      fontWeight: 800,
+      padding: small ? "0.2rem 0.5rem" : "0.3rem 0.7rem",
+      background: bg, color,
+      borderRadius: "var(--radius-full)",
+      border: `1px solid ${color}30`,
+    }}>
+      🎯 {rate}%
+    </span>
+  );
+}
 
 export default function CreatorDashboard() {
   const [jobs, setJobs] = useState([]);
@@ -32,26 +82,19 @@ export default function CreatorDashboard() {
     }
   };
 
-  useEffect(() => {
-    fetchJobs();
-  }, []);
+  useEffect(() => { fetchJobs(); }, []);
 
   const handleConnect = async (jobId) => {
     if (applyingId) return;
-
     const confirmApply = window.confirm("Xác nhận dùng 5 Trái Tim để ứng tuyển công việc này?");
     if (!confirmApply) return;
-
     setApplyingId(jobId);
-
     const result = await applyToJobAction(jobId);
-
     if (result.success) {
       alert("✅ Ứng tuyển thành công! Shop sẽ xem hồ sơ của bạn sớm.");
     } else {
       alert(`❌ ${result.error || "Không thể ứng tuyển lúc này"}`);
     }
-
     setApplyingId(null);
   };
 
@@ -60,323 +103,277 @@ export default function CreatorDashboard() {
     setShopProfile(null);
     setLoadingShop(true);
     setShopModalOpen(true);
-
     const result = await getPublicShopProfile(shopId);
-    if (result.success) {
-      setShopProfile(result.data);
-    } else {
-      alert(result.error || "Không thể tải hồ sơ cửa hàng");
-      setShopProfile(null);
-    }
-
+    if (result.success) setShopProfile(result.data);
+    else { alert(result.error || "Không thể tải hồ sơ cửa hàng"); setShopProfile(null); }
     setLoadingShop(false);
   };
 
-  return (
-    <div className="space-y-8">
-      {/* KHỐI AI MATCHING GỢI Ý */}
-      <section className="bg-linear-to-r from-purple-900 to-indigo-900 text-white rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 bottom-0 text-9xl opacity-10 pointer-events-none select-none">
-          🤖
-        </div>
-        <div className="max-w-xl">
-          <span className="inline-block px-3 py-1 bg-purple-500/30 border border-purple-400/20 text-purple-200 text-xs font-bold rounded-full mb-3 uppercase tracking-wider">
-            Castme AI Matching Engine
-          </span>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-2">
-            Shop phù hợp nhất với Vibe của bạn
-          </h1>
-          <p className="text-purple-200 text-sm leading-relaxed mb-6">
-            Hệ thống AI vừa quét bản tóm tắt hồ sơ phong cách cá nhân của bạn và tìm thấy những nhãn hàng phù hợp nhất.
-          </p>
-        </div>
+  const topMatches = jobs.filter((j) => (j.matchRate || 0) >= 85).slice(0, 4);
+  const allJobs = jobs;
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          {jobs
-            .filter((j) => (j.matchRate || 0) >= 85)
-            .slice(0, 4)
-            .map((aiJob) => (
-              <div
-                key={`ai-${aiJob.id}`}
-                className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/10 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold text-purple-300">{aiJob.shopName}</span>
-                    <span className="text-xs font-black bg-emerald-500 text-white px-2 py-0.5 rounded-lg animate-pulse">
-                      🔥 {aiJob.matchRate}% Phù hợp
-                    </span>
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "2rem", animation: "fadeIn 0.4s ease" }}>
+
+      {/* ── Page Header ── */}
+      <div>
+        <h1 style={{ fontFamily:"var(--font-heading)", fontSize:"1.625rem", fontWeight:800, color:"var(--slate)", letterSpacing:"-0.02em", marginBottom:"0.25rem" }}>
+          Khám phá Chiến dịch
+        </h1>
+        <p style={{ fontSize:"0.875rem", color:"var(--muted)" }}>
+          AI đã tìm thấy {topMatches.length} shop phù hợp với phong cách của bạn.
+        </p>
+      </div>
+
+      {/* ═══ AI MATCHING BANNER ═══ */}
+      <section style={{
+        background: "linear-gradient(135deg, #0F0520 0%, #2D1060 40%, #4C1D95 75%, #7C1F5A 100%)",
+        borderRadius: "var(--radius-xl)",
+        padding: "2rem",
+        position: "relative",
+        overflow: "hidden",
+        boxShadow: "0 20px 60px -10px rgba(124,58,237,0.45)",
+      }}>
+        {/* Glow orbs */}
+        <div style={{ position:"absolute", top:"-80px", right:"-80px", width:"280px", height:"280px", borderRadius:"50%", background:"radial-gradient(circle, rgba(244,63,142,0.22) 0%, transparent 70%)", pointerEvents:"none" }} />
+        <div style={{ position:"absolute", bottom:"-60px", left:"20%", width:"200px", height:"200px", borderRadius:"50%", background:"radial-gradient(circle, rgba(124,58,237,0.20) 0%, transparent 70%)", pointerEvents:"none" }} />
+
+        <div style={{ position:"relative" }}>
+          {/* Header */}
+          <div style={{ display:"flex", alignItems:"center", gap:"0.5rem", marginBottom:"0.5rem" }}>
+            <Sparkles size={14} color="var(--primary-muted)" />
+            <span style={{ fontSize:"0.625rem", fontWeight:800, color:"var(--primary-muted)", textTransform:"uppercase", letterSpacing:"0.1em" }}>
+              Castme AI Matching Engine
+            </span>
+            <span style={{ marginLeft:"0.5rem", fontSize:"0.5625rem", fontWeight:800, background:"var(--rose)", color:"white", padding:"0.15rem 0.5rem", borderRadius:"99px" }}>LIVE</span>
+          </div>
+          <h2 style={{
+            fontFamily: "var(--font-heading)",
+            fontSize: "clamp(1.125rem, 3vw, 1.5rem)",
+            fontWeight: 800, color: "white",
+            letterSpacing: "-0.02em",
+            marginBottom: "0.5rem",
+          }}>
+            Shop phù hợp nhất với Vibe của bạn
+          </h2>
+          <p style={{ color:"rgba(196,181,253,0.75)", fontSize:"0.875rem", lineHeight:1.6, marginBottom:"1.5rem", maxWidth:"480px" }}>
+            Hệ thống AI đã quét hồ sơ phong cách của bạn và tìm thấy các nhãn hàng tương thích nhất hôm nay.
+          </p>
+
+          {/* AI Match Cards */}
+          {loading ? (
+            <div style={{ display:"flex", justifyContent:"center", padding:"2rem 0" }}>
+              <div style={{ width:"32px", height:"32px", border:"3px solid rgba(196,181,253,0.40)", borderTopColor:"var(--primary-muted)", borderRadius:"50%", animation:"spinSlow 0.8s linear infinite" }} />
+            </div>
+          ) : topMatches.length > 0 ? (
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+              gap: "0.875rem",
+            }}>
+              {topMatches.map((job) => (
+                <div key={`ai-${job.id}`} style={{
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: "var(--radius-lg)",
+                  padding: "1.25rem",
+                  backdropFilter: "blur(10px)",
+                  display: "flex", flexDirection: "column", justifyContent: "space-between",
+                  gap: "1rem",
+                  transition: "background 0.2s",
+                }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.14)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
+                >
+                  <div>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"0.625rem" }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:"0.5rem" }}>
+                        <div style={{ width:"28px", height:"28px", background:"linear-gradient(135deg, var(--primary-light), var(--rose-light))", borderRadius:"var(--radius-sm)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"0.75rem", fontWeight:700, color:"var(--primary)" }}>
+                          {job.shopName[0]}
+                        </div>
+                        <span style={{ fontSize:"0.75rem", fontWeight:700, color:"rgba(196,181,253,0.80)" }}>{job.shopName}</span>
+                      </div>
+                      <MatchBadge rate={job.matchRate} small />
+                    </div>
+                    <h3 style={{ fontFamily:"var(--font-heading)", fontWeight:700, color:"white", fontSize:"0.9375rem", lineHeight:1.3, marginBottom:"0.625rem" }}>
+                      {job.title}
+                    </h3>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:"0.375rem" }}>
+                      {job.vibeTags.slice(0, 3).map((tag) => (
+                        <span key={tag} style={{ fontSize:"0.625rem", background:"rgba(255,255,255,0.10)", color:"rgba(255,255,255,0.75)", padding:"0.2rem 0.5rem", borderRadius:"var(--radius-full)", border:"1px solid rgba(255,255,255,0.10)" }}>#{tag}</span>
+                      ))}
+                    </div>
                   </div>
-                  <h3 className="font-bold text-sm line-clamp-2 mb-3">{aiJob.title}</h3>
-                  <div className="flex flex-wrap gap-1.5">
-                    {aiJob.vibeTags.map((tag) => (
-                      <span key={tag} className="text-[10px] bg-white/10 px-2 py-0.5 rounded-md">
-                        #{tag}
-                      </span>
-                    ))}
+
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", borderTop:"1px solid rgba(255,255,255,0.08)", paddingTop:"0.875rem" }}>
+                    <span style={{ fontFamily:"var(--font-heading)", fontSize:"1rem", fontWeight:800, color:"#FCD34D" }}>{job.budget}</span>
+                    <div style={{ display:"flex", gap:"0.5rem" }}>
+                      <button
+                        onClick={() => viewShopProfile(job.shopId)}
+                        style={{
+                          padding:"0.4rem 0.875rem",
+                          background:"rgba(255,255,255,0.10)",
+                          border:"1px solid rgba(255,255,255,0.15)",
+                          borderRadius:"var(--radius-sm)",
+                          color:"rgba(255,255,255,0.80)",
+                          fontSize:"0.75rem", fontWeight:600,
+                          cursor:"pointer",
+                        }}
+                      >
+                        Xem hồ sơ
+                      </button>
+                      <button
+                        onClick={() => handleConnect(job.id)}
+                        disabled={applyingId === job.id}
+                        style={{
+                          padding:"0.4rem 0.875rem",
+                          background:"white",
+                          border:"none",
+                          borderRadius:"var(--radius-sm)",
+                          color:"var(--primary)",
+                          fontSize:"0.75rem", fontWeight:800,
+                          cursor: applyingId === job.id ? "not-allowed" : "pointer",
+                          opacity: applyingId === job.id ? 0.7 : 1,
+                        }}
+                      >
+                        {applyingId === job.id ? "..." : "Kết nối ngay"}
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-4">
-                  <span className="text-sm font-bold text-amber-300">{aiJob.budget}</span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleConnect(aiJob.id)}
-                      disabled={applyingId === aiJob.id}
-                      className="px-4 py-2 bg-white text-purple-900 font-bold text-sm rounded-xl hover:bg-purple-100 disabled:opacity-70"
-                    >
-                      {applyingId === aiJob.id ? "Đang xử lý..." : "Kết nối ngay"}
-                    </button>
-                    <button
-                      onClick={() => viewShopProfile(aiJob.shopId)}
-                      className="px-3 py-2 bg-white/10 border border-white/20 text-white text-sm rounded-xl hover:bg-white/20"
-                    >
-                      Xem hồ sơ
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          ) : (
+            <p style={{ color:"rgba(196,181,253,0.60)", fontSize:"0.875rem" }}>Chưa có gợi ý phù hợp. Hãy cập nhật hồ sơ phong cách của bạn!</p>
+          )}
         </div>
       </section>
 
-      {shopModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setShopModalOpen(false)} />
-          <div className="relative max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl z-10 max-h-[90vh] flex flex-col">
-
-            {/* TIÊU ĐỀ FIXED Ở TOP MODAL */}
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white z-20">
-              <h3 className="font-bold text-gray-900">Thông tin đối tác thương hiệu</h3>
-              <button
-                onClick={() => setShopModalOpen(false)}
-                className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-full font-bold text-sm transition cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* VÙNG NỘI DUNG CHÍNH CÓ CUỘN (SCROLL) */}
-            <div className="flex-1 overflow-y-auto option-scroll">
-              {loadingShop ? (
-                <div className="py-20 text-center">
-                  <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <p className="mt-3 text-sm text-gray-500">Đang đồng bộ dữ liệu cửa hàng...</p>
-                </div>
-              ) : shopProfile ? (
-                <div>
-
-                  {/* Cấu trúc Ảnh bìa (Cover) & Ảnh đại diện (MainImage) */}
-                  <div className="relative bg-gray-100">
-                    <div className="h-40 w-full bg-slate-200 relative">
-                      {shopProfile.coverImage ? (
-                        <img src={shopProfile.coverImage} alt="Cover" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-linear-to-r from-purple-100 to-indigo-100" />
-                      )}
-                    </div>
-
-                    {/* Avatar Logo thương hiệu nằm đè */}
-                    <div className="absolute -bottom-10 left-6 w-20 h-20 rounded-2xl border-4 border-white bg-gray-50 overflow-hidden shadow-md">
-                      {shopProfile.mainImage ? (
-                        <img src={shopProfile.mainImage} alt="Logo" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-purple-600 text-white font-bold text-xl">
-                          {shopProfile.shopName?.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Thông tin chữ phía dưới khối ảnh */}
-                  <div className="pt-14 px-6 pb-6 space-y-6">
-                    <div>
-                      <h2 className="text-xl font-black text-gray-900">{shopProfile.shopName}</h2>
-                      <p className="text-xs text-gray-400 mt-0.5">Người đại diện: {shopProfile.ownerName || "Chưa cập nhật"}</p>
-                    </div>
-
-                    {/* Danh mục hoạt động */}
-                    {shopProfile.categories?.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {shopProfile.categories.map((c) => (
-                          <span key={c} className="text-[11px] bg-purple-50 text-purple-700 border border-purple-100 px-2.5 py-0.5 rounded-lg font-medium">
-                            {c}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Khối mô tả chi tiết */}
-                    <div className="bg-gray-50/50 rounded-2xl p-4 border border-gray-100">
-                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Giới thiệu thương hiệu</h4>
-                      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-                        {shopProfile.description || "Cửa hàng chưa cập nhật phần mô tả."}
-                      </p>
-                    </div>
-
-                    {/* Các thông số khác */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                      <div className="space-y-1">
-                        <span className="block text-xs font-bold text-gray-400 uppercase">🎯 Định hướng Vibe sáng tạo</span>
-                        <p className="text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100 text-xs leading-relaxed">
-                          {shopProfile.vibeText || "Chưa có định hướng cụ thể từ AI"}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-3 text-center">
-                          <span className="block text-[10px] font-bold text-amber-600 uppercase">Đánh giá</span>
-                          <span className="text-base font-black text-amber-700 mt-1 block">
-                            {shopProfile.averageRating ? `${shopProfile.averageRating} ⭐` : "Chưa có"}
-                          </span>
-                        </div>
-                        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3 text-center">
-                          <span className="block text-[10px] font-bold text-blue-600 uppercase">Chiến dịch</span>
-                          <span className="text-base font-black text-blue-700 mt-1 block">{shopProfile.totalJobs || 0} đã mở</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 🌐 THÔNG TIN ĐƯỜNG LINK LIÊN HỆ */}
-                    <div className="border-t border-gray-100 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-600">
-                      <div className="flex items-center gap-2 bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-                        <span className="text-base">🌐</span>
-                        <span className="font-semibold text-gray-400">Website:</span>
-                        {shopProfile.website ? (
-                          <a href={shopProfile.website} target="_blank" rel="noreferrer" className="text-purple-600 hover:underline font-medium truncate flex-1">
-                            {shopProfile.website}
-                          </a>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-                        <span className="text-base">📸</span>
-                        <span className="font-semibold text-gray-400">Instagram:</span>
-                        {shopProfile.instagram ? (
-                          <a
-                            href={shopProfile.instagram.startsWith('http') ? shopProfile.instagram : `https://instagram.com/${shopProfile.instagram.replace('@', '')}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-purple-600 hover:underline font-medium truncate flex-1"
-                          >
-                            {shopProfile.instagram}
-                          </a>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 🖼️ KHU VỰC BỘ SƯU TẬP ẢNH (GALLERY) */}
-                    <div className="border-t border-gray-100 pt-4 space-y-2">
-                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Không gian & Sản phẩm nổi bật</h4>
-                      {shopProfile.gallery?.length > 0 ? (
-                        <div className="grid grid-cols-3 gap-2">
-                          {shopProfile.gallery.map((img, i) => (
-                            <a key={i} href={img} target="_blank" rel="noreferrer" className="aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200 block group relative">
-                              <img src={img} alt={`Gallery-${i}`} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
-                            </a>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-gray-400 italic">Thương hiệu chưa tải lên ảnh bộ sưu tập mẫu.</p>
-                      )}
-                    </div>
-
-                  </div>
-                </div>
-              ) : (
-                <div className="py-12 text-center text-sm text-gray-500">Lỗi: Không tìm thấy dữ liệu hồ sơ này.</div>
-              )}
-            </div>
-
-            {/* THANH THAO TÁC FIXED Ở BOTTOM MODAL */}
-            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2">
-              <button
-                onClick={() => setShopModalOpen(false)}
-                className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition cursor-pointer"
-              >
-                Đóng lại
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* DANH SÁCH TIN TUYỂN DỤNG ĐANG MỞ */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
+      {/* ═══ ALL JOBS LIST ═══ */}
+      <section style={{ display:"flex", flexDirection:"column", gap:"1.25rem" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:"0.75rem" }}>
           <div>
-            <h2 className="text-xl font-extrabold text-gray-950">Tin tuyển dụng đang mở</h2>
-            <p className="text-xs text-gray-500">Các cơ hội hợp tác quảng cáo phù hợp với bạn</p>
+            <h2 style={{ fontFamily:"var(--font-heading)", fontSize:"1.125rem", fontWeight:800, color:"var(--slate)", letterSpacing:"-0.01em" }}>
+              Tất cả tin tuyển dụng
+            </h2>
+            <p style={{ fontSize:"0.8125rem", color:"var(--muted)" }}>Các cơ hội hợp tác phù hợp với bạn</p>
           </div>
-          <button className="text-sm font-bold text-purple-600 hover:underline cursor-pointer">
-            Bộ lọc nâng cao 🔍
+          <button style={{
+            display:"flex", alignItems:"center", gap:"0.5rem",
+            padding:"0.5rem 1rem",
+            background:"var(--surface)",
+            border:"1.5px solid var(--border)",
+            borderRadius:"var(--radius-full)",
+            fontSize:"0.875rem", fontWeight:600, color:"var(--slate)",
+            cursor:"pointer",
+            transition:"all 0.2s",
+          }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--primary-muted)"; e.currentTarget.style.color = "var(--primary)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--slate)"; }}
+          >
+            <SlidersHorizontal size={14} />
+            Bộ lọc nâng cao
           </button>
         </div>
 
         {loading ? (
-          <div className="py-20 text-center">
-            <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-            <p className="text-sm text-gray-500 mt-4">Đang tải...</p>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"center", padding:"3rem", background:"var(--surface)", borderRadius:"var(--radius-lg)", border:"1px solid var(--border)" }}>
+            <div style={{ width:"32px", height:"32px", border:"3px solid var(--primary-muted)", borderTopColor:"var(--primary)", borderRadius:"50%", animation:"spinSlow 0.8s linear infinite" }} />
           </div>
-        ) : jobs.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4">
-            {jobs.map((job) => (
-              <div
-                key={job.id}
-                className="bg-white rounded-2xl p-6 border border-gray-100 shadow-xs hover:shadow-md transition-all flex flex-col md:flex-row justify-between gap-6"
-              >
-                {/* Phần trái - Thông tin */}
-                <div className="flex-1 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-gray-800 bg-gray-50 border border-gray-200 px-2.5 py-0.5 rounded-lg">
-                      🏪 {job.shopName}
-                    </span>
-                    {job.matchRate && (
-                      <span className="text-xs font-bold px-2.5 py-1 bg-purple-50 text-purple-700 rounded-lg">
-                        🤖 {job.matchRate}% Match
-                      </span>
-                    )}
-                  </div>
+        ) : allJobs.length > 0 ? (
+          <div style={{ display:"flex", flexDirection:"column", gap:"0.875rem" }}>
+            {allJobs.map((job) => (
+              <div key={job.id} className="card" style={{
+                padding: "1.5rem",
+                display: "flex",
+                gap: "1.5rem",
+                alignItems: "flex-start",
+              }}>
+                {/* Shop avatar */}
+                <div style={{
+                  width: "48px", height: "48px", flexShrink: 0,
+                  background: "linear-gradient(135deg, var(--primary-light), var(--rose-light))",
+                  borderRadius: "var(--radius-md)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "1.25rem", fontWeight: 800, color: "var(--primary)",
+                  border: "1px solid var(--primary-muted)",
+                }}>
+                  {job.shopName[0]}
+                </div>
 
-                  <h3 className="text-lg font-bold text-gray-900 line-clamp-2">{job.title}</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
+                {/* Content */}
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:"0.625rem", flexWrap:"wrap", marginBottom:"0.375rem" }}>
+                    <span style={{
+                      display:"flex", alignItems:"center", gap:"0.25rem",
+                      fontSize:"0.8125rem", fontWeight:700, color:"var(--muted)",
+                    }}>
+                      <Store size={13} />
+                      {job.shopName}
+                    </span>
+                    <MatchBadge rate={job.matchRate} small />
+                  </div>
+                  <h3 style={{
+                    fontFamily:"var(--font-heading)",
+                    fontSize:"1.0625rem",
+                    fontWeight:800,
+                    color:"var(--slate)",
+                    marginBottom:"0.5rem",
+                    lineHeight:1.3,
+                  }}>
+                    {job.title}
+                  </h3>
+                  <p style={{ fontSize:"0.875rem", color:"var(--muted)", lineHeight:1.65, marginBottom:"0.75rem", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>
                     {job.description}
                   </p>
-
-                  <div className="flex flex-wrap gap-1.5 pt-2">
-                    {job.vibeTags.map((tag) => (
-                      <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg">
-                        #{tag}
-                      </span>
-                    ))}
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:"0.375rem" }}>
+                    {job.vibeTags.map((tag) => <VibeTag key={tag} tag={tag} />)}
                   </div>
                 </div>
 
-                {/* Phần phải - Budget + Nút Kết nối */}
-                <div className="md:w-56 flex flex-col justify-between md:items-end gap-4 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6">
-                  <div className="text-left md:text-right">
-                    <span className="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Thù lao</span>
-                    <span className="text-2xl font-black text-purple-600">{job.budget}</span>
+                {/* Right panel */}
+                <div style={{
+                  flexShrink:0,
+                  display:"flex", flexDirection:"column",
+                  alignItems:"flex-end", justifyContent:"space-between",
+                  gap:"1rem", minWidth:"160px",
+                }}>
+                  <div style={{ textAlign:"right" }}>
+                    <span style={{ display:"block", fontSize:"0.6875rem", fontWeight:600, color:"var(--subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:"0.25rem" }}>
+                      Thù lao
+                    </span>
+                    <span style={{
+                      fontFamily:"var(--font-heading)",
+                      fontSize:"1.25rem",
+                      fontWeight:800,
+                      color:"var(--primary)",
+                    }}>
+                      {job.budget}
+                    </span>
                   </div>
-
-                  <div className="w-full md:w-auto flex flex-col gap-2">
+                  <div style={{ display:"flex", flexDirection:"column", gap:"0.5rem", width:"100%" }}>
                     <button
                       onClick={() => viewShopProfile(job.shopId)}
-                      className="w-full md:w-auto px-4 py-2 bg-white border border-gray-200 text-gray-800 font-medium rounded-xl hover:bg-gray-50"
+                      className="btn btn-ghost"
+                      style={{ width:"100%", padding:"0.5rem", fontSize:"0.8125rem", cursor:"pointer" }}
                     >
-                      👀 Xem hồ sơ
+                      <Store size={13} />
+                      Xem hồ sơ
                     </button>
-
                     <button
                       onClick={() => handleConnect(job.id)}
                       disabled={applyingId === job.id}
-                      className="w-full md:w-auto px-6 py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition disabled:opacity-70 flex items-center justify-center gap-2"
+                      className="btn btn-primary"
+                      style={{
+                        width:"100%",
+                        padding:"0.625rem",
+                        fontSize:"0.875rem",
+                        cursor: applyingId === job.id ? "not-allowed" : "pointer",
+                        opacity: applyingId === job.id ? 0.7 : 1,
+                      }}
                     >
-                      ⚡ {applyingId === job.id ? "Đang ứng tuyển..." : "Kết nối ngay"}
+                      <Zap size={14} />
+                      {applyingId === job.id ? "Đang ứng tuyển..." : "Kết nối ngay"}
                     </button>
                   </div>
                 </div>
@@ -384,11 +381,225 @@ export default function CreatorDashboard() {
             ))}
           </div>
         ) : (
-          <div className="py-20 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-            <p className="text-gray-500">Hiện chưa có tin tuyển dụng nào đang mở.</p>
+          <div style={{
+            background:"var(--surface)",
+            border:"1.5px dashed var(--border)",
+            borderRadius:"var(--radius-lg)",
+            padding:"3rem",
+            textAlign:"center",
+          }}>
+            <div style={{ fontSize:"2rem", marginBottom:"0.75rem" }}>🔍</div>
+            <p style={{ color:"var(--muted)", fontSize:"0.9rem" }}>Hiện chưa có tin tuyển dụng nào đang mở.</p>
           </div>
         )}
       </section>
+
+      {/* ═══ SHOP PROFILE MODAL ═══ */}
+      {shopModalOpen && (
+        <div style={{
+          position:"fixed", inset:0,
+          background:"rgba(15,5,32,0.70)",
+          backdropFilter:"blur(8px)",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          zIndex:50, padding:"1rem",
+          animation:"fadeIn 0.25s ease",
+        }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShopModalOpen(false); }}
+        >
+          <div className="animate-scale-in" style={{
+            background:"var(--surface)",
+            borderRadius:"var(--radius-xl)",
+            maxWidth:"680px", width:"100%",
+            maxHeight:"90vh",
+            display:"flex", flexDirection:"column",
+            boxShadow:"var(--shadow-lg)",
+            overflow:"hidden",
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding:"1.25rem 1.5rem",
+              borderBottom:"1px solid var(--border)",
+              display:"flex", alignItems:"center", justifyContent:"space-between",
+              background:"var(--surface)",
+              flexShrink:0,
+            }}>
+              <h3 style={{ fontFamily:"var(--font-heading)", fontWeight:800, color:"var(--slate)", fontSize:"1rem" }}>
+                Thông tin đối tác thương hiệu
+              </h3>
+              <button
+                onClick={() => setShopModalOpen(false)}
+                style={{
+                  width:"32px", height:"32px",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  background:"var(--bg)",
+                  border:"1px solid var(--border)",
+                  borderRadius:"50%",
+                  cursor:"pointer",
+                  transition:"all 0.2s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--error-light)"; e.currentTarget.style.borderColor = "var(--error)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--bg)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+              >
+                <X size={14} color="var(--muted)" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ flex:1, overflowY:"auto" }}>
+              {loadingShop ? (
+                <div style={{ padding:"4rem", textAlign:"center" }}>
+                  <div style={{ width:"36px", height:"36px", border:"3px solid var(--primary-muted)", borderTopColor:"var(--primary)", borderRadius:"50%", animation:"spinSlow 0.8s linear infinite", margin:"0 auto 1rem" }} />
+                  <p style={{ fontSize:"0.875rem", color:"var(--muted)" }}>Đang đồng bộ dữ liệu cửa hàng...</p>
+                </div>
+              ) : shopProfile ? (
+                <div>
+                  {/* Cover + Avatar */}
+                  <div style={{ position:"relative" }}>
+                    <div style={{ height:"140px", background:"linear-gradient(135deg, var(--primary-light), var(--rose-light))", overflow:"hidden" }}>
+                      {shopProfile.coverImage && <img src={shopProfile.coverImage} alt="Cover" style={{ width:"100%", height:"100%", objectFit:"cover" }} />}
+                    </div>
+                    <div style={{
+                      position:"absolute", bottom:"-24px", left:"1.5rem",
+                      width:"56px", height:"56px",
+                      borderRadius:"var(--radius-md)",
+                      border:"3px solid white",
+                      background:"var(--surface)",
+                      overflow:"hidden",
+                      boxShadow:"var(--shadow-md)",
+                    }}>
+                      {shopProfile.mainImage
+                        ? <img src={shopProfile.mainImage} alt="Logo" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                        : <div style={{ width:"100%", height:"100%", background:"linear-gradient(135deg, var(--primary), var(--rose))", display:"flex", alignItems:"center", justifyContent:"center", color:"white", fontWeight:800, fontSize:"1.25rem" }}>{shopProfile.shopName?.charAt(0)}</div>
+                      }
+                    </div>
+                  </div>
+
+                  <div style={{ padding:"2.5rem 1.5rem 1.5rem" }}>
+                    <h2 style={{ fontFamily:"var(--font-heading)", fontSize:"1.25rem", fontWeight:800, color:"var(--slate)", marginBottom:"0.25rem" }}>
+                      {shopProfile.shopName}
+                    </h2>
+                    <p style={{ fontSize:"0.8125rem", color:"var(--muted)", marginBottom:"1rem" }}>
+                      Người đại diện: {shopProfile.ownerName || "Chưa cập nhật"}
+                    </p>
+
+                    {/* Categories */}
+                    {shopProfile.categories?.length > 0 && (
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:"0.375rem", marginBottom:"1.25rem" }}>
+                        {shopProfile.categories.map((c) => (
+                          <span key={c} className="badge badge-primary">{c}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Description */}
+                    <div style={{ background:"var(--bg)", borderRadius:"var(--radius-md)", padding:"1rem 1.125rem", border:"1px solid var(--border)", marginBottom:"1.25rem" }}>
+                      <p style={{ fontSize:"0.625rem", fontWeight:700, color:"var(--subtle)", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:"0.5rem" }}>Giới thiệu thương hiệu</p>
+                      <p style={{ fontSize:"0.875rem", color:"var(--muted)", lineHeight:1.7, whiteSpace:"pre-line" }}>
+                        {shopProfile.description || "Cửa hàng chưa cập nhật phần mô tả."}
+                      </p>
+                    </div>
+
+                    {/* Stats */}
+                    <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(130px, 1fr))", gap:"0.75rem", marginBottom:"1.25rem" }}>
+                      <div style={{ background:"var(--warning-light)", border:"1px solid rgba(245,158,11,0.20)", borderRadius:"var(--radius-md)", padding:"0.875rem", textAlign:"center" }}>
+                        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:"0.25rem", marginBottom:"0.25rem" }}>
+                          <Star size={12} color="var(--warning)" fill="var(--warning)" />
+                          <span style={{ fontSize:"0.625rem", fontWeight:700, color:"var(--warning)", textTransform:"uppercase" }}>Đánh giá</span>
+                        </div>
+                        <span style={{ fontFamily:"var(--font-heading)", fontSize:"1.25rem", fontWeight:800, color:"var(--warning)" }}>
+                          {shopProfile.averageRating ? `${shopProfile.averageRating}` : "—"}
+                        </span>
+                      </div>
+                      <div style={{ background:"var(--primary-light)", border:"1px solid var(--primary-muted)", borderRadius:"var(--radius-md)", padding:"0.875rem", textAlign:"center" }}>
+                        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:"0.25rem", marginBottom:"0.25rem" }}>
+                          <Briefcase size={12} color="var(--primary)" />
+                          <span style={{ fontSize:"0.625rem", fontWeight:700, color:"var(--primary)", textTransform:"uppercase" }}>Chiến dịch</span>
+                        </div>
+                        <span style={{ fontFamily:"var(--font-heading)", fontSize:"1.25rem", fontWeight:800, color:"var(--primary)" }}>
+                          {shopProfile.totalJobs || 0}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Vibe */}
+                    {shopProfile.vibeText && (
+                      <div style={{ background:"var(--bg)", borderRadius:"var(--radius-md)", padding:"1rem", border:"1px solid var(--border)", marginBottom:"1.25rem" }}>
+                        <p style={{ fontSize:"0.625rem", fontWeight:700, color:"var(--subtle)", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:"0.5rem" }}>🎯 Định hướng Vibe sáng tạo</p>
+                        <p style={{ fontSize:"0.875rem", color:"var(--muted)", lineHeight:1.6 }}>{shopProfile.vibeText}</p>
+                      </div>
+                    )}
+
+                    {/* Links */}
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0.625rem", marginBottom:"1.25rem" }}>
+                      {shopProfile.website && (
+                        <a href={shopProfile.website} target="_blank" rel="noreferrer" style={{
+                          display:"flex", alignItems:"center", gap:"0.5rem",
+                          padding:"0.625rem", background:"var(--bg)", border:"1px solid var(--border)",
+                          borderRadius:"var(--radius-md)", textDecoration:"none", fontSize:"0.8125rem",
+                          color:"var(--primary)", fontWeight:500, transition:"all 0.2s",
+                        }}>
+                          <Globe size={14} /> Website <ExternalLink size={11} />
+                        </a>
+                      )}
+                      {shopProfile.instagram && (
+                        <a href={shopProfile.instagram.startsWith("http") ? shopProfile.instagram : `https://instagram.com/${shopProfile.instagram.replace("@", "")}`}
+                          target="_blank" rel="noreferrer" style={{
+                            display:"flex", alignItems:"center", gap:"0.5rem",
+                            padding:"0.625rem", background:"var(--rose-light)", border:"1px solid var(--rose-muted)",
+                            borderRadius:"var(--radius-md)", textDecoration:"none", fontSize:"0.8125rem",
+                            color:"var(--rose)", fontWeight:500, transition:"all 0.2s",
+                          }}>
+                          <Instagram size={14} /> Instagram <ExternalLink size={11} />
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Gallery */}
+                    {shopProfile.gallery?.length > 0 && (
+                      <div>
+                        <p style={{ fontSize:"0.625rem", fontWeight:700, color:"var(--subtle)", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:"0.75rem" }}>
+                          Không gian & Sản phẩm nổi bật
+                        </p>
+                        <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:"0.5rem" }}>
+                          {shopProfile.gallery.map((img, i) => (
+                            <a key={i} href={img} target="_blank" rel="noreferrer" style={{ aspectRatio:"1", display:"block", borderRadius:"var(--radius-md)", overflow:"hidden", background:"var(--bg)", border:"1px solid var(--border)" }}>
+                              <img src={img} alt={`Gallery-${i}`} style={{ width:"100%", height:"100%", objectFit:"cover", transition:"transform 0.3s" }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+                              />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ padding:"3rem", textAlign:"center", color:"var(--muted)", fontSize:"0.875rem" }}>
+                  Lỗi: Không tìm thấy dữ liệu hồ sơ này.
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding:"1rem 1.5rem",
+              borderTop:"1px solid var(--border)",
+              background:"var(--bg)",
+              display:"flex", justifyContent:"flex-end",
+              flexShrink:0,
+            }}>
+              <button
+                onClick={() => setShopModalOpen(false)}
+                className="btn btn-ghost"
+                style={{ fontSize:"0.875rem", cursor:"pointer" }}
+              >
+                Đóng lại
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

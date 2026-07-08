@@ -1,10 +1,419 @@
-/* src/app/globals.css */
+/* ============================================================
+   CASTME — Global Design System
+   ============================================================ */
+
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@400;500;600;700&display=swap');
+
 @import "tailwindcss";
 
-body {
-  overflow: auto !important;
+/* ============================================================
+   CSS Custom Properties (Design Tokens)
+   ============================================================ */
+:root {
+  /* Background */
+  --bg:           #FAFAF9;
+  --surface:      #FFFFFF;
+  --surface-2:    #F8F7FF;
+
+  /* Primary — Deep Violet */
+  --primary:        #7C3AED;
+  --primary-hover:  #6D28D9;
+  --primary-light:  #EDE9FE;
+  --primary-muted:  #C4B5FD;
+
+  /* Accent — Rose / Pink */
+  --rose:        #F43F8E;
+  --rose-hover:  #E11D77;
+  --rose-light:  #FFE4F1;
+  --rose-muted:  #FBCFE8;
+
+  /* Neutral */
+  --slate:   #0F172A;
+  --slate-2: #1E293B;
+  --muted:   #64748B;
+  --subtle:  #94A3B8;
+  --border:  #E2E8F0;
+  --border-2:#F1F5F9;
+
+  /* Status */
+  --success:       #10B981;
+  --success-light: #D1FAE5;
+  --warning:       #F59E0B;
+  --warning-light: #FEF3C7;
+  --error:         #EF4444;
+  --error-light:   #FEE2E2;
+
+  /* Shadows */
+  --shadow-sm:  0 1px 3px 0 rgb(0 0 0 / .06), 0 1px 2px -1px rgb(0 0 0 / .04);
+  --shadow-md:  0 4px 16px -2px rgb(124 58 237 / .10), 0 2px 6px -1px rgb(0 0 0 / .05);
+  --shadow-lg:  0 12px 40px -8px rgb(124 58 237 / .18), 0 4px 12px -2px rgb(0 0 0 / .06);
+  --shadow-glow: 0 0 0 3px rgb(124 58 237 / .20);
+
+  /* Radius */
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+  --radius-full: 9999px;
+
+  /* Typography */
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+  --font-body:    'Inter', sans-serif;
 }
 
-html, body {
+/* ============================================================
+   Base Reset & Typography
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
   scrollbar-gutter: stable;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg);
+  color: var(--slate);
+  overflow: auto !important;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* Selection */
+::selection {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--subtle); }
+
+/* ============================================================
+   Keyframe Animations
+   ============================================================ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ============================================================
+   Utility: Animation Classes
+   ============================================================ */
+.animate-fade-up {
+  animation: fadeUp 0.5s ease-out both;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out both;
+}
+
+.animate-float {
+  animation: floatY 3s ease-in-out infinite;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.35s cubic-bezier(.175,.885,.32,1.275) both;
+}
+
+/* Stagger delays */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+
+/* ============================================================
+   Utility: Gradient Text
+   ============================================================ */
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--rose) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    var(--primary) 0%,
+    var(--rose) 40%,
+    var(--primary) 80%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+/* ============================================================
+   Utility: Cards
+   ============================================================ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-muted);
+}
+
+.card-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+/* ============================================================
+   Utility: Buttons
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: var(--radius-full);
+  padding: 0.625rem 1.5rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, #9333EA 100%);
+  color: white;
+  box-shadow: 0 4px 14px 0 rgb(124 58 237 / .30);
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px 0 rgb(124 58 237 / .40);
+}
+
+.btn-rose {
+  background: linear-gradient(135deg, var(--rose) 0%, #E11D77 100%);
+  color: white;
+  box-shadow: 0 4px 14px 0 rgb(244 63 142 / .30);
+}
+.btn-rose:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px 0 rgb(244 63 142 / .40);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--slate);
+  border: 1.5px solid var(--border);
+}
+.btn-ghost:hover {
+  background: var(--surface-2);
+  border-color: var(--primary-muted);
+  color: var(--primary);
+}
+
+.btn-outline-primary {
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1.5px solid var(--primary-muted);
+}
+.btn-outline-primary:hover {
+  background: var(--primary);
+  color: white;
+}
+
+/* ============================================================
+   Utility: Badges / Pills
+   ============================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.01em;
+}
+
+.badge-primary  { background: var(--primary-light); color: var(--primary); }
+.badge-rose     { background: var(--rose-light); color: var(--rose); }
+.badge-success  { background: var(--success-light); color: var(--success); }
+.badge-warning  { background: var(--warning-light); color: var(--warning); }
+.badge-error    { background: var(--error-light); color: var(--error); }
+.badge-slate    { background: #F1F5F9; color: var(--muted); }
+
+/* ============================================================
+   Utility: Form Inputs
+   ============================================================ */
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--slate);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(124 58 237 / .12);
+}
+
+.input::placeholder {
+  color: var(--subtle);
+}
+
+/* ============================================================
+   Utility: Section Spacing
+   ============================================================ */
+.section {
+  padding: 5rem 1.5rem;
+}
+
+.section-sm {
+  padding: 3rem 1.5rem;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ============================================================
+   Utility: AI Match Glow
+   ============================================================ */
+.ai-glow {
+  background: linear-gradient(135deg, #4C1D95 0%, #7C3AED 50%, #DB2777 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-glow::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.07) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* ============================================================
+   Utility: Sidebar Nav Item
+   ============================================================ */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.625rem 0.875rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.65);
+  transition: all 0.18s ease;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+
+.nav-item:hover {
+  background: rgba(255,255,255,0.10);
+  color: white;
+}
+
+.nav-item.active {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+}
+
+/* ============================================================
+   Metric Card Accent
+   ============================================================ */
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px; height: 100%;
+  background: linear-gradient(180deg, var(--primary) 0%, var(--rose) 100%);
+  border-radius: 4px 0 0 4px;
 }
