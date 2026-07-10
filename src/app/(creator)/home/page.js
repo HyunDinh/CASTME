@@ -3,14 +3,14 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSessionAction } from "../../(auth)/actions";
-import { getMyCastingJobs } from "#/app/(shop)/my-casting/actions";
+import { getUserHearts, getMyAppliedJobs } from "../actions";
 import {
   Sparkles,
   Heart,
   Briefcase,
   DollarSign,
   TrendingUp,
-  Store,
+  User,
   ArrowRight,
   Zap,
   CheckCircle,
@@ -19,23 +19,21 @@ import {
   ChevronRight,
   Play,
   Activity,
-  FileText,
-  Users,
-  Eye
+  FileText
 } from "lucide-react";
 
-export default function ShopDashboard() {
+export default function CreatorHomePage() {
   const router = useRouter();
   const [session, setSession] = useState(null);
-  const [inProgressJobs, setInProgressJobs] = useState([]);
-  const [loadingJobs, setLoadingJobs] = useState(true);
+  const [hearts, setHearts] = useState(0);
+  const [appliedCount, setAppliedCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  // Thống kê giả lập
-  const metricsData = {
-    budgetSpent: 45500000,
-    activeCampaigns: 3,
-    cooperatingKocs: 12,
-    totalReach: "1.2M",
+  // Hardcoded wallet details for placeholder/demo matching layout
+  const wallet = {
+    available: 4850000,
+    escrow: 3500000,
+    totalEarned: 8350000,
   };
 
   useEffect(() => {
@@ -44,14 +42,15 @@ export default function ShopDashboard() {
         const s = await getSessionAction();
         if (s) setSession(s);
 
-        const jobsRes = await getMyCastingJobs();
-        if (jobsRes.success) {
-          setInProgressJobs(jobsRes.data.filter((j) => j.status === "IN_PROGRESS" || j.status === "in-progress"));
-        }
+        const heartRes = await getUserHearts();
+        if (heartRes.success) setHearts(heartRes.data.hearts);
+
+        const jobsRes = await getMyAppliedJobs();
+        if (jobsRes.success) setAppliedCount(jobsRes.data.length);
       } catch (err) {
-        console.error("Lỗi khi tải dữ liệu tổng quan shop:", err);
+        console.error("Lỗi khi tải dữ liệu trang chủ:", err);
       } finally {
-        setLoadingJobs(false);
+        setLoading(false);
       }
     }
     loadData();
@@ -62,6 +61,18 @@ export default function ShopDashboard() {
     if (hr < 12) return "Chào buổi sáng ☀️";
     if (hr < 18) return "Chào buổi chiều 🌤️";
     return "Chào buổi tối 🌙";
+  };
+
+  const triggerRecharge = () => {
+    const desktopTrigger = document.getElementById("header-hearts-trigger");
+    if (desktopTrigger) {
+      desktopTrigger.click();
+      return;
+    }
+    const mobileTrigger = document.getElementById("header-hearts-trigger-mobile");
+    if (mobileTrigger) {
+      mobileTrigger.click();
+    }
   };
 
   return (
@@ -80,6 +91,7 @@ export default function ShopDashboard() {
         overflow: "hidden",
         boxShadow: "0 12px 32px rgba(120, 140, 180, 0.06)"
       }}>
+
         <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div style={{
             display: "inline-flex",
@@ -120,12 +132,12 @@ export default function ShopDashboard() {
             lineHeight: 1.6,
             margin: 0
           }}>
-            Nền tảng của Castme đã phân tích cá tính, vibe thương hiệu và đề xuất các KOC/KOL phù hợp nhất với tỉ lệ kết nối khớp chuẩn xác lên đến 99%.
+            Nền tảng của Castme đã phân tích cá tính, vibe thương hiệu và đề xuất chiến dịch phù hợp nhất với tỉ lệ kết nối khớp chuẩn xác lên đến 99%.
           </p>
 
           <div style={{ marginTop: "0.5rem" }}>
-            <button
-              onClick={() => router.push("/search-creator")}
+            <Link
+              href="/creator-dashboard"
               className="glow-btn-peach"
               style={{
                 display: "inline-flex",
@@ -135,13 +147,12 @@ export default function ShopDashboard() {
                 fontWeight: 700,
                 fontSize: "0.875rem",
                 textDecoration: "none",
-                cursor: "pointer",
-                border: "none"
+                cursor: "pointer"
               }}
             >
-              Khám Phá KOC/KOL Ngay
+              Khám Phá Chiến Dịch Ngay
               <ArrowRight size={16} />
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -149,7 +160,7 @@ export default function ShopDashboard() {
       {/* ── STATS METRICS GRID ── */}
       <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: "1.25rem" }}>
 
-        {/* CARD 1: TỔNG NGÂN SÁCH ĐÃ CHI */}
+        {/* CARD 1: TIM HIỆN CÓ */}
         <div
           style={{
             background: "white",
@@ -167,33 +178,38 @@ export default function ShopDashboard() {
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
             <div>
-              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.03em" }}>Tổng ngân sách đã chi</span>
-              <h2 style={{ fontSize: "1.625rem", fontWeight: 900, color: "#1a2b4a", margin: "0.45rem 0 0 0" }}>
-                {metricsData.budgetSpent.toLocaleString()} <span style={{ fontSize: "1rem" }}>đ</span>
+              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.03em" }}>Số Tim hiện có</span>
+              <h2 style={{ fontSize: "2.25rem", fontWeight: 900, color: "#1a2b4a", margin: "0.25rem 0 0 0" }}>
+                {loading ? "..." : hearts}
               </h2>
             </div>
             <div style={{
               width: "42px",
               height: "42px",
               borderRadius: "12px",
-              background: "rgba(16, 185, 129, 0.12)",
+              background: "rgba(244, 63, 94, 0.12)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4)"
             }}>
-              <DollarSign size={20} color="#10b981" />
+              <Heart size={20} fill="#f43f5e" stroke="#f43f5e" />
             </div>
           </div>
           <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Bảo chứng dòng tiền an toàn</span>
-            <Link href="/transactions" style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
-              Chi tiết ví <ArrowRight size={10} />
-            </Link>
+            <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Nộp hồ sơ (5 Tim/chiến dịch)</span>
+            <button
+              onClick={triggerRecharge}
+              style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "2px", transition: "color 0.2s" }}
+              onMouseEnter={(e) => e.target.style.color = "#1d4ed8"}
+              onMouseLeave={(e) => e.target.style.color = "#2563eb"}
+            >
+              Nạp ngay <Zap size={10} fill="currentColor" />
+            </button>
           </div>
         </div>
 
-        {/* CARD 2: CHIẾN DỊCH ĐANG CHẠY */}
+        {/* CARD 2: CÔNG VIỆC ĐÃ ỨNG TUYỂN */}
         <div
           style={{
             background: "white",
@@ -211,9 +227,9 @@ export default function ShopDashboard() {
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
             <div>
-              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.03em" }}>Chiến dịch đang chạy</span>
+              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.03em" }}>Chiến dịch đã nộp</span>
               <h2 style={{ fontSize: "2.25rem", fontWeight: 900, color: "#1a2b4a", margin: "0.25rem 0 0 0" }}>
-                {metricsData.activeCampaigns}
+                {loading ? "..." : appliedCount}
               </h2>
             </div>
             <div style={{
@@ -230,14 +246,14 @@ export default function ShopDashboard() {
             </div>
           </div>
           <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Cập nhật phản hồi từ KOC</span>
-            <Link href="/my-casting" style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
+            <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Cập nhật phản hồi từ Shop</span>
+            <Link href="/my-jobs" style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
               Xem danh sách <ArrowRight size={10} />
             </Link>
           </div>
         </div>
 
-        {/* CARD 3: KOC ĐANG HỢP TÁC */}
+        {/* CARD 3: SỐ DƯ VÍ KHẢ DỤNG */}
         <div
           style={{
             background: "white",
@@ -255,33 +271,33 @@ export default function ShopDashboard() {
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
             <div>
-              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.03em" }}>KOC đang hợp tác</span>
-              <h2 style={{ fontSize: "2.25rem", fontWeight: 900, color: "#1a2b4a", margin: "0.25rem 0 0 0" }}>
-                {metricsData.cooperatingKocs}
+              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.03em" }}>Số dư khả dụng</span>
+              <h2 style={{ fontSize: "1.625rem", fontWeight: 900, color: "#1a2b4a", margin: "0.45rem 0 0 0" }}>
+                {wallet.available.toLocaleString()} <span style={{ fontSize: "1rem" }}>đ</span>
               </h2>
             </div>
             <div style={{
               width: "42px",
               height: "42px",
               borderRadius: "12px",
-              background: "rgba(168, 85, 247, 0.12)",
+              background: "rgba(16, 185, 129, 0.12)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4)"
             }}>
-              <Users size={20} color="#a855f7" />
+              <DollarSign size={20} color="#10b981" />
             </div>
           </div>
           <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Tiến độ sản xuất nội dung</span>
-            <Link href="/my-casting" style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
-              Quản lý <ArrowRight size={10} />
+            <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Hỗ trợ rút về tài khoản ngân hàng</span>
+            <Link href="/revenue" style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
+              Chi tiết ví <ArrowRight size={10} />
             </Link>
           </div>
         </div>
 
-        {/* CARD 4: TỔNG LƯỢT TIẾP CẬN */}
+        {/* CARD 4: VIBE MATCH RATING */}
         <div
           style={{
             background: "white",
@@ -299,28 +315,28 @@ export default function ShopDashboard() {
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
             <div>
-              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.03em" }}>Tổng lượt tiếp cận</span>
+              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.03em" }}>Chỉ số Vibe Match</span>
               <h2 style={{ fontSize: "2.25rem", fontWeight: 900, color: "#1a2b4a", margin: "0.25rem 0 0 0" }}>
-                {metricsData.totalReach}
+                95%
               </h2>
             </div>
             <div style={{
               width: "42px",
               height: "42px",
               borderRadius: "12px",
-              background: "rgba(244, 63, 94, 0.12)",
+              background: "rgba(245, 158, 11, 0.12)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4)"
             }}>
-              <Award size={20} color="#f43f5e" />
+              <Award size={20} color="#f59e0b" />
             </div>
           </div>
           <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Tăng trưởng độ phủ thương hiệu</span>
-            <Link href="/shop-profile" style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
-              Xem hồ sơ <ArrowRight size={10} />
+            <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Tăng tỉ lệ AI match thành công</span>
+            <Link href="/profile" style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
+              Nâng cấp hồ sơ <ArrowRight size={10} />
             </Link>
           </div>
         </div>
@@ -333,7 +349,7 @@ export default function ShopDashboard() {
         {/* ── LEFT COLUMN: VIBE PANEL & QUICK LINKS ── */}
         <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
 
-          {/* Vibe cá tính thương hiệu */}
+          {/* Glass floating creator panel mockup */}
           <div style={{ borderRadius: "24px", padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem", background: "white", border: "1px solid rgba(0, 0, 0, 0.08)", boxShadow: "0 8px 32px rgba(120, 140, 180, 0.06)" }}>
 
             {/* Header Tabs */}
@@ -345,7 +361,7 @@ export default function ShopDashboard() {
                 fontWeight: 800,
                 letterSpacing: "0.03em",
                 cursor: "default"
-              }}>Vibe Nhãn Hàng</span>
+              }}>Vibe Cá Nhân</span>
               <span style={{
                 padding: "6px 14px",
                 borderRadius: "999px",
@@ -355,7 +371,7 @@ export default function ShopDashboard() {
                 letterSpacing: "0.03em",
                 cursor: "pointer",
                 background: "transparent"
-              }} onClick={() => router.push("/search-creator")}>Creator Gợi Ý</span>
+              }}>Shop Gợi Ý</span>
             </div>
 
             {/* Record Player Cover Container */}
@@ -373,14 +389,14 @@ export default function ShopDashboard() {
               {/* Floating tags */}
               <div style={{ position: "absolute", bottom: "12px", left: "12px", display: "flex", gap: "6px" }}>
                 <span style={{
-                  background: "linear-gradient(135deg, #2563eb 0%, #a855f7 100%)",
+                  background: "linear-gradient(135deg, #ffb07a 0%, #ff7eb3 100%)",
                   color: "white",
                   padding: "4px 10px",
                   borderRadius: "99px",
                   fontSize: "9px",
                   fontWeight: 800,
                   textTransform: "uppercase"
-                }}>Minimalism</span>
+                }}>Synth Wave</span>
                 <span style={{
                   background: "rgba(26, 43, 74, 0.75)",
                   color: "white",
@@ -390,19 +406,19 @@ export default function ShopDashboard() {
                   fontWeight: 700,
                   backdropFilter: "blur(4px)",
                   textTransform: "uppercase"
-                }}>Gen Z Vibe</span>
+                }}>Cyber Vinyl</span>
               </div>
             </div>
 
-            {/* Top matching creators inside capsules */}
+            {/* Top matching shops inside capsules */}
             <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                KOC Phù hợp cao nhất (AI Vibe Match)
+                Nhãn hàng phù hợp cao nhất (AI Vibe Match)
               </span>
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.5rem" }}>
 
-                {/* Creator 1 */}
+                {/* Shop 1 */}
                 <div style={{
                   background: "#f8fafc",
                   border: "1px solid rgba(0, 0, 0, 0.05)",
@@ -415,12 +431,12 @@ export default function ShopDashboard() {
                   gap: "0.25rem",
                   boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)"
                 }}>
-                  <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #3b82f6, #9333ea)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>T</div>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>Thảo Vy</span>
+                  <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #ffb07a, #ff7eb3)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>C</div>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a" }}>Coolmate</span>
                   <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>98%</span>
                 </div>
 
-                {/* Creator 2 */}
+                {/* Shop 2 */}
                 <div style={{
                   background: "#f8fafc",
                   border: "1px solid rgba(0, 0, 0, 0.05)",
@@ -433,12 +449,12 @@ export default function ShopDashboard() {
                   gap: "0.25rem",
                   boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)"
                 }}>
-                  <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #ec4899, #f43f5e)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>K</div>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>Khoa Style</span>
+                  <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #3b82f6, #60a5fa)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>A</div>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a" }}>Anker VN</span>
                   <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>95%</span>
                 </div>
 
-                {/* Creator 3 */}
+                {/* Shop 3 */}
                 <div style={{
                   background: "#f8fafc",
                   border: "1px solid rgba(0, 0, 0, 0.05)",
@@ -451,8 +467,8 @@ export default function ShopDashboard() {
                   gap: "0.25rem",
                   boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)"
                 }}>
-                  <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #10b981, #06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>M</div>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>Mai Matcha</span>
+                  <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #10b981, #34d399)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>D</div>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a" }}>Decathlon</span>
                   <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>92%</span>
                 </div>
 
@@ -468,7 +484,7 @@ export default function ShopDashboard() {
             </h3>
             <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "0.85rem" }}>
 
-              <Link href="/my-casting" style={{ textDecoration: "none", color: "inherit" }}>
+              <Link href="/creator-dashboard" style={{ textDecoration: "none", color: "inherit" }}>
                 <div
                   style={{
                     background: "white",
@@ -489,14 +505,14 @@ export default function ShopDashboard() {
                     <Sparkles size={16} color="#2563eb" />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <h4 style={{ fontSize: "0.875rem", fontWeight: 800, color: "#1a2b4a", margin: 0 }}>Khám phá KOL/KOC</h4>
-                    <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: 0 }}>Tìm kiếm theo vibe và lọc tài năng</p>
+                    <h4 style={{ fontSize: "0.875rem", fontWeight: 800, color: "#1a2b4a", margin: 0 }}>Khám phá Job mới</h4>
+                    <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: 0 }}>Tìm chiến dịch và nộp hồ sơ AI</p>
                   </div>
                   <ChevronRight size={16} color="#7a8b9f" />
                 </div>
               </Link>
 
-              <Link href="/shop-profile" style={{ textDecoration: "none", color: "inherit" }}>
+              <Link href="/profile" style={{ textDecoration: "none", color: "inherit" }}>
                 <div
                   style={{
                     background: "white",
@@ -514,17 +530,17 @@ export default function ShopDashboard() {
                   onMouseLeave={(e) => { e.currentTarget.style.transform = "translateX(0)"; e.currentTarget.style.borderColor = "rgba(0, 0, 0, 0.08)"; }}
                 >
                   <div style={{ width: "38px", height: "38px", borderRadius: "50%", background: "linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Store size={16} color="#ff6b9d" />
+                    <User size={16} color="#ff6b9d" />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <h4 style={{ fontSize: "0.875rem", fontWeight: 800, color: "#1a2b4a", margin: 0 }}>Thiết lập hồ sơ Shop</h4>
-                    <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: 0 }}>Cập nhật hình ảnh showroom, logo, danh mục</p>
+                    <h4 style={{ fontSize: "0.875rem", fontWeight: 800, color: "#1a2b4a", margin: 0 }}>Thiết lập Portfolio</h4>
+                    <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: 0 }}>Cập nhật hình ảnh, phong cách vibe cá nhân</p>
                   </div>
                   <ChevronRight size={16} color="#7a8b9f" />
                 </div>
               </Link>
 
-              <Link href="/transactions" style={{ textDecoration: "none", color: "inherit" }}>
+              <Link href="/revenue" style={{ textDecoration: "none", color: "inherit" }}>
                 <div
                   style={{
                     background: "white",
@@ -545,8 +561,8 @@ export default function ShopDashboard() {
                     <DollarSign size={16} color="#10b981" />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <h4 style={{ fontSize: "0.875rem", fontWeight: 800, color: "#1a2b4a", margin: 0 }}>Ví & Nạp Tiền</h4>
-                    <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: 0 }}>Kiểm tra số dư khả dụng và lịch sử chi tiêu</p>
+                    <h4 style={{ fontSize: "0.875rem", fontWeight: 800, color: "#1a2b4a", margin: 0 }}>Ví & Doanh thu</h4>
+                    <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: 0 }}>Rút tiền bảo hiểm và kiểm tra số dư</p>
                   </div>
                   <ChevronRight size={16} color="#7a8b9f" />
                 </div>
@@ -685,7 +701,7 @@ export default function ShopDashboard() {
             {/* Campaign Slider Line Indicator */}
             <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%", marginTop: "0.25rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)" }}>
-                <span>Đang triển khai</span>
+                <span>Đã phát hành</span>
                 <span>70% Hoàn thành</span>
               </div>
               <div style={{ width: "100%", height: "5px", background: "rgba(37,99,235,0.08)", borderRadius: "99px", overflow: "hidden", position: "relative" }}>
@@ -712,10 +728,10 @@ export default function ShopDashboard() {
       }}>
         <div>
           <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.25rem", fontWeight: 800, color: "#1a2b4a", marginBottom: "0.25rem" }}>
-            💡 Mẹo giúp Shop kết nối Creator tốt hơn
+            💡 Mẹo giúp bạn kết nối Shop tốt hơn
           </h2>
           <p style={{ fontSize: "0.78rem", color: "var(--ash)", margin: 0 }}>
-            Tối ưu hóa khả năng hiển thị và điểm vibe match với các Creator hàng đầu bằng cách làm theo các gợi ý bên dưới.
+            Tối ưu hóa khả năng hiển thị và điểm vibe match với các Shop hàng đầu bằng cách làm theo các gợi ý bên dưới.
           </p>
         </div>
 
@@ -724,30 +740,30 @@ export default function ShopDashboard() {
           <div style={{ background: "#f8fafc", padding: "1.25rem", borderRadius: "16px", border: "1px solid rgba(0,0,0,0.04)", borderLeft: "4px solid #10b981", boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
               <CheckCircle size={16} color="#10b981" />
-              <h3 style={{ fontSize: "0.875rem", fontWeight: 800, color: "#1a2b4a", margin: 0 }}>Định hình Vibe rõ ràng</h3>
+              <h3 style={{ fontSize: "0.875rem", fontWeight: 800, color: "#1a2b4a", margin: 0 }}>Từ khóa Vibe phong phú</h3>
             </div>
             <p style={{ fontSize: "0.78rem", color: "var(--muted)", lineHeight: 1.5, margin: 0 }}>
-              AI sẽ quét các tags phong cách trên hồ sơ Shop và mô tả chiến dịch (như #Minimalist, #Streetwear). Định hình vibe chính xác sẽ tăng độ phù hợp matching lên tới 98%.
+              AI sẽ quét các tags phong cách trên Portfolio của bạn (như #Minimalist, #Streetwear, #TechReview). Đặt thẻ vibe chính xác sẽ tăng độ phù hợp lên tới 98%.
             </p>
           </div>
 
           <div style={{ background: "#f8fafc", padding: "1.25rem", borderRadius: "16px", border: "1px solid rgba(0,0,0,0.04)", borderLeft: "4px solid #2563eb", boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
               <Clock size={16} color="#2563eb" />
-              <h3 style={{ fontSize: "0.875rem", fontWeight: 800, color: "#1a2b4a", margin: 0 }}>Yêu cầu công việc rõ ràng</h3>
+              <h3 style={{ fontSize: "0.875rem", fontWeight: 800, color: "#1a2b4a", margin: 0 }}>Duy trì lịch nộp bài</h3>
             </div>
             <p style={{ fontSize: "0.78rem", color: "var(--muted)", lineHeight: 1.5, margin: 0 }}>
-              Mô tả chi tiết quyền lợi, thù lao, thể lệ và kịch bản mẫu. Cung cấp đầy đủ thông tin giúp các Creator chất lượng cao dễ dàng ứng tuyển và chuẩn bị tốt hơn.
+              Các Shop cực kỳ thích các Creator hoàn thành milestone đúng hẹn. Lịch sử hoàn thành tốt được lưu trữ trên Castme và tự động hiển thị trước mắt nhà quảng cáo.
             </p>
           </div>
 
           <div style={{ background: "#f8fafc", padding: "1.25rem", borderRadius: "16px", border: "1px solid rgba(0,0,0,0.04)", borderLeft: "4px solid #f59e0b", boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
               <Award size={16} color="#f59e0b" />
-              <h3 style={{ fontSize: "0.875rem", fontWeight: 800, color: "#1a2b4a", margin: 0 }}>Phản hồi ứng tuyển nhanh</h3>
+              <h3 style={{ fontSize: "0.875rem", fontWeight: 800, color: "#1a2b4a", margin: 0 }}>Chất lượng hình ảnh / Video link</h3>
             </div>
             <p style={{ fontSize: "0.78rem", color: "var(--muted)", lineHeight: 1.5, margin: 0 }}>
-              Duy trì tương tác và phản hồi hồ sơ ứng cử từ các Creator nhanh chóng. Điều này giúp nâng điểm uy tín của Shop trên hệ thống Castme và giữ chân các creator tốt nhất.
+              Đừng quên đính kèm link TikTok/Instagram/YouTube chất lượng cao trong Portfolio. Một hồ sơ gọn gàng và trực quan giúp tăng 300% khả năng được Shop phê duyệt.
             </p>
           </div>
 

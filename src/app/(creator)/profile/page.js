@@ -2,76 +2,101 @@
 
 import { useState, useEffect } from "react";
 import { getCreatorProfile, updateCreatorProfile } from "#/app/(creator)/profile/actions";
-import { Camera, Image as ImageIcon, Loader2, Plus, X, Save, CheckCircle2, AlertCircle } from "lucide-react";
+import { Camera, Image as ImageIcon, Loader2, Plus, X, Save, CheckCircle2, AlertCircle, Bookmark, MoreHorizontal, MessageSquare, Mail, Calendar, Clock, Award, Users, ChevronDown, Check, Star, Youtube, Instagram, Facebook, Link2, MapPin } from "lucide-react";
 import { CldUploadWidget } from 'next-cloudinary';
 
+const skillPool = ["Makeup", "Model", "Review", "UGC", "Photography", "Content Creator", "Video Editing", "Livestream"];
+const stylePool = ["Streetwear", "Vintage", "Minimalism", "Y2K", "Hàn Quốc", "Cá tính", "GenZ", "Beauty", "Lifestyle"];
+
+const premiumPlaceholders = [
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=600&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=600&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?q=80&w=600&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=600&auto=format&fit=crop"
+];
+
 export default function CreatorProfileEditor() {
-  const [activeTab, setActiveTab] = useState("portfolio");
+  const [activeTab, setActiveTab] = useState("all");
   const [loading, setLoading] = useState(true);
-  
-  // Trạng thái lưu từng phần
   const [savingField, setSavingField] = useState(null);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
-  
+
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
   };
-  
-  // Current edited states
-  const [name, setName] = useState("Tên của bạn"); // Thường lấy từ User session
-  const [bio, setBio] = useState("");
-  const [selectedStyles, setSelectedStyles] = useState([]);
-  const [location, setLocation] = useState("");
-  const [priceRange, setPriceRange] = useState("");
-  const [followersCount, setFollowersCount] = useState("");
+
+  const [name, setName] = useState("Bảo Trân");
+  const [bio, setBio] = useState("Mình là Bảo Trân, một Fashion & Lifestyle Creator với 3 năm kinh nghiệm trong lĩnh vực sáng tạo nội dung...");
+  const [selectedStyles, setSelectedStyles] = useState(["Fashion", "Beauty", "Lifestyle", "Travel", "Review"]);
+  const [selectedSkills, setSelectedSkills] = useState(["Makeup", "Model", "Review", "UGC", "Photography", "Content Creator", "Video Editing", "Livestream"]);
+  const [location, setLocation] = useState("Hồ Chí Minh, Việt Nam");
+  const [followersCount, setFollowersCount] = useState("1.2K");
   const [mainImage, setMainImage] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [gallery, setGallery] = useState([]);
-  
-  // Socials structure
-  const [socialLinks, setSocialLinks] = useState({
-    tiktok: "", instagram: "", facebook: ""
-  });
+  const [reviews, setReviews] = useState([]);
 
-  // Lưu trữ dữ liệu gốc để so sánh (cho các ô text)
+  const [photoPrice, setPhotoPrice] = useState("200.000đ");
+  const [shortVideoPrice, setShortVideoPrice] = useState("500.000đ");
+  const [longVideoPrice, setLongVideoPrice] = useState("900.000đ");
+  const [livestreamPrice, setLivestreamPrice] = useState("1.200.000đ");
+
+  const [socialLinks, setSocialLinks] = useState({ tiktok: "", instagram: "", facebook: "", youtube: "" });
+  const [socialFollowers, setSocialFollowers] = useState({ tiktok: "120K", instagram: "35K", facebook: "20K", youtube: "15K" });
   const [savedData, setSavedData] = useState({});
 
-  // UI States
   const [newImageLink, setNewImageLink] = useState("");
   const [isAddingImage, setIsAddingImage] = useState(false);
   const [imageToDelete, setImageToDelete] = useState(null);
   const [isEditingCover, setIsEditingCover] = useState(false);
   const [coverInput, setCoverInput] = useState("");
-  const [socialModal, setSocialModal] = useState({ isOpen: false, platform: null, link: "" });
+  const [socialModal, setSocialModal] = useState({ isOpen: false, platform: null, link: "", followers: "" });
   const [avatarModal, setAvatarModal] = useState({ isOpen: false, link: "" });
-
-  const stylePool = ["Streetwear", "Vintage", "Minimalism", "Y2K", "Hàn Quốc", "Cá tính", "GenZ", "Beauty", "Lifestyle"];
+  const [isViewAllOpen, setIsViewAllOpen] = useState(false);
+  const [bioExpanded, setBioExpanded] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
       const result = await getCreatorProfile();
       if (result.success) {
         const d = result.data;
-        setName(d.name || "Tên của bạn");
-        setBio(d.bio || "");
-        setSelectedStyles(d.styles || []);
-        setLocation(d.location || "");
-        setPriceRange(d.priceRange || "");
-        setFollowersCount(d.followersCount || "");
-        setMainImage(d.mainImage || "https://ui-avatars.com/api/?name=Creator&background=random");
-        setCoverImage(d.coverImage || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop");
+        setName(d.name || "Bảo Trân");
+        setBio(d.bio || "Mình là Bảo Trân...");
+        const loadedStyles = d.styles || [];
+        setSelectedStyles(loadedStyles.filter(s => stylePool.includes(s)));
+        setSelectedSkills(loadedStyles.filter(s => skillPool.includes(s)));
+        setLocation(d.location || "Hồ Chí Minh, Việt Nam");
+        setFollowersCount(d.followersCount || "1.2K");
+        setMainImage(d.mainImage || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400");
+        setCoverImage(d.coverImage || "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1200");
         setGallery(d.gallery || []);
-        setSocialLinks(d.socialLinks || { tiktok: "", instagram: "", facebook: "" });
-
-        setSavedData({
-          name: d.name || "Tên của bạn",
-          bio: d.bio || "",
-          location: d.location || "",
-          priceRange: d.priceRange || "",
-          followersCount: d.followersCount || "",
-          styles: d.styles || []
-        });
+        try {
+          const prices = JSON.parse(d.priceRange);
+          if (prices && prices.photo) {
+            setPhotoPrice(prices.photo);
+            setShortVideoPrice(prices.shortVideo);
+            setLongVideoPrice(prices.longVideo);
+            setLivestreamPrice(prices.livestream);
+          }
+        } catch { }
+        const dbSocials = d.socialLinks;
+        const mappedLinks = { tiktok: "", instagram: "", facebook: "", youtube: "" };
+        const mappedFollowers = { tiktok: "120K", instagram: "35K", facebook: "20K", youtube: "15K" };
+        if (Array.isArray(dbSocials)) {
+          dbSocials.forEach(s => {
+            const key = s.platform.toLowerCase();
+            if (mappedLinks.hasOwnProperty(key)) {
+              mappedLinks[key] = s.link || "";
+              mappedFollowers[key] = s.followers || "0";
+            }
+          });
+        }
+        setSocialLinks(mappedLinks);
+        setSocialFollowers(mappedFollowers);
+        setReviews(d.reviews || []);
+        setSavedData({ name: d.name || "Bảo Trân", bio: d.bio || "", location: d.location || "", priceRange: d.priceRange || "", followersCount: d.followersCount || "", styles: d.styles || [] });
       }
       setLoading(false);
     }
@@ -80,14 +105,24 @@ export default function CreatorProfileEditor() {
 
   const handlePartialSave = async (fieldName, updates) => {
     setSavingField(fieldName);
-    
+    const stylesCombined = fieldName === 'styles' ? updates.styles : [...selectedStyles, ...selectedSkills];
+    let finalSocialLinks = [];
+    if (fieldName === 'social') {
+      finalSocialLinks = updates.socialLinks;
+    } else {
+      finalSocialLinks = [
+        { platform: "TikTok", link: socialLinks.tiktok, followers: socialFollowers.tiktok, icon: "🎵" },
+        { platform: "Instagram", link: socialLinks.instagram, followers: socialFollowers.instagram, icon: "📸" },
+        { platform: "Facebook", link: socialLinks.facebook, followers: socialFollowers.facebook, icon: "📘" },
+        { platform: "YouTube", link: socialLinks.youtube, followers: socialFollowers.youtube, icon: "📺" }
+      ];
+    }
     const payload = {
-      name, bio, styles: selectedStyles, location, priceRange, followersCount, mainImage, coverImage, gallery, socialLinks,
-      ...updates // overwrite with the specific update
+      name, bio, styles: stylesCombined, location,
+      priceRange: fieldName === 'priceRange' ? updates.priceRange : JSON.stringify({ photo: photoPrice, shortVideo: shortVideoPrice, longVideo: longVideoPrice, livestream: livestreamPrice }),
+      followersCount, mainImage, coverImage, gallery, socialLinks: finalSocialLinks, ...updates
     };
-
     const result = await updateCreatorProfile(payload);
-    
     if (result.success) {
       setSavedData(prev => ({ ...prev, ...updates }));
       showToast("Đã lưu thay đổi thành công!", "success");
@@ -100,36 +135,35 @@ export default function CreatorProfileEditor() {
   const renderSaveButton = (fieldKey, value) => {
     if (savedData[fieldKey] === value) return null;
     return (
-      <button 
-        onClick={() => handlePartialSave(fieldKey, { [fieldKey]: value })}
-        disabled={savingField === fieldKey}
-        className="ml-2 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-md shadow-sm transition flex items-center gap-1 shrink-0"
-      >
+      <button onClick={() => handlePartialSave(fieldKey, { [fieldKey]: value })} disabled={savingField === fieldKey} className="ml-2 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold rounded-md shadow-sm transition flex items-center gap-1 shrink-0 cursor-pointer">
         {savingField === fieldKey ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
         Lưu
       </button>
     );
   };
 
-  // Immediate save handlers for images and tags
-  const toggleStyle = (style) => {
-    let newStyles;
-    if (selectedStyles.includes(style)) newStyles = selectedStyles.filter(s => s !== style);
-    else newStyles = [...selectedStyles, style];
-    
+  const toggleStyle = async (style) => {
+    let newStyles = selectedStyles.includes(style) ? selectedStyles.filter(s => s !== style) : [...selectedStyles, style];
     setSelectedStyles(newStyles);
+    await handlePartialSave('styles', { styles: [...newStyles, ...selectedSkills] });
+  };
+
+  const toggleSkill = async (skill) => {
+    let newSkills = selectedSkills.includes(skill) ? selectedSkills.filter(s => s !== skill) : [...selectedSkills, skill];
+    setSelectedSkills(newSkills);
+    await handlePartialSave('styles', { styles: [...selectedStyles, ...newSkills] });
   };
 
   const handleUpdateCover = async () => {
     setCoverImage(coverInput);
     setIsEditingCover(false);
-    await handlePartialSave('cover', { coverImage: coverInput });
+    await handlePartialSave('coverImage', { coverImage: coverInput });
   };
 
   const handleUpdateAvatar = async () => {
     setMainImage(avatarModal.link);
     setAvatarModal({ isOpen: false, link: "" });
-    await handlePartialSave('avatar', { mainImage: avatarModal.link });
+    await handlePartialSave('mainImage', { mainImage: avatarModal.link });
   };
 
   const handleAddGalleryImage = async () => {
@@ -150,26 +184,33 @@ export default function CreatorProfileEditor() {
   };
 
   const handleUpdateSocial = async () => {
-    const newLinks = { ...socialLinks, [socialModal.platform]: socialModal.link };
-    setSocialLinks(newLinks);
-    setSocialModal({ isOpen: false, platform: null, link: "" });
-    await handlePartialSave('social', { socialLinks: newLinks });
+    const updatedLinks = { ...socialLinks, [socialModal.platform]: socialModal.link };
+    const updatedFollowers = { ...socialFollowers, [socialModal.platform]: socialModal.followers };
+    setSocialLinks(updatedLinks);
+    setSocialFollowers(updatedFollowers);
+    setSocialModal({ isOpen: false, platform: null, link: "", followers: "" });
+    const arraySocials = [
+      { platform: "TikTok", link: updatedLinks.tiktok, followers: updatedFollowers.tiktok, icon: "🎵" },
+      { platform: "Instagram", link: updatedLinks.instagram, followers: updatedFollowers.instagram, icon: "📸" },
+      { platform: "Facebook", link: updatedLinks.facebook, followers: updatedFollowers.facebook, icon: "📘" },
+      { platform: "YouTube", link: updatedLinks.youtube, followers: updatedFollowers.youtube, icon: "📺" }
+    ];
+    await handlePartialSave('social', { socialLinks: arraySocials });
   };
-
 
   if (loading) {
     return (
       <div className="w-full max-w-5xl mx-auto h-screen flex flex-col items-center justify-center">
-        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
         <p className="text-gray-500 font-medium">Đang tải trình chỉnh sửa...</p>
       </div>
     );
   }
 
+  const displayGallery = [...gallery, ...premiumPlaceholders];
+
   return (
-    <div className="w-full max-w-5xl mx-auto pb-24 relative">
-      
-      {/* Toast Notification */}
+    <div className="w-full bg-gray-50 min-h-screen">
       <div className={`fixed top-6 right-6 z-[200] transition-all duration-300 transform ${toast.show ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'}`}>
         <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl font-bold text-sm text-white ${toast.type === 'success' ? 'bg-gray-900 border border-gray-700' : 'bg-red-600'}`}>
           {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-green-400" /> : <AlertCircle className="w-5 h-5" />}
@@ -177,526 +218,219 @@ export default function CreatorProfileEditor() {
         </div>
       </div>
 
-      <div className="mb-6 flex justify-between items-center">
-        <span className="text-sm font-semibold text-gray-500">Chế độ xem trước & Chỉnh sửa trực tiếp</span>
+      <div className="relative w-full h-[280px] group/cover">
+        <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-50"></div>
+        {!isEditingCover && (
+          <button onClick={() => { setCoverInput(coverImage); setIsEditingCover(true); }} className="absolute bottom-6 right-6 bg-black/40 hover:bg-black/60 backdrop-blur-md px-4 py-2.5 rounded-xl text-white font-bold text-sm transition flex items-center gap-2 opacity-0 group-hover/cover:opacity-100 shadow-lg cursor-pointer z-10">
+            <Camera className="w-4 h-4" /> Chỉnh ảnh bìa
+          </button>
+        )}
+        {isEditingCover && (
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-20">
+            <div className="bg-white p-6 rounded-2xl w-[90%] max-w-md shadow-2xl flex flex-col gap-4">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2"><ImageIcon className="w-5 h-5 text-indigo-500" /> Cập nhật ảnh bìa</h3>
+              <input autoFocus type="url" value={coverInput} onChange={e => setCoverInput(e.target.value)} placeholder="Dán link Ảnh Bìa..." className="w-full p-3 text-sm border border-gray-300 rounded-xl outline-none focus:border-indigo-500 bg-gray-50" onKeyDown={(e) => { if (e.key === 'Enter') handleUpdateCover(); }} />
+              <div className="flex gap-2 mt-2">
+                <button onClick={() => setIsEditingCover(false)} className="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200 transition cursor-pointer">Hủy</button>
+                <button onClick={handleUpdateCover} className="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition cursor-pointer">{savingField === 'coverImage' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Lưu"}</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* 2. HERO SECTION */}
-      <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 relative group">
-        {/* Cover Image */}
-        <div className="h-64 md:h-80 w-full relative group/cover">
-          <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-          
-          {/* Nút Chỉnh Ảnh Bìa */}
-          {!isEditingCover && (
-            <button 
-              onClick={() => { setCoverInput(coverImage); setIsEditingCover(true); }}
-              className="absolute bottom-4 right-4 bg-black/40 hover:bg-black/60 backdrop-blur-md px-4 py-2.5 rounded-xl text-white font-bold text-sm transition flex items-center gap-2 opacity-0 group-hover/cover:opacity-100 shadow-lg cursor-pointer z-10"
-            >
-              <Camera className="w-4 h-4" /> Chỉnh ảnh bìa
-            </button>
-          )}
+      <div className="max-w-[1400px] mx-auto px-6 -mt-24 relative z-10 pb-12">
+        <div className="bg-white rounded-3xl shadow-lg p-8 mb-6">
+          <div className="flex flex-col lg:flex-row gap-8 items-center lg:items-start">
+            {/* Avatar Column */}
+            <div className="w-40 h-40 rounded-full p-1.5 bg-white shadow-xl flex-shrink-0 relative group/avatar border-4 border-white lg:-mt-20">
+              <img src={mainImage} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+              <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 border-4 border-white rounded-full"></div>
+              <div onClick={() => setAvatarModal({ isOpen: true, link: mainImage })} className="absolute inset-1.5 rounded-full bg-black/50 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer">
+                <Camera className="w-6 h-6 text-white mb-1" />
+                <span className="text-white text-[10px] font-bold">Chỉnh sửa</span>
+              </div>
+            </div>
 
-          {/* Form Chỉnh Ảnh Bìa */}
-          {isEditingCover && (
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-20">
-              <div className="bg-white p-6 rounded-2xl w-[90%] max-w-md shadow-2xl flex flex-col gap-4">
-                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                  <ImageIcon className="w-5 h-5 text-blue-500" /> Cập nhật ảnh bìa
-                </h3>
-                
-                <input 
-                  autoFocus
-                  type="url" 
-                  value={coverInput} 
-                  onChange={e => setCoverInput(e.target.value)} 
-                  placeholder="Dán link Ảnh Bìa vào đây..."
-                  className="w-full p-3 text-sm border border-gray-300 rounded-xl outline-none focus:border-blue-500 bg-gray-50"
-                  onKeyDown={(e) => {
-                    if(e.key === 'Enter') handleUpdateCover();
-                  }}
-                />
-                
-                <div className="w-full flex items-center gap-2">
-                  <div className="h-px bg-gray-200 flex-1"></div>
-                  <span className="text-[10px] text-gray-400 font-medium uppercase">hoặc</span>
-                  <div className="h-px bg-gray-200 flex-1"></div>
+            {/* Info and Actions Column */}
+            <div className="flex-1 flex flex-col gap-4 w-full">
+              {/* Row 1: Name and Action Buttons */}
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex items-center gap-2 justify-center lg:justify-start">
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="Tên của bạn"
+                    style={{ width: name ? `${name.length * 18 + 10}px` : '150px' }}
+                    className="text-3xl font-black text-gray-900 bg-transparent border-b-2 border-transparent hover:border-gray-200 focus:border-indigo-500 outline-none transition-colors text-center lg:text-left"
+                  />
+                  <span className="inline-flex items-center justify-center w-6 h-6 bg-indigo-600 rounded-full text-white text-xs font-bold shrink-0 shadow-sm">✓</span>
+                  {renderSaveButton('name', name)}
                 </div>
-                
-                <CldUploadWidget 
-                  onSuccess={(result) => { 
-                    if(result.info && result.info.secure_url) {
-                      setCoverInput(result.info.secure_url);
-                    }
-                  }}
-                  uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "default_preset"}
-                  options={{ maxFiles: 1, resourceType: "image" }}
-                >
-                  {({ open }) => (
-                    <button 
-                      type="button"
-                      onClick={(e) => { e.preventDefault(); open(); }}
-                      className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-sm font-bold py-3 rounded-xl transition flex items-center justify-center gap-2"
-                    >
-                      <Camera className="w-4 h-4" />
-                      <span>Tải ảnh từ máy (Cloudinary)</span>
-                    </button>
-                  )}
-                </CldUploadWidget>
-
-                <div className="flex gap-2 mt-2">
-                  <button onClick={() => setIsEditingCover(false)} className="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200 transition cursor-pointer">
-                    Hủy
-                  </button>
-                  <button onClick={handleUpdateCover} className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition cursor-pointer flex items-center justify-center gap-2">
-                    {savingField === 'cover' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Lưu Ảnh Bìa"}
-                  </button>
+                <div className="flex items-center gap-3 justify-center lg:justify-end flex-wrap">
+                  <button className="px-5 py-3 border-2 border-gray-200 hover:bg-gray-50 text-gray-800 font-bold text-sm rounded-xl flex items-center gap-2 transition cursor-pointer whitespace-nowrap"><MessageSquare className="w-4 h-4" /> Nhắn tin</button>
+                  <button className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-200 transition cursor-pointer whitespace-nowrap"><Mail className="w-4 h-4" /> Mời Casting</button>
+                  <button className="p-3 border-2 border-gray-200 hover:bg-gray-50 rounded-xl transition cursor-pointer shrink-0"><Bookmark className="w-5 h-5 text-gray-500" /></button>
+                  <button className="p-3 border-2 border-gray-200 hover:bg-gray-50 rounded-xl transition cursor-pointer shrink-0"><MoreHorizontal className="w-5 h-5 text-gray-500" /></button>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
 
-        {/* Info Box over Cover */}
-        <div className="absolute top-4 right-4 flex gap-2">
-          <button className="bg-white/20 backdrop-blur-md p-2.5 rounded-full text-white cursor-default">🔗</button>
-          <button className="bg-white/20 backdrop-blur-md p-2.5 rounded-full text-white cursor-default">❤️</button>
-        </div>
-
-        {/* Profile Details Container */}
-        <div className="px-6 md:px-10 pb-10 relative -mt-20 flex flex-col md:flex-row gap-6 items-end">
-          {/* Avatar */}
-          <div className="w-32 h-32 md:w-40 md:h-40 rounded-3xl p-1.5 bg-white shadow-xl flex-shrink-0 z-10 relative group/avatar">
-            <img src={mainImage} alt="Avatar" className="w-full h-full object-cover rounded-2xl" />
-            <div 
-              onClick={() => setAvatarModal({ isOpen: true, link: mainImage })}
-              className="absolute inset-1.5 rounded-2xl bg-black/50 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer"
-            >
-              <Camera className="w-8 h-8 text-white mb-1" />
-              <span className="text-white text-xs font-bold">Chỉnh sửa</span>
-            </div>
-          </div>
-
-          {/* Name & Basic Info */}
-          <div className="flex-1 mb-2 relative z-10 translate-y-[3px]">
-            <div className="flex items-center gap-3 mb-2">
-              <input 
-                type="text" 
-                value={name} 
-                onChange={e => setName(e.target.value)} 
-                placeholder="Nhập tên của bạn..."
-                className="text-3xl md:text-4xl font-black text-gray-900 bg-transparent border-b-2 border-transparent hover:border-gray-200 focus:border-blue-500 outline-none w-full max-w-sm transition-colors"
-              />
-              {renderSaveButton('name', name)}
-            </div>
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 font-medium">
-              <span className="flex items-center gap-1 group/loc relative">
-                📍 
-                <input 
-                  type="text" 
-                  value={location} 
-                  onChange={e => setLocation(e.target.value)} 
-                  placeholder="Nhập địa điểm..."
-                  className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 outline-none w-32 transition-colors"
-                />
-                {renderSaveButton('location', location)}
-              </span>
-              <span className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2.5 py-1 rounded-lg border border-yellow-200">
-                ⭐ 5.0 (0 đánh giá)
-              </span>
-            </div>
-          </div>
-
-          {/* Call to action (Mock) */}
-          <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3 mt-4 md:mt-0 opacity-50 pointer-events-none">
-            <button className="px-6 py-3 bg-gray-100 text-gray-900 font-bold rounded-xl">💬 Nhắn tin</button>
-            <button className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg">Gửi lời mời Casting</button>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. MAIN CONTENT (STATS & BIO) */}
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column (Stats & Sidebar info) */}
-        <div className="flex flex-col gap-6">
-          {/* Stats Box */}
-          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm grid grid-cols-2 gap-4 text-center">
-            <div className="p-4 bg-gray-50 rounded-2xl group/stat relative">
-              <input 
-                type="text" 
-                value={followersCount} 
-                onChange={e => setFollowersCount(e.target.value)} 
-                placeholder="VD: 1.2M"
-                className="w-full text-center bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 outline-none text-2xl font-black text-blue-600"
-              />
-              <div className="text-xs text-gray-500 font-semibold uppercase mt-1 flex justify-center items-center gap-2">
-                Người theo dõi
-                {renderSaveButton('followersCount', followersCount)}
+              {/* Row 2: Headline and Location */}
+              <div className="flex flex-col lg:flex-row lg:items-center gap-4 text-center lg:text-left">
+                <p className="text-sm font-semibold text-gray-500">Fashion & Lifestyle Creator</p>
+                <span className="hidden lg:inline text-gray-300">|</span>
+                <div className="flex items-center gap-2 text-sm text-gray-500 font-medium justify-center lg:justify-start">
+                  <MapPin className="w-4 h-4 text-indigo-500" />
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={e => setLocation(e.target.value)}
+                    placeholder="Địa điểm..."
+                    style={{ width: location ? `${location.length * 8 + 10}px` : '120px' }}
+                    className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-indigo-500 outline-none transition-colors text-gray-600"
+                  />
+                  {renderSaveButton('location', location)}
+                </div>
               </div>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-2xl opacity-70">
-              <div className="text-2xl font-black text-gray-900">0</div>
-              <div className="text-xs text-gray-500 font-semibold uppercase mt-1">Job hoàn thành</div>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-2xl col-span-2">
-              <input 
-                type="text" 
-                value={priceRange} 
-                onChange={e => setPriceRange(e.target.value)} 
-                placeholder="VD: 1tr - 3tr"
-                className="w-full text-center bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 outline-none text-lg font-black text-gray-900"
-              />
-              <div className="text-xs text-gray-500 font-semibold uppercase mt-1 flex justify-center items-center gap-2">
-                Ngân sách tham khảo
-                {renderSaveButton('priceRange', priceRange)}
-              </div>
-            </div>
-          </div>
 
-          {/* Social Links */}
-          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm relative">
-            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Kênh truyền thông</h3>
-            {savingField === 'social' && <div className="absolute top-6 right-6"><Loader2 className="w-4 h-4 text-blue-500 animate-spin" /></div>}
-            <div className="flex flex-col gap-3">
-              {[
-                { key: 'tiktok', icon: '🎵', name: 'TikTok' },
-                { key: 'instagram', icon: '📸', name: 'Instagram' },
-                { key: 'facebook', icon: '📘', name: 'Facebook' }
-              ].map((s) => {
-                const currentLink = socialLinks[s.key];
-                return (
-                  <div 
-                    key={s.key} 
-                    onClick={() => setSocialModal({ isOpen: true, platform: s.key, link: currentLink || "" })}
-                    className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-transparent hover:border-gray-200 transition group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{s.icon}</span>
-                      <span className="font-semibold text-gray-700">{s.name}</span>
-                    </div>
-                    {currentLink ? (
-                      <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">Đã liên kết (Sửa)</span>
-                    ) : (
-                      <button className="text-xs font-bold text-gray-500 group-hover:text-blue-600 transition flex items-center gap-1">
-                        <Plus className="w-3 h-3" /> Thêm link
-                      </button>
-                    )}
+              {/* Row 3: Stats and Tags */}
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-2 border-t border-gray-100 mt-2">
+                <div className="flex items-center gap-6 justify-center lg:justify-start">
+                  <div className="flex items-center gap-2 whitespace-nowrap">
+                    <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                    <span className="text-lg font-black text-gray-900">5.0</span>
+                    <span className="text-xs text-gray-400">(120 đánh giá)</span>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Styles */}
-          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm relative">
-            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex justify-between items-center">
-              Phong cách
-              <span className="text-xs text-blue-500 font-normal normal-case">Bấm để chọn</span>
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {stylePool.map((style) => (
-                <button 
-                  key={style}
-                  onClick={() => toggleStyle(style)}
-                  disabled={savingField === 'styles'}
-                  className={`px-3 py-1.5 font-bold text-xs rounded-lg border transition-all ${
-                    selectedStyles.includes(style) 
-                    ? "bg-blue-50 text-blue-700 border-blue-200" 
-                    : "bg-white text-gray-400 border-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  {style}
-                </button>
-              ))}
-            </div>
-            {JSON.stringify([...selectedStyles].sort()) !== JSON.stringify([...(savedData.styles || [])].sort()) && (
-              <div className="mt-4 flex justify-end">
-                <button 
-                  onClick={() => handlePartialSave('styles', { styles: selectedStyles })}
-                  disabled={savingField === 'styles'}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-2"
-                >
-                  {savingField === 'styles' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  Lưu thay đổi
-                </button>
+                  <div className="flex items-center gap-2 whitespace-nowrap">
+                    <Users className="w-5 h-5 text-gray-400" />
+                    <span className="text-lg font-black text-gray-900">{followersCount}</span>
+                    <span className="text-xs text-gray-400">Followers</span>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
+                  {selectedStyles.slice(0, 5).map((style, idx) => (
+                    <span key={idx} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 font-bold text-xs rounded-full border border-indigo-100 whitespace-nowrap">{style}</span>
+                  ))}
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
-
-        {/* Right Column (Tabs: Portfolio & Reviews) */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          
-          {/* Bio */}
-          <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm relative">
-            <h2 className="text-xl font-black text-gray-900 mb-4 flex items-center justify-between">
-              Giới thiệu
-              <span className="text-xs font-normal text-gray-400">Click để sửa</span>
-            </h2>
-            <textarea 
-              rows={4}
-              value={bio}
-              onChange={e => setBio(e.target.value)}
-              placeholder="Xin chào, tôi là..."
-              className="w-full text-gray-600 leading-relaxed bg-transparent resize-none outline-none border border-transparent hover:border-gray-200 focus:border-blue-500 rounded-xl p-3 -mx-3 transition-colors"
-            />
-            {savedData.bio !== bio && (
-              <div className="absolute bottom-4 right-4">
-                <button 
-                  onClick={() => handlePartialSave('bio', { bio })}
-                  disabled={savingField === 'bio'}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-2"
-                >
-                  {savingField === 'bio' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  Lưu thay đổi
-                </button>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-6 gap-y-4">
+          {/* Cột trái Hàng 1 */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-2xl p-5 shadow-sm h-full flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Thông tin nhanh</h3>
+                  <span className="bg-green-50 text-green-600 text-[10px] font-bold px-2 py-1 rounded-md flex items-center gap-1">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>Available
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 mb-3">Có thể nhận job ngay</p>
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-2 text-gray-500"><Clock className="w-4 h-4" /> Phản hồi</span><span className="font-bold text-gray-900">&lt; 2 giờ</span></div>
+                  <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-2 text-gray-500"><CheckCircle2 className="w-4 h-4" /> Tỉ lệ hoàn thành</span><span className="font-bold text-gray-900">98%</span></div>
+                  <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-2 text-gray-500"><Calendar className="w-4 h-4" /> Tham gia Castme</span><span className="font-bold text-gray-900">05/2023</span></div>
+                  <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-2 text-gray-500"><MapPin className="w-4 h-4" /> Khu vực</span><span className="font-bold text-indigo-600">{location.split(',')[0]}</span></div>
+                </div>
               </div>
-            )}
+            </div>
+          </div>
+          {/* Cột phải Hàng 1 */}
+          <div className="lg:col-span-9">
+            <div className="bg-white rounded-2xl p-6 shadow-sm h-full flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Giới thiệu</h3>
+                <textarea rows={bioExpanded ? 8 : 3} value={bio} onChange={e => setBio(e.target.value)} placeholder="Xin chào, tôi là..." className="w-full text-sm text-gray-700 leading-relaxed bg-transparent resize-none outline-none border border-transparent hover:border-gray-200 focus:border-indigo-500 rounded-xl p-3 transition-colors" />
+              </div>
+              <div className="flex justify-between items-center mt-3">
+                <button onClick={() => setBioExpanded(!bioExpanded)} className="text-xs font-bold text-indigo-600 hover:text-indigo-700 cursor-pointer">{bioExpanded ? "Thu gọn" : "Xem thêm"}</button>
+                {savedData.bio !== bio && (<button onClick={() => handlePartialSave('bio', { bio })} disabled={savingField === 'bio'} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer">{savingField === 'bio' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}Lưu thay đổi</button>)}
+              </div>
+            </div>
           </div>
 
-          {/* Tabs Container */}
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden relative">
-            {savingField === 'gallery' && <div className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur rounded-full p-1"><Loader2 className="w-5 h-5 text-blue-500 animate-spin" /></div>}
-            
-            {/* Tab Headers */}
-            <div className="flex border-b border-gray-100">
-              <button 
-                onClick={() => setActiveTab("portfolio")}
-                className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition ${activeTab === 'portfolio' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/30' : 'text-gray-500 hover:bg-gray-50'}`}
-              >
-                Portfolio & Hình ảnh
-              </button>
-              <button 
-                onClick={() => setActiveTab("reviews")}
-                className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition ${activeTab === 'reviews' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/30' : 'text-gray-500 hover:bg-gray-50'}`}
-              >
-                Đánh giá từ Shop (0)
-              </button>
+          {/* Cột trái Hàng 2 */}
+          <div className="lg:col-span-3">
+            <div className="flex flex-col gap-4 h-full justify-between">
+              <div className="bg-white rounded-2xl p-5 shadow-sm">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Mạng xã hội</h3>
+                <div className="space-y-2">
+                  {[{ key: 'tiktok', icon: '🎵', name: 'TikTok' }, { key: 'instagram', icon: '📸', name: 'Instagram' }, { key: 'facebook', icon: '📘', name: 'Facebook' }, { key: 'youtube', icon: '📺', name: 'YouTube' }].map((s) => {
+                    const currentLink = socialLinks[s.key]; const followers = socialFollowers[s.key];
+                    return (<div key={s.key} onClick={() => setSocialModal({ isOpen: true, platform: s.key, link: currentLink || "", followers: followers })} className="flex items-center justify-between py-1.5 px-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition group cursor-pointer">
+                      <div className="flex items-center gap-3"><span className="text-base">{s.icon}</span><span className="font-bold text-xs text-gray-700">{s.name}</span></div>
+                      <div className="flex items-center gap-2"><span className="text-xs font-black text-gray-900">{followers}</span>{currentLink ? <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Sửa</span> : <Plus className="w-4 h-4 text-gray-400 group-hover:text-indigo-600" />}</div>
+                    </div>);
+                  })}
+                </div>
+                <button className="w-full mt-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"><Link2 className="w-4 h-4" />Xem tất cả liên kết</button>
+              </div>
+              <div className="bg-white rounded-2xl p-5 shadow-sm">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex justify-between items-center">Kỹ năng<span className="text-[10px] text-gray-400 font-normal normal-case">Bấm để chọn</span></h3>
+                <div className="flex flex-wrap gap-2">{skillPool.map((skill) => (<button key={skill} onClick={() => toggleSkill(skill)} disabled={savingField === 'styles'} className={`px-2.5 py-1 font-bold text-xs rounded-lg border transition-all cursor-pointer ${selectedSkills.includes(skill) ? "bg-indigo-50 text-indigo-600 border-indigo-200" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}>{skill}</button>))}</div>
+              </div>
             </div>
+          </div>
 
-            {/* Tab Content */}
-            <div className="p-8">
-              
-              {/* PORTFOLIO TAB */}
-              {activeTab === "portfolio" && (
-                <div>
-                  <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                    {/* Block Add Image (Luôn hiển thị đầu tiên) */}
-                    <div 
-                      className="group relative rounded-2xl overflow-hidden aspect-square border-2 border-dashed border-gray-300 hover:border-blue-500 bg-gray-50 flex flex-col items-center justify-center cursor-pointer transition"
-                      onClick={() => !isAddingImage && setIsAddingImage(true)}
-                    >
-                      {isAddingImage ? (
-                        <div className="p-4 w-full flex flex-col gap-2 items-center text-center">
-                          <input 
-                            autoFocus
-                            type="url" 
-                            value={newImageLink} 
-                            onChange={(e) => setNewImageLink(e.target.value)} 
-                            placeholder="Dán link ảnh..."
-                            className="w-full p-2 text-xs border border-gray-300 rounded-lg outline-none focus:border-blue-500 bg-white"
-                            onClick={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => {
-                              if(e.key === 'Enter') handleAddGalleryImage();
-                              if(e.key === 'Escape') setIsAddingImage(false);
-                            }}
-                          />
-                          
-                          <div className="w-full flex items-center gap-2 my-1">
-                            <div className="h-px bg-gray-200 flex-1"></div>
-                            <span className="text-[10px] text-gray-400 font-medium uppercase">hoặc</span>
-                            <div className="h-px bg-gray-200 flex-1"></div>
-                          </div>
-                          
-                          <CldUploadWidget 
-                            onSuccess={(result) => { 
-                              if(result.info && result.info.secure_url) {
-                                setNewImageLink(result.info.secure_url);
-                              }
-                            }}
-                            uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "default_preset"}
-                            options={{ maxFiles: 1, resourceType: "image" }}
-                          >
-                            {({ open }) => (
-                              <button 
-                                type="button"
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); open(); }}
-                                className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-bold py-1.5 rounded-lg transition flex items-center justify-center"
-                              >
-                                <span>Tải ảnh lên (Cloudinary)</span>
-                              </button>
-                            )}
-                          </CldUploadWidget>
-
-                          <div className="flex gap-2 w-full mt-1">
-                            <button onClick={(e) => { e.stopPropagation(); handleAddGalleryImage(); }} className="flex-1 bg-blue-600 text-white text-xs font-bold py-1.5 rounded-lg hover:bg-blue-700 transition">Lưu link</button>
-                            <button onClick={(e) => { e.stopPropagation(); setIsAddingImage(false); }} className="flex-1 bg-gray-200 text-gray-700 text-xs font-bold py-1.5 rounded-lg hover:bg-gray-300 transition">Hủy</button>
-                          </div>
+          {/* Cột phải Hàng 2 */}
+          <div className="lg:col-span-9">
+            <div className="bg-white rounded-2xl p-6 shadow-sm h-full flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-bold text-gray-900">Portfolio</h2>
+                  <button onClick={() => setIsViewAllOpen(true)} className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 cursor-pointer">Xem tất cả <span>→</span></button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {displayGallery.slice(0, 8).map((img, idx) => (
+                    <div key={idx} className="relative rounded-xl overflow-hidden aspect-[10/9] group/img bg-gray-100 border border-gray-200">
+                      <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover group-hover/img:scale-105 transition duration-500 cursor-pointer" onClick={() => setIsViewAllOpen(true)} />
+                      {idx < 2 && (<div className="absolute bottom-2 left-2 bg-black/40 backdrop-blur-md w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] shadow-md pointer-events-none">▶</div>)}
+                      {idx === 7 && displayGallery.length > 8 && (
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white font-bold text-sm hover:bg-black/70 transition cursor-pointer" onClick={() => setIsViewAllOpen(true)}>
+                          <span className="text-xl">+{displayGallery.length - 7}</span>
+                          <span className="text-[9px] font-semibold uppercase tracking-wider mt-1">Xem tất cả</span>
                         </div>
-                      ) : (
-                        <>
-                          <Plus className="w-10 h-10 text-gray-400 group-hover:text-blue-500 mb-2 transition-colors" />
-                          <span className="text-sm font-bold text-gray-500 group-hover:text-blue-500 transition-colors">Thêm ảnh</span>
-                        </>
                       )}
                     </div>
-
-                    {/* Danh sách ảnh hiện tại */}
-                    {gallery.map((img, idx) => (
-                      <div key={idx} className="group relative rounded-2xl overflow-hidden aspect-square border border-gray-100">
-                        <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" onError={(e) => {e.target.src='https://placehold.co/400?text=Lỗi+Ảnh'}} />
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setImageToDelete(idx); }}
-                          className="absolute top-3 right-3 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-red-500 backdrop-blur-sm"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                  ))}
                 </div>
-              )}
-
-              {/* REVIEWS TAB */}
-              {activeTab === "reviews" && (
-                <div className="flex flex-col items-center justify-center py-10 text-center opacity-50">
-                  <span className="text-4xl mb-4">⭐</span>
-                  <p className="text-gray-500 font-medium">Chưa có đánh giá nào (Tab này chỉ xem)</p>
-                </div>
-              )}
-
+              </div>
+              <div className="flex justify-end mt-4"><button onClick={() => setIsAddingImage(true)} className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-5 py-2.5 rounded-xl transition flex items-center gap-2 cursor-pointer"><Plus className="w-4 h-4" />Thêm ảnh mới</button></div>
             </div>
           </div>
 
+          {/* Cột trái Hàng 3 */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-2xl p-5 shadow-sm h-full">
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex justify-between items-center">Phong cách<span className="text-[10px] text-gray-400 font-normal normal-case">Bấm để chọn</span></h3>
+              <div className="flex flex-wrap gap-2">{stylePool.map((style) => (<button key={style} onClick={() => toggleStyle(style)} disabled={savingField === 'styles'} className={`px-2.5 py-1 font-bold text-xs rounded-lg border transition-all cursor-pointer ${selectedStyles.includes(style) ? "bg-indigo-50 text-indigo-600 border-indigo-200" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}>{style}</button>))}</div>
+            </div>
+          </div>
+
+          {/* Cột phải Hàng 3 */}
+          <div className="lg:col-span-9">
+            <div className="bg-white rounded-2xl p-6 shadow-sm h-full flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-6"><h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Đánh giá của khách hàng</h3><button className="text-xs font-bold text-indigo-600 hover:text-indigo-700 cursor-pointer">Xem tất cả →</button></div>
+              <div className="flex items-center gap-2 mb-4">{Array.from({ length: 5 }).map((_, i) => (<Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />))}<span className="text-sm font-black text-gray-900 ml-1">5.0</span><span className="text-xs text-gray-400">(120 đánh giá)</span></div>
+              <div className="space-y-4"><div className="p-4 bg-gray-50 rounded-xl border border-gray-100"><p className="text-sm text-gray-700 italic mb-3 leading-relaxed">"Trân làm việc rất chuyên nghiệp, đúng deadline và nội dung sáng tạo. Hình ảnh & video đẹp!"</p><div className="flex items-center justify-between"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-black text-indigo-600 text-sm">M</div><div><h4 className="text-xs font-bold text-gray-900">Shop Minh Anh</h4><p className="text-[10px] text-gray-500">Chiến dịch: Review mỹ phẩm</p></div></div><span className="text-[10px] text-gray-400 font-medium">12/05/2024</span></div></div></div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {imageToDelete !== null && (
-        <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl transform transition-all">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Xóa hình ảnh?</h3>
-            <p className="text-gray-500 mb-6 text-sm">Bạn có chắc chắn muốn xóa hình ảnh này khỏi Portfolio? Hành động này sẽ được lưu ngay lập tức.</p>
-            <div className="flex gap-3">
-              <button 
-                onClick={() => setImageToDelete(null)}
-                className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition cursor-pointer"
-              >
-                Hủy
-              </button>
-              <button 
-                onClick={handleDeleteGalleryImage}
-                className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 transition cursor-pointer flex justify-center items-center gap-2"
-              >
-                {savingField === 'gallery' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Đồng ý xóa"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {imageToDelete !== null && (<div className="fixed inset-0 z-[120] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"><div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl transform transition-all"><h3 className="text-lg font-bold text-gray-900 mb-2">Xóa hình ảnh?</h3><p className="text-gray-500 mb-6 text-sm leading-relaxed">Bạn có chắc chắn muốn xóa hình ảnh này khỏi Portfolio?</p><div className="flex gap-3"><button onClick={() => setImageToDelete(null)} className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition cursor-pointer">Hủy</button><button onClick={handleDeleteGalleryImage} className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white font-bold text-sm rounded-xl shadow-lg transition cursor-pointer flex justify-center items-center gap-2">{savingField === 'gallery' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Đồng ý xóa"}</button></div></div></div>)}
 
-      {/* Social Link Modal */}
-      {socialModal.isOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl transform transition-all">
-            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-               Cập nhật link {socialModal.platform === 'tiktok' ? 'TikTok' : socialModal.platform === 'instagram' ? 'Instagram' : 'Facebook'}
-            </h3>
-            <input 
-              autoFocus
-              type="url"
-              value={socialModal.link}
-              onChange={e => setSocialModal({...socialModal, link: e.target.value})}
-              placeholder="https://..."
-              className="w-full p-3 text-sm border border-gray-300 rounded-xl outline-none focus:border-blue-500 bg-gray-50 mb-6"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleUpdateSocial();
-              }}
-            />
-            <div className="flex gap-3">
-              <button 
-                onClick={() => setSocialModal({ isOpen: false, platform: null, link: "" })}
-                className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition cursor-pointer"
-              >
-                Hủy
-              </button>
-              <button 
-                onClick={handleUpdateSocial}
-                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition cursor-pointer flex justify-center items-center gap-2"
-              >
-                {savingField === 'social' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Xác nhận"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {socialModal.isOpen && (<div className="fixed inset-0 z-[120] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"><div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl transform transition-all space-y-4"><h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">Liên kết {socialModal.platform === 'tiktok' ? 'TikTok' : socialModal.platform === 'instagram' ? 'Instagram' : socialModal.platform === 'facebook' ? 'Facebook' : 'YouTube'}</h3><div className="space-y-1"><label className="text-[10px] font-bold text-gray-500 uppercase">Link URL</label><input autoFocus type="url" value={socialModal.link} onChange={e => setSocialModal({ ...socialModal, link: e.target.value })} placeholder="https://..." className="w-full p-3 text-sm border border-gray-300 rounded-xl outline-none focus:border-indigo-500 bg-gray-50" /></div><div className="space-y-1"><label className="text-[10px] font-bold text-gray-500 uppercase">Số lượng Followers</label><input type="text" value={socialModal.followers} onChange={e => setSocialModal({ ...socialModal, followers: e.target.value })} placeholder="10K, 250K..." className="w-full p-3 text-sm border border-gray-300 rounded-xl outline-none focus:border-indigo-500 bg-gray-50" onKeyDown={(e) => { if (e.key === 'Enter') handleUpdateSocial(); }} /></div><div className="flex gap-3 pt-2"><button onClick={() => setSocialModal({ isOpen: false, platform: null, link: "", followers: "" })} className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition cursor-pointer">Hủy</button><button onClick={handleUpdateSocial} className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg transition cursor-pointer flex justify-center items-center gap-2">{savingField === 'social' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Xác nhận"}</button></div></div></div>)}
 
-      {/* Avatar Modal */}
-      {avatarModal.isOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl transform transition-all">
-            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-               <Camera className="w-5 h-5 text-blue-500" /> Cập nhật Ảnh Đại Diện
-            </h3>
-            
-            <input 
-              autoFocus
-              type="url"
-              value={avatarModal.link}
-              onChange={e => setAvatarModal({...avatarModal, link: e.target.value})}
-              placeholder="Dán link ảnh vào đây..."
-              className="w-full p-3 text-sm border border-gray-300 rounded-xl outline-none focus:border-blue-500 bg-gray-50"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleUpdateAvatar();
-              }}
-            />
-            
-            <div className="w-full flex items-center gap-2 my-4">
-              <div className="h-px bg-gray-200 flex-1"></div>
-              <span className="text-[10px] text-gray-400 font-medium uppercase">hoặc</span>
-              <div className="h-px bg-gray-200 flex-1"></div>
-            </div>
-            
-            <CldUploadWidget 
-              onSuccess={(result) => { 
-                if(result.info && result.info.secure_url) {
-                  setAvatarModal({...avatarModal, link: result.info.secure_url});
-                }
-              }}
-              uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "default_preset"}
-              options={{ maxFiles: 1, resourceType: "image" }}
-            >
-              {({ open }) => (
-                <button 
-                  type="button"
-                  onClick={(e) => { e.preventDefault(); open(); }}
-                  className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-sm font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 mb-6"
-                >
-                  <Camera className="w-4 h-4" />
-                  <span>Tải ảnh từ máy (Cloudinary)</span>
-                </button>
-              )}
-            </CldUploadWidget>
+      {avatarModal.isOpen && (<div className="fixed inset-0 z-[120] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"><div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl transform transition-all"><h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Camera className="w-5 h-5 text-indigo-500" />Cập nhật Ảnh Đại Diện</h3><input autoFocus type="url" value={avatarModal.link} onChange={e => setAvatarModal({ ...avatarModal, link: e.target.value })} placeholder="Dán link ảnh..." className="w-full p-3 text-sm border border-gray-300 rounded-xl outline-none focus:border-indigo-500 bg-gray-50 mb-4" onKeyDown={(e) => { if (e.key === 'Enter') handleUpdateAvatar(); }} /><div className="flex gap-3"><button onClick={() => setAvatarModal({ isOpen: false, link: "" })} className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition cursor-pointer">Hủy</button><button onClick={handleUpdateAvatar} className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg transition cursor-pointer flex justify-center items-center gap-2">{savingField === 'mainImage' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Xác nhận"}</button></div></div></div>)}
 
-            <div className="flex gap-3">
-              <button 
-                onClick={() => setAvatarModal({ isOpen: false, link: "" })}
-                className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition cursor-pointer"
-              >
-                Hủy
-              </button>
-              <button 
-                onClick={handleUpdateAvatar}
-                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition cursor-pointer flex justify-center items-center gap-2"
-              >
-                {savingField === 'avatar' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Xác nhận"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {isViewAllOpen && (<div className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"><div className="bg-white rounded-3xl p-6 md:p-8 max-w-5xl w-full shadow-2xl transform transition-all flex flex-col max-h-[85vh]"><div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4"><div><h3 className="text-lg font-bold text-gray-900">Tất cả hình ảnh</h3><p className="text-xs text-gray-500 mt-1">Tổng cộng {gallery.length} hình ảnh</p></div><button onClick={() => setIsViewAllOpen(false)} className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-900 transition cursor-pointer"><X className="w-5 h-5" /></button></div><div className="flex-1 overflow-y-auto pr-1"><div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"><div className="group relative rounded-2xl overflow-hidden aspect-square border-2 border-dashed border-gray-300 hover:border-indigo-500 bg-gray-50 flex flex-col items-center justify-center cursor-pointer transition-colors" onClick={() => setIsAddingImage(true)}><Plus className="w-6 h-6 text-gray-400 group-hover:text-indigo-500 mb-1 transition-colors" /><span className="text-[10px] font-bold text-gray-400 group-hover:text-indigo-500 transition-colors">Thêm ảnh</span></div>{gallery.map((img, idx) => (<div key={idx} className="group relative rounded-2xl overflow-hidden aspect-square border border-gray-100 bg-gray-50"><img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" onError={(e) => { e.target.src = 'https://placehold.co/400?text=Lỗi+Ảnh' }} /><button onClick={(e) => { e.stopPropagation(); setImageToDelete(idx); }} className="absolute top-2 right-2 w-7 h-7 bg-black/60 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-red-500 backdrop-blur-sm cursor-pointer"><X className="w-4 h-4" /></button></div>))}</div></div><div className="border-t border-gray-100 pt-4 mt-4 flex justify-end"><button onClick={() => setIsViewAllOpen(false)} className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-md transition cursor-pointer">Hoàn tất</button></div></div></div>)}
+
+      {isAddingImage && (<div className="fixed inset-0 z-[130] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"><div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl transform transition-all space-y-4"><h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">Thêm hình ảnh mới</h3><input autoFocus type="url" value={newImageLink} onChange={e => setNewImageLink(e.target.value)} placeholder="Dán link hình ảnh..." className="w-full p-3 text-sm border border-gray-300 rounded-xl outline-none focus:border-indigo-500 bg-gray-50" onKeyDown={(e) => { if (e.key === 'Enter') handleAddGalleryImage(); }} /><div className="flex gap-3 pt-2"><button onClick={() => { setIsAddingImage(false); setNewImageLink(""); }} className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition cursor-pointer">Hủy</button><button onClick={handleAddGalleryImage} className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg transition cursor-pointer flex justify-center items-center gap-2">{savingField === 'gallery' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Xác nhận"}</button></div></div></div>)}
 
     </div>
   );

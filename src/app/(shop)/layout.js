@@ -13,10 +13,11 @@ import {
   Bell,
   LogOut,
   Wallet,
-  ChevronRight,
-  Sparkles,
+  ChevronDown,
+  Menu,
   X,
 } from "lucide-react";
+import { logoutAction, getSessionAction } from "../(auth)/actions";
 
 const STATIC_STYLES = [
   { type: "style", name: "Food Review", icon: "🍔" },
@@ -27,369 +28,366 @@ const STATIC_STYLES = [
 ];
 
 const menuItems = [
-  { name: "Tổng quan Shop", path: "/shop-dashboard", icon: LayoutDashboard },
-  { name: "Hồ sơ Cửa Hàng", path: "/shop-profile", icon: Store },
-  { name: "Quản lý Casting", path: "/my-casting", icon: Megaphone },
-  { name: "Tin nhắn", path: "/messages", icon: MessageSquare },
-  { name: "Lịch sử giao dịch", path: "/transactions", icon: CreditCard },
+  { name: "TỔNG QUAN SHOP", path: "/shop-dashboard", icon: LayoutDashboard },
+  { name: "KHÁM PHÁ KOL/KOC", path: "/search-creator" },
+  { name: "HỒ SƠ CỬA HÀNG", path: "/shop-profile", icon: Store },
+  { name: "QUẢN LÝ CASTING", path: "/my-casting", icon: Megaphone },
+  { name: "TIN NHẮN", path: "/messages", icon: MessageSquare },
+  { name: "GIAO DỊCH", path: "/transactions", icon: CreditCard },
+  { name: "GIỚI THIỆU", path: "/" },
+
 ];
 
 export default function ShopLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [searchCreator, setSearchCreator] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [creatorSuggestions, setCreatorSuggestions] = useState([]);
-  const searchContainerRef = useRef(null);
-
-  /* ── Debounce search ── */
-  useEffect(() => {
-    const fetchCreators = async () => {
-      if (searchCreator.trim() === "") { setCreatorSuggestions([]); return; }
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/creators/search?q=${encodeURIComponent(searchCreator)}`);
-        const result = await res.json();
-        if (result.success) {
-          setCreatorSuggestions(result.data.map((creator) => ({
-            ...creator,
-            type: "creator",
-            style: creator.styles?.length > 0 ? creator.styles.join(", ") : "Chưa cập nhật",
-          })));
-        }
-      } catch (e) { console.error(e); }
-      finally { setLoading(false); }
-    };
-    const t = setTimeout(fetchCreators, 300);
-    return () => clearTimeout(t);
-  }, [searchCreator]);
-
-  const styleSuggestions = searchCreator.trim() === ""
-    ? []
-    : STATIC_STYLES.filter((i) => i.name.toLowerCase().includes(searchCreator.toLowerCase()));
-  const filteredSuggestions = [...styleSuggestions, ...creatorSuggestions];
+  const [session, setSession] = useState(null);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const handler = (e) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) setShowDropdown(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    async function loadSession() {
+      const s = await getSessionAction();
+      if (s) setSession(s);
+    }
+    loadSession();
   }, []);
 
-  const handleSelectSuggestion = (s) => {
-    setSearchCreator(s.name);
-    setShowDropdown(false);
-    router.push(s.type === "style" ? `/search-creator?style=${encodeURIComponent(s.name)}` : `/search-creator?q=${encodeURIComponent(s.name)}`);
-  };
+  useEffect(() => {
+    if (!showUserDropdown) return;
+    const handleOutsideClick = (e) => {
+      const container = document.getElementById("shop-profile-dropdown");
+      if (container && !container.contains(e.target)) {
+        setShowUserDropdown(false);
+      }
+    };
+    document.addEventListener("click", handleOutsideClick);
+    return () => document.removeEventListener("click", handleOutsideClick);
+  }, [showUserDropdown]);
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && searchCreator.trim()) {
-      setShowDropdown(false);
-      router.push(`/search-creator?q=${encodeURIComponent(searchCreator.trim())}`);
+  const handleLogout = async () => {
+    const res = await logoutAction();
+    if (res.success) {
+      router.push("/login");
+      router.refresh();
     }
   };
 
-  /* ── Inline styles ── */
-  const S = {
-    wrap: {
+  return (
+    <div className={`shop-workspace ${pathname.startsWith("/messages") ? "messages-bg-override" : ""}`} style={{
+      height: pathname.startsWith("/messages") ? "100vh" : "auto",
       minHeight: "100vh",
       display: "flex",
       flexDirection: "column",
-      background: "var(--bg)",
       fontFamily: "var(--font-body)",
-    },
-    topbar: {
-      position: "sticky",
-      top: 0,
-      zIndex: 40,
-      height: "64px",
-      background: "var(--surface)",
-      borderBottom: "1px solid var(--border)",
-      padding: "0 1.5rem",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: "1rem",
-      boxShadow: "0 1px 8px rgba(0,0,0,0.04)",
-    },
-    logo: {
-      fontFamily: "var(--font-heading)",
-      fontSize: "1.375rem",
-      fontWeight: 800,
-      textDecoration: "none",
-      background: "linear-gradient(135deg, var(--primary) 0%, var(--rose) 100%)",
-      WebkitBackgroundClip: "text",
-      WebkitTextFillColor: "transparent",
-      backgroundClip: "text",
-      letterSpacing: "-0.03em",
-      flexShrink: 0,
-    },
-    body: { display: "flex", flex: 1, minHeight: 0 },
-    sidebar: {
-      width: "240px",
-      flexShrink: 0,
-      background: "linear-gradient(180deg, #1E0845 0%, #2D1060 50%, #4C1D95 100%)",
-      display: "flex",
-      flexDirection: "column",
-      padding: "1.25rem 0.875rem",
-      gap: "2px",
-    },
-    sidebarLabel: {
-      fontSize: "0.6875rem",
-      fontWeight: 700,
-      textTransform: "uppercase",
-      letterSpacing: "0.1em",
-      color: "rgba(196,181,253,0.50)",
-      padding: "0 0.5rem 0.5rem",
-      marginBottom: "0.25rem",
-      marginTop: "0.5rem",
-    },
-  };
-
-  return (
-    <div style={S.wrap}>
-      {/* ── TOP BAR ── */}
-      <header style={S.topbar}>
-        {/* Logo + Search */}
-        <div style={{ display:"flex", alignItems:"center", gap:"1.25rem", flex:1, minWidth:0 }}>
-          <Link href="/shop-dashboard" style={S.logo}>castme.</Link>
-
-          {/* Search Bar */}
-          <div ref={searchContainerRef} style={{ position:"relative", maxWidth:"340px", width:"100%" }}>
+      overflow: pathname.startsWith("/messages") ? "hidden" : "visible"
+    }}>
+      {/* ── DESKTOP HORIZONTAL HEADER (TOP NAV) ── */}
+      <header style={{
+        position: "fixed",
+        top: 0, left: 0, right: 0,
+        height: "72px",
+        background: "rgba(255, 255, 255, 0.85)",
+        borderBottom: "1px solid var(--border)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        zIndex: 100,
+        display: "grid",
+        gridTemplateColumns: "1.2fr auto 1fr",
+        alignItems: "center",
+        padding: "0 2.5rem",
+      }} className="hidden-mobile">
+        {/* Left: Brand Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", justifySelf: "start", width: "100%" }}>
+          <Link href="/shop-dashboard" style={{ display: "flex", alignItems: "center", gap: "0.625rem", textDecoration: "none", flexShrink: 0 }}>
             <div style={{
-              display:"flex", alignItems:"center",
-              background:"var(--bg)", border:"1.5px solid var(--border)",
-              borderRadius:"var(--radius-md)",
-              padding:"0.5rem 0.875rem",
-              gap:"0.5rem",
-              transition:"border-color 0.2s, box-shadow 0.2s",
-            }}
-              onFocusCapture={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(124,58,237,0.10)"; }}
-              onBlurCapture={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.boxShadow = "none"; } }}
-            >
-              <Search size={15} color="var(--subtle)" strokeWidth={2} />
-              <input
-                type="text"
-                placeholder="Tìm KOL/Creator (vibe, style...)"
-                style={{ background:"transparent", border:"none", outline:"none", fontSize:"0.875rem", color:"var(--slate)", width:"100%", fontFamily:"var(--font-body)" }}
-                value={searchCreator}
-                onChange={(e) => { setSearchCreator(e.target.value); setShowDropdown(true); }}
-                onFocus={() => { if (searchCreator.trim()) setShowDropdown(true); }}
-                onKeyDown={handleKeyDown}
-              />
-              {searchCreator && (
-                <button onClick={() => { setSearchCreator(""); setShowDropdown(false); }} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--subtle)", padding:0, display:"flex" }}>
-                  <X size={14} />
-                </button>
-              )}
+              width: "28px", height: "28px",
+              background: "linear-gradient(135deg, var(--primary) 0%, #9333ea 100%)",
+              borderRadius: "var(--radius-sm)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 12px rgba(124, 58, 237, 0.2)"
+            }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
             </div>
+            <span style={{
+              fontFamily: "var(--font-heading)",
+              fontSize: "1.25rem",
+              fontWeight: 800,
+              letterSpacing: "0.04em",
+              color: "var(--charcoal)",
+            }}>CASTME</span>
+            <span style={{
+              fontSize: "0.55rem",
+              fontWeight: 800,
+              background: "rgba(124, 58, 237, 0.08)",
+              color: "var(--primary)",
+              padding: "0.15rem 0.5rem",
+              borderRadius: "99px",
+              marginLeft: "0.25rem",
+              letterSpacing: "0.06em",
+            }}>SHOP</span>
+          </Link>
+        </div>
 
-            {/* Search Dropdown */}
-            {showDropdown && searchCreator.trim() && (
+        {/* Center: Navigation Capsule Menu */}
+        <nav className="landing-nav-capsule glass-capsule-nav" style={{ display: "flex", alignItems: "center", gap: "0.25rem", justifySelf: "center" }}>
+          {menuItems.map((item) => {
+            const active = pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                style={{
+                  fontFamily: "var(--font-heading)",
+                  fontSize: "0.8125rem",
+                  fontWeight: active ? 700 : 600,
+                  color: active ? "#c2410c" : "var(--charcoal)",
+                  textDecoration: "none",
+                  transition: "all 0.2s ease",
+                  letterSpacing: "0.01em",
+                  padding: "0.4375rem 1.125rem",
+                  borderRadius: "999px",
+                  whiteSpace: "nowrap",
+                  ...(active ? {
+                    background: "linear-gradient(135deg, rgba(255, 183, 130, 0.55) 0%, rgba(255, 140, 170, 0.4) 100%)",
+                    border: "1px solid rgba(255, 154, 108, 0.35)",
+                  } : {})
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) e.currentTarget.style.background = "rgba(255, 255, 255, 0.35)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) e.currentTarget.style.background = "transparent";
+                }}
+              >
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Right: User actions & settings */}
+        <div style={{ display: "flex", alignItems: "center", gap: "1.125rem", justifySelf: "end" }}>
+          {/* Wallet Status */}
+          <div
+            onClick={() => router.push("/transactions")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.45rem",
+              padding: "0.42rem 0.875rem",
+              background: "rgba(255, 255, 255, 0.35)",
+              border: "1.2px solid rgba(124, 58, 237, 0.25)",
+              borderRadius: "var(--radius-full)",
+              cursor: "pointer",
+              fontSize: "0.8125rem",
+              fontWeight: 700,
+              color: "var(--charcoal)",
+              transition: "all 0.2s",
+              userSelect: "none",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; e.currentTarget.style.background = "rgba(255, 255, 255, 0.45)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(124, 58, 237, 0.25)"; e.currentTarget.style.background = "rgba(255, 255, 255, 0.35)"; }}
+          >
+            <Wallet size={14} color="#7c3aed" strokeWidth={2.5} />
+            <span>1.5M₫</span>
+            <span style={{ fontSize: "0.6875rem", color: "var(--primary)", fontWeight: 800 }}>Nạp</span>
+          </div>
+
+          {/* Notification bell */}
+          <button style={{ width: "36px", height: "36px", borderRadius: "50%", background: "rgba(255, 255, 255, 0.25)", border: "1px solid rgba(255, 255, 255, 0.4)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--ash)", position: "relative" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.45)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)"; }}
+          >
+            <Bell size={15} />
+            <span style={{ position: "absolute", top: "8px", right: "8px", width: "6px", height: "6px", background: "var(--primary)", borderRadius: "50%" }} />
+          </button>
+
+          {/* Profile Dropdown */}
+          <div id="shop-profile-dropdown" style={{ position: "relative" }}>
+            <button
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              style={{
+                display: "flex", alignItems: "center", gap: "0.5rem",
+                padding: "0.45rem 0.875rem", borderRadius: "var(--radius-full)",
+                background: "rgba(255, 255, 255, 0.35)", border: "1.5px solid var(--charcoal)",
+                fontSize: "0.8125rem", fontWeight: 700, color: "var(--charcoal)", cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.55)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.35)"; }}
+            >
               <div style={{
-                position:"absolute", top:"calc(100% + 8px)", left:0, right:0,
-                background:"var(--surface)",
-                borderRadius:"var(--radius-md)",
-                border:"1px solid var(--border)",
-                boxShadow:"var(--shadow-lg)",
-                overflow:"hidden",
-                maxHeight:"380px",
-                overflowY:"auto",
-                zIndex:999,
+                width: "20px", height: "20px",
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, var(--primary) 0%, #9333ea 100%)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "0.6875rem",
+                fontWeight: 700,
+                color: "white",
               }}>
-                {loading ? (
-                  <div style={{ padding:"2rem", textAlign:"center" }}>
-                    <div style={{ width:"24px", height:"24px", border:"2.5px solid var(--primary)", borderTopColor:"transparent", borderRadius:"50%", animation:"spinSlow 0.8s linear infinite", margin:"0 auto 0.5rem" }} />
-                    <span style={{ fontSize:"0.8125rem", color:"var(--muted)" }}>Đang tìm kiếm...</span>
-                  </div>
-                ) : filteredSuggestions.length > 0 ? (
-                  <div style={{ padding:"0.5rem 0" }}>
-                    {filteredSuggestions.filter((s) => s.type === "style").length > 0 && (
-                      <div>
-                        <div style={{ padding:"0.5rem 1rem", fontSize:"0.625rem", fontWeight:700, color:"var(--subtle)", textTransform:"uppercase", letterSpacing:"0.1em", background:"var(--bg)" }}>
-                          Phong cách / Ngành hàng
-                        </div>
-                        {filteredSuggestions.filter((s) => s.type === "style").map((item, i) => (
-                          <div key={`s-${i}`} onClick={() => handleSelectSuggestion(item)}
-                            style={{ padding:"0.75rem 1rem", display:"flex", alignItems:"center", gap:"0.75rem", cursor:"pointer", transition:"background 0.15s" }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = "var(--primary-light)"}
-                            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                          >
-                            <span style={{ width:"32px", height:"32px", background:"var(--bg)", borderRadius:"var(--radius-sm)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"1rem" }}>{item.icon}</span>
-                            <span style={{ fontSize:"0.875rem", fontWeight:500, color:"var(--slate)" }}>{item.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {filteredSuggestions.filter((s) => s.type === "creator").length > 0 && (
-                      <div>
-                        <div style={{ padding:"0.5rem 1rem", fontSize:"0.625rem", fontWeight:700, color:"var(--subtle)", textTransform:"uppercase", letterSpacing:"0.1em", background:"var(--bg)", borderTop:"1px solid var(--border)" }}>
-                          Creator / KOL
-                        </div>
-                        {filteredSuggestions.filter((s) => s.type === "creator").map((item, i) => (
-                          <div key={`c-${i}`} onClick={() => handleSelectSuggestion(item)}
-                            style={{ padding:"0.75rem 1rem", display:"flex", alignItems:"center", gap:"0.75rem", cursor:"pointer", transition:"background 0.15s" }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = "var(--primary-light)"}
-                            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                          >
-                            <div style={{ width:"36px", height:"36px", background:"var(--primary-light)", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"0.75rem", fontWeight:700, color:"var(--primary)", flexShrink:0, overflow:"hidden" }}>
-                              {item.avatar && item.avatar.length > 1 ? <img src={item.avatar} alt={item.name} style={{ width:"100%", height:"100%", objectFit:"cover" }} /> : item.avatar}
-                            </div>
-                            <div>
-                              <div style={{ fontSize:"0.875rem", fontWeight:600, color:"var(--slate)" }}>{item.name}</div>
-                              <div style={{ fontSize:"0.6875rem", color:"var(--muted)" }}>{item.style}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div style={{ padding:"2rem", textAlign:"center" }}>
-                    <div style={{ fontSize:"1.5rem", marginBottom:"0.5rem" }}>🔍</div>
-                    <div style={{ fontSize:"0.875rem", color:"var(--muted)" }}>Không tìm thấy kết quả cho &ldquo;{searchCreator}&rdquo;</div>
-                  </div>
-                )}
+                {session?.name ? session.name[0].toUpperCase() : "B"}
+              </div>
+              <span style={{ maxWidth: "80px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {session?.name || "Brand Name"}
+              </span>
+              <ChevronDown size={12} style={{ transform: showUserDropdown ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+            </button>
+            {showUserDropdown && (
+              <div className="animate-slide-down" style={{
+                position: "absolute", top: "calc(100% + 8px)", right: 0,
+                background: "rgba(15, 23, 42, 0.95)", border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-lg)",
+                padding: "0.5rem 0", minWidth: "180px", zIndex: 110,
+                backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)"
+              }}>
+                <Link href="/shop-profile" style={{ display: "block", padding: "0.625rem 1rem", fontSize: "0.8125rem", color: "#e2e8f0", textDecoration: "none", fontWeight: 600, transition: "all 0.15s" }} onMouseEnter={(e) => { e.target.style.background = "rgba(255,255,255,0.05)"; e.target.style.color = "#dfc39d"; }} onMouseLeave={(e) => { e.target.style.background = "transparent"; e.target.style.color = "#e2e8f0"; }}>🏪 Hồ sơ Shop</Link>
+                <Link href="/transactions" style={{ display: "block", padding: "0.625rem 1rem", fontSize: "0.8125rem", color: "#e2e8f0", textDecoration: "none", fontWeight: 600, transition: "all 0.15s" }} onMouseEnter={(e) => { e.target.style.background = "rgba(255,255,255,0.05)"; e.target.style.color = "#dfc39d"; }} onMouseLeave={(e) => { e.target.style.background = "transparent"; e.target.style.color = "#e2e8f0"; }}>💳 Lịch sử giao dịch</Link>
+                <div style={{ height: "1px", background: "rgba(255, 255, 255, 0.08)", margin: "0.25rem 0" }} />
+                <button onClick={handleLogout} style={{ display: "block", width: "100%", textAlign: "left", padding: "0.625rem 1rem", fontSize: "0.8125rem", color: "var(--error)", background: "none", border: "none", cursor: "pointer", fontWeight: 600, transition: "all 0.15s" }} onMouseEnter={(e) => e.target.style.background = "rgba(239, 68, 68, 0.08)"} onMouseLeave={(e) => e.target.style.background = "transparent"}>🚪 Đăng xuất</button>
               </div>
             )}
           </div>
         </div>
+      </header>
 
-        {/* Right Actions */}
-        <div style={{ display:"flex", alignItems:"center", gap:"0.625rem", flexShrink:0 }}>
-          {/* Notification Bell */}
-          <button style={{ width:"38px", height:"38px", display:"flex", alignItems:"center", justifyContent:"center", background:"none", border:"none", cursor:"pointer", borderRadius:"var(--radius-md)", position:"relative", transition:"background 0.2s" }}
-            onMouseEnter={(e) => e.currentTarget.style.background = "var(--bg)"}
-            onMouseLeave={(e) => e.currentTarget.style.background = "none"}
-          >
-            <Bell size={18} color="var(--muted)" />
-            <span style={{ position:"absolute", top:"6px", right:"6px", width:"7px", height:"7px", background:"var(--rose)", borderRadius:"50%", border:"1.5px solid white" }} />
-          </button>
-
-          {/* Divider */}
-          <div style={{ width:"1px", height:"28px", background:"var(--border)" }} />
-
-          {/* User pill */}
-          <div style={{ display:"flex", alignItems:"center", gap:"0.625rem", cursor:"pointer", padding:"0.375rem 0.75rem 0.375rem 0.375rem", borderRadius:"var(--radius-full)", border:"1px solid var(--border)", background:"var(--bg)", transition:"all 0.2s" }}
-            onClick={() => router.push("/shop-profile")}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--primary-muted)"; e.currentTarget.style.background = "var(--primary-light)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--bg)"; }}
-          >
-            <div style={{ width:"30px", height:"30px", background:"linear-gradient(135deg, var(--primary) 0%, var(--rose) 100%)", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", color:"white", fontWeight:800, fontSize:"0.8125rem" }}>B</div>
-            <div>
-              <div style={{ fontSize:"0.8125rem", fontWeight:700, color:"var(--slate)", lineHeight:1.2 }}>Brand Name</div>
-              <div style={{ fontSize:"0.625rem", fontWeight:700, color:"var(--primary)" }}>SHOP</div>
-            </div>
-          </div>
+      {/* ── MOBILE NAVBAR (TOP) ── */}
+      <header style={{
+        height: "64px",
+        background: "rgba(255, 255, 255, 0.85)",
+        borderBottom: "1px solid var(--border)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        position: "fixed",
+        top: 0, right: 0, left: 0,
+        zIndex: 95,
+        padding: "0 1.25rem",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }} className="show-mobile">
+        <button onClick={() => setSidebarOpen(true)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--charcoal)" }}>
+          <Menu size={22} />
+        </button>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.5rem", textDecoration: "none" }}>
+          <span style={{ fontFamily: "var(--font-display)", fontSize: "1.15rem", fontWeight: 700, color: "var(--charcoal)" }}>CASTME</span>
+        </Link>
+        <div id="header-wallet-trigger-mobile" onClick={() => router.push("/transactions")} style={{ display: "flex", alignItems: "center", gap: "0.25rem", background: "rgba(124, 58, 237, 0.1)", padding: "0.3rem 0.625rem", borderRadius: "99px", color: "var(--primary)", fontSize: "0.75rem", fontWeight: 800, cursor: "pointer" }}>
+          <Wallet size={12} color="var(--primary)" strokeWidth={2.5} />
+          <span>1.5M₫</span>
         </div>
       </header>
 
-      {/* ── BODY ── */}
-      <div style={S.body}>
-        {/* Sidebar */}
-        <aside style={S.sidebar} className="castme-sidebar">
-          <p style={S.sidebarLabel}>Menu Shop</p>
+      {/* MOBILE DRAWER SIDEBAR */}
+      {sidebarOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex" }}>
+          {/* Overlay */}
+          <div onClick={() => setSidebarOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} />
 
-          {menuItems.map(({ name, path, icon: Icon }) => {
-            const active = pathname === path;
-            return (
-              <Link key={path} href={path}
-                style={{
-                  display:"flex", alignItems:"center", gap:"0.625rem",
-                  padding:"0.625rem 0.875rem",
-                  borderRadius:"var(--radius-md)",
-                  textDecoration:"none",
-                  fontSize:"0.875rem",
-                  fontWeight: active ? 700 : 500,
-                  color: active ? "white" : "rgba(255,255,255,0.60)",
-                  background: active ? "rgba(255,255,255,0.15)" : "transparent",
-                  border: active ? "1px solid rgba(255,255,255,0.15)" : "1px solid transparent",
-                  boxShadow: active ? "inset 0 1px 0 rgba(255,255,255,0.10)" : "none",
-                  transition:"all 0.18s ease",
-                }}
-                onMouseEnter={(e) => { if (!active) { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "white"; } }}
-                onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(255,255,255,0.60)"; } }}
-              >
-                <Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                {name}
-              </Link>
-            );
-          })}
-
-          {/* Logout */}
-          <button
-            onClick={() => router.push("/login")}
-            style={{
-              display:"flex", alignItems:"center", gap:"0.625rem",
-              padding:"0.625rem 0.875rem", marginTop:"0.5rem",
-              borderRadius:"var(--radius-md)",
-              background:"none", border:"none", cursor:"pointer",
-              fontSize:"0.875rem", fontWeight:500,
-              color:"rgba(255,100,100,0.75)",
-              width:"100%", textAlign:"left",
-              transition:"all 0.18s ease",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.12)"; e.currentTarget.style.color = "#FF8080"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "rgba(255,100,100,0.75)"; }}
-          >
-            <LogOut size={16} strokeWidth={2} />
-            Đăng xuất
-          </button>
-
-          {/* Wallet Card */}
+          {/* Menu Drawer */}
           <div style={{
-            marginTop:"auto",
-            background:"rgba(255,255,255,0.08)",
-            border:"1px solid rgba(255,255,255,0.12)",
-            borderRadius:"var(--radius-lg)",
-            padding:"1rem",
+            position: "relative",
+            width: "270px",
+            background: "var(--chalk)",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            animation: "slideUp 0.3s ease",
+            padding: "1.5rem",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
           }}>
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"0.5rem" }}>
-              <div style={{ display:"flex", alignItems:"center", gap:"0.375rem" }}>
-                <Wallet size={14} color="rgba(196,181,253,0.80)" />
-                <span style={{ fontSize:"0.75rem", fontWeight:600, color:"rgba(196,181,253,0.80)" }}>Số dư ví</span>
-              </div>
-              <span style={{ fontSize:"0.9375rem", fontWeight:800, color:"white" }}>1.5M</span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+              <span style={{ fontFamily: "var(--font-display)", fontSize: "1.25rem", fontWeight: 700 }}>CASTME</span>
+              <button onClick={() => setSidebarOpen(false)} style={{ background: "none", border: "none", color: "var(--charcoal)", cursor: "pointer" }}>
+                <X size={20} />
+              </button>
             </div>
-            <p style={{ fontSize:"0.6875rem", color:"rgba(196,181,253,0.60)", lineHeight:1.5, marginBottom:"0.75rem" }}>
-              Dùng để đăng thêm chiến dịch hoặc mở khóa thông tin KOL.
-            </p>
-            <button style={{
-              width:"100%", padding:"0.5rem",
-              background:"rgba(255,255,255,0.12)",
-              border:"1px solid rgba(255,255,255,0.15)",
-              borderRadius:"var(--radius-sm)",
-              color:"white", fontWeight:700, fontSize:"0.75rem",
-              cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:"0.375rem",
-              transition:"background 0.2s",
-            }}
-              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.20)"}
-              onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.12)"}
-            >
-              + Nạp thêm tiền
-            </button>
-          </div>
-        </aside>
 
-        {/* Main Content */}
-        <main
-          style={{
-            flex: 1,
-            minWidth: 0,
-            ...(pathname.startsWith("/messages")
-              ? { overflow: "hidden", display: "flex", flexDirection: "column" }
-              : { padding: "2rem", overflowY: "auto" }),
-          }}
-        >
+            <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                const active = pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    href={item.path}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`sidebar-nav-item ${active ? "active" : ""}`}
+                  >
+                    <Icon size={16} />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: "1rem", marginBottom: "1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <Wallet size={16} color="var(--primary)" />
+                  <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--charcoal)" }}>Số dư ví:</span>
+                </div>
+                <span style={{ fontSize: "1rem", fontWeight: 800, color: "var(--primary)" }}>1.5M₫</span>
+              </div>
+            </div>
+
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: "1.5rem", marginTop: "auto" }}>
+              <button onClick={() => { setSidebarOpen(false); handleLogout(); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.75rem", color: "var(--error)", border: "none", background: "none", fontWeight: 600, fontSize: "0.875rem", cursor: "pointer" }}>
+                <LogOut size={16} />
+                Đăng xuất
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MAIN WORKSPACE AREA ── */}
+      <div style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        marginLeft: 0,
+        minWidth: 0,
+        ...(pathname.startsWith("/messages") ? { height: "calc(100vh - 72px)", overflow: "hidden" } : {})
+      }} className={`shop-workspace ${pathname.startsWith("/messages") ? "messages-bg-override" : ""}`}>
+        {/* ── WORKSPACE CONTENT ── */}
+        <main style={{
+          flex: 1,
+          padding: pathname.startsWith("/messages") ? "0" : "0.75rem 2.5rem 2rem 2.5rem",
+          boxSizing: "border-box",
+          marginTop: "72px", // Fixed space for the desktop top navbar
+          marginLeft: "auto",
+          marginRight: "auto",
+          marginBottom: 0,
+          maxWidth: pathname.startsWith("/messages") ? "100%" : "1200px",
+          width: "100%",
+          ...(pathname.startsWith("/messages") ? { display: "flex", flexDirection: "column", overflow: "hidden", height: "100%" } : {})
+        }} className={`shop-workspace-content ${pathname.startsWith("/messages") ? "messages-active" : ""}`}>
           {children}
         </main>
       </div>
 
       <style>{`
-        @media (max-width: 1024px) {
-          .castme-sidebar { display: none !important; }
+        .show-mobile { display: none !important; }
+        .shop-workspace-content { zoom: 0.9; }
+        .shop-workspace-content.messages-active {
+          height: calc((100vh - 72px) / 0.9);
+        }
+        /* Override workspace background image for messages page */
+        .shop-workspace.messages-bg-override {
+          background-image: none !important;
+          background-color: white !important;
+        }
+        @media (max-width: 768px) {
+          .hidden-mobile { display: none !important; }
+          .show-mobile { display: flex !important; }
+          .shop-workspace { margin-left: 0 !important; }
+          .shop-workspace-content { padding: 1.5rem 1.25rem !important; margin-top: 0 !important; zoom: 1 !important; }
+          .shop-workspace-content.messages-active {
+            height: calc(100vh - 64px) !important;
+          }
         }
       `}</style>
     </div>

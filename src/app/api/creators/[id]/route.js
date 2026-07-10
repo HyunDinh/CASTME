@@ -98,7 +98,15 @@ export async function GET(request, { params }) {
       avatar: profile.mainImage || creator.name.charAt(0).toUpperCase(),
       bio: profile.bio || "Creator này chưa cập nhật tiểu sử.",
       location: profile.location || "Chưa cập nhật",
-      priceRange: profile.priceRange || "Thỏa thuận",
+      priceRange: (() => {
+        try {
+          const prices = JSON.parse(profile.priceRange);
+          if (prices && prices.photo) {
+            return `${prices.photo} - ${prices.livestream}`;
+          }
+        } catch {}
+        return profile.priceRange || "Thỏa thuận";
+      })(),
       styles: profile.styles || [],
       stats: {
         followers: profile.followersCount || "0",

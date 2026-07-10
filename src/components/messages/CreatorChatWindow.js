@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Paperclip, FileText, FileBadge, Info, AlertCircle, CheckCircle } from "lucide-react";
-import ProposalDealModal from "./ProposalDealModal";
+import CreatorProposalDealModal from "./CreatorProposalDealModal";
 
-export default function ChatWindow({ chat, messages, onSendMessage, onSendProposal }) {
+export default function CreatorChatWindow({ chat, messages, onSendMessage, onSendProposal }) {
   const [inputText, setInputText] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const scrollRef = useRef(null);
@@ -34,7 +34,7 @@ export default function ChatWindow({ chat, messages, onSendMessage, onSendPropos
       onSendMessage(chat.id, {
         type: "text",
         content: inputText,
-        sender: "shop",
+        sender: "koc",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       });
       setInputText("");
@@ -45,7 +45,7 @@ export default function ChatWindow({ chat, messages, onSendMessage, onSendPropos
     onSendProposal(chat.id, {
       type: "proposal",
       content: data,
-      sender: "shop",
+      sender: "koc",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: "pending",
     });
@@ -64,18 +64,18 @@ export default function ChatWindow({ chat, messages, onSendMessage, onSendPropos
       
       {/* 1. CHAT HEADER */}
       <div className="h-20 border-b border-gray-100 flex items-center justify-between px-6 bg-white shrink-0">
-        {/* KOC Info */}
+        {/* Shop Info */}
         <div className="flex items-center gap-4">
           <div className="relative">
             <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-2xl border border-indigo-100">
-              {chat.kocAvatar}
+              {chat.shopAvatar}
             </div>
             {chat.isOnline && (
               <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
             )}
           </div>
           <div>
-            <h2 className="text-base font-extrabold text-gray-900">{chat.kocName}</h2>
+            <h2 className="text-base font-extrabold text-gray-900">{chat.shopName}</h2>
             <p className="text-xs font-medium text-gray-500">
               {chat.isOnline ? "Đang hoạt động" : "Hoạt động 2 giờ trước"}
             </p>
@@ -95,7 +95,7 @@ export default function ChatWindow({ chat, messages, onSendMessage, onSendPropos
             <p className="text-sm font-black text-gray-900">{chat.originalBudget}</p>
           </div>
           <button className="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold rounded-xl transition-colors border border-gray-200 cursor-pointer flex items-center gap-2">
-            <Info size={14} /> Xem Profile
+            <Info size={14} /> Xem Shop
           </button>
         </div>
       </div>
@@ -103,15 +103,15 @@ export default function ChatWindow({ chat, messages, onSendMessage, onSendPropos
       {/* 2. MESSAGE FEED */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
         {messages.map((msg, idx) => {
-          const isShop = msg.sender === "shop";
+          const isMyMessage = msg.sender === "koc";
           
           return (
-            <div key={idx} className={`flex flex-col ${isShop ? "items-end" : "items-start"}`}>
+            <div key={idx} className={`flex flex-col ${isMyMessage ? "items-end" : "items-start"}`}>
               
               {/* Tin nhắn Text thông thường */}
               {msg.type === "text" && (
                 <div className={`max-w-[75%] px-4 py-3 rounded-2xl text-sm shadow-xs ${
-                  isShop 
+                  isMyMessage 
                     ? "bg-blue-600 text-white rounded-tr-sm" 
                     : "bg-gray-100 border border-gray-200/60 text-gray-800 rounded-tl-sm"
                 }`}>
@@ -122,7 +122,7 @@ export default function ChatWindow({ chat, messages, onSendMessage, onSendPropos
               {/* Tin nhắn đính kèm Hình ảnh */}
               {msg.type === "image" && (
                 <div className={`max-w-[60%] p-1.5 rounded-2xl shadow-xs border ${
-                  isShop ? "bg-blue-600 border-blue-700 rounded-tr-sm" : "bg-white border-gray-100 rounded-tl-sm"
+                  isMyMessage ? "bg-blue-600 border-blue-700 rounded-tr-sm" : "bg-white border-gray-100 rounded-tl-sm"
                 }`}>
                   <img src={msg.content} alt="Attachment" className="rounded-xl w-full object-cover" />
                 </div>
@@ -130,12 +130,12 @@ export default function ChatWindow({ chat, messages, onSendMessage, onSendPropos
 
               {/* THẺ HỢP ĐỒNG THÔNG MINH (Proposal Deal Card) */}
               {msg.type === "proposal" && (
-                <div className={`w-full max-w-sm mt-2 mb-2 bg-white rounded-2xl border border-blue-100 shadow-md overflow-hidden ${isShop ? "rounded-tr-sm" : "rounded-tl-sm"}`}>
+                <div className={`w-full max-w-sm mt-2 mb-2 bg-white rounded-2xl border border-blue-100 shadow-md overflow-hidden ${isMyMessage ? "rounded-tr-sm" : "rounded-tl-sm"}`}>
                   <div className="bg-linear-to-r from-blue-600 to-indigo-600 p-4 text-white flex items-center gap-3">
                     <FileBadge size={24} />
                     <div>
                       <h4 className="font-extrabold text-sm">Thẻ Hợp Đồng Dịch Vụ</h4>
-                      <p className="text-[10px] text-blue-100 font-medium">Gửi từ {isShop ? "Shop" : "KOC"}</p>
+                      <p className="text-[10px] text-blue-100 font-medium">Gửi từ {msg.sender === "shop" ? "Shop" : "KOC"}</p>
                     </div>
                   </div>
                   <div className="p-5 space-y-4">
@@ -227,11 +227,11 @@ export default function ChatWindow({ chat, messages, onSendMessage, onSendPropos
       </div>
 
       {/* Modal Tạo Proposal */}
-      <ProposalDealModal 
+      <CreatorProposalDealModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         onSubmit={handleProposalSubmit}
-        kocName={chat.kocName}
+        shopName={chat.shopName}
       />
 
     </div>

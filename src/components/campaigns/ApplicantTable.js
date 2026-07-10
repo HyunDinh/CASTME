@@ -78,7 +78,7 @@ export default function ApplicantTable({ job, onActionComplete }) {
           <tbody className="divide-y divide-gray-50">
             {applicants.map((app) => (
               <tr key={app.id} className="hover:bg-gray-50/50 transition-colors">
-                
+
                 {/* 1. Người sáng tạo */}
                 <td className="p-4 pl-6 align-top">
                   <div className="flex gap-3">
@@ -132,17 +132,17 @@ export default function ApplicantTable({ job, onActionComplete }) {
                 {/* 4. Hành động */}
                 <td className="p-4 pr-6 align-top">
                   <div className="flex flex-col gap-2 items-end">
-                    
+
                     {app.status === "PENDING" && !isJobFilled && (
                       <div className="flex items-center gap-2">
-                        <button 
+                        <button
                           onClick={() => handleReject(app.id, app.creator.name)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 cursor-pointer" 
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 cursor-pointer"
                           title="Từ chối"
                         >
                           <X size={18} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleApprove(app.id, app.creator.name)}
                           className="px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-500 hover:text-white text-xs font-bold rounded-lg transition-colors border border-emerald-200 hover:border-emerald-500 flex items-center gap-1.5 cursor-pointer shadow-sm"
                         >
@@ -163,7 +163,7 @@ export default function ApplicantTable({ job, onActionComplete }) {
                       </span>
                     )}
 
-                    <button 
+                    <button
                       onClick={() => handleMessage(app.creator.name)}
                       className="flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-blue-600 px-2 py-1 rounded-md hover:bg-blue-50 transition-colors cursor-pointer mt-1"
                     >
@@ -177,7 +177,7 @@ export default function ApplicantTable({ job, onActionComplete }) {
           </tbody>
         </table>
         {applicants.length === 0 && (
-           <div className="py-20 text-center flex flex-col items-center justify-center bg-white">
+          <div className="py-20 text-center flex flex-col items-center justify-center bg-white">
             <h3 className="text-lg font-bold text-gray-900">Không có ứng viên nào</h3>
             <p className="text-gray-500 mt-1 text-sm">Chưa có ai ứng tuyển vào bài đăng này.</p>
           </div>

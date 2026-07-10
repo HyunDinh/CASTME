@@ -4,10 +4,10 @@ import { Store, Rocket, Eye, Zap } from "lucide-react";
 
 /* Status config */
 const STATUS_CONFIG = {
-  RECRUITING:   { label: "Đang tuyển",       color: "var(--success)",  bg: "var(--success-light)",  dot: true },
-  IN_PROGRESS:  { label: "Đang thực hiện",   color: "var(--primary)",  bg: "var(--primary-light)",  dot: true },
-  COMPLETED:    { label: "Đã kết thúc",      color: "var(--muted)",    bg: "#F1F5F9",               dot: false },
-  DRAFT:        { label: "Bản nháp",         color: "var(--warning)",  bg: "var(--warning-light)",  dot: false },
+  RECRUITING: { label: "Đang tuyển", color: "var(--success)", bg: "var(--success-light)", dot: true },
+  IN_PROGRESS: { label: "Đang thực hiện", color: "var(--primary)", bg: "var(--primary-light)", dot: true },
+  COMPLETED: { label: "Đã kết thúc", color: "var(--muted)", bg: "#F1F5F9", dot: false },
+  DRAFT: { label: "Bản nháp", color: "var(--warning)", bg: "var(--warning-light)", dot: false },
 };
 
 export default function JobCard({ job, role = "koc", onAction, actionLabel, onRefresh }) {
@@ -23,7 +23,7 @@ export default function JobCard({ job, role = "koc", onAction, actionLabel, onRe
 
   return (
     <div style={{
-      background: "var(--surface)",
+      background: isShop ? "white" : "var(--surface)",
       border: "1px solid var(--border)",
       borderRadius: "var(--radius-lg)",
       padding: "1.375rem 1.5rem",

@@ -19,7 +19,17 @@ export async function getCreatorProfile() {
   try {
     const dbUser = await prisma.user.findUnique({
       where: { id: user.id },
-      include: { creatorProfile: true }
+      include: { 
+        creatorProfile: true,
+        receivedReviews: {
+          include: { 
+            shop: { 
+              include: { shopProfile: true } 
+            } 
+          },
+          orderBy: { createdAt: "desc" }
+        }
+      }
     });
 
     if (!dbUser) return { success: false, error: "Người dùng không tồn tại" };
@@ -39,6 +49,14 @@ export async function getCreatorProfile() {
         coverImage: profile?.coverImage || "",
         gallery: profile?.gallery || [],
         socialLinks: profile?.socialLinks || {},
+        reviews: (dbUser.receivedReviews || []).map(r => ({
+          id: r.id,
+          shopName: r.shop?.shopProfile?.shopName || r.shop?.name || "Shop",
+          avatar: r.shop?.shopProfile?.mainImage || "",
+          rating: r.rating,
+          content: r.content,
+          createdAt: r.createdAt.toLocaleDateString("vi-VN"),
+        })),
       },
     };
   } catch (error) {

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Search } from "lucide-react";
 
-export default function ChatList({ chats, selectedChatId, onSelectChat }) {
+export default function CreatorChatList({ chats, selectedChatId, onSelectChat }) {
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -12,7 +12,7 @@ export default function ChatList({ chats, selectedChatId, onSelectChat }) {
   ];
 
   const filteredChats = chats.filter((chat) => {
-    const matchesSearch = chat.kocName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = chat.shopName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = filter === "all" ? true : chat.status === filter;
     return matchesSearch && matchesFilter;
   });
@@ -31,7 +31,7 @@ export default function ChatList({ chats, selectedChatId, onSelectChat }) {
           </span>
           <input
             type="text"
-            placeholder="Tìm kiếm KOC..."
+            placeholder="Tìm kiếm Shop..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm"
@@ -70,7 +70,7 @@ export default function ChatList({ chats, selectedChatId, onSelectChat }) {
             >
               <div className="relative shrink-0">
                 <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-2xl border border-indigo-100">
-                  {chat.kocAvatar}
+                  {chat.shopAvatar}
                 </div>
                 {chat.isOnline && (
                   <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
@@ -80,7 +80,7 @@ export default function ChatList({ chats, selectedChatId, onSelectChat }) {
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-start mb-0.5">
                   <h4 className={`text-sm truncate pr-2 ${chat.unreadCount > 0 ? "font-extrabold text-gray-900" : "font-bold text-gray-700"}`}>
-                    {chat.kocName}
+                    {chat.shopName}
                   </h4>
                   <span className={`text-[10px] whitespace-nowrap ${chat.unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}>
                     {chat.lastMessageTime}

@@ -1,17 +1,19 @@
-// src/app/(creator)/revenue/page.js
 "use client";
 import { useState } from "react";
 
 export default function RevenuePage() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [bankInfo, setBankInfo] = useState({ bank: "MBBank", account: "0987654321", name: "NGUYEN VAN A" });
+  const [bankInfo, setBankInfo] = useState({
+    bank: "MBBank",
+    account: "0987654321",
+    name: "NGUYEN VAN A"
+  });
 
-  // Dữ liệu giả lập ví tiền và lịch sử giao dịch
   const wallet = {
-    available: 4850000,   // Số dư khả dụng (Có thể rút)
-    escrow: 3500000,      // Số tiền đang đóng băng (Đang làm dự án)
-    totalEarned: 8350000, // Tổng doanh thu tích lũy từ trước đến nay
+    available: 4850000,
+    escrow: 3500000,
+    totalEarned: 8350000,
   };
 
   const [transactions, setTransactions] = useState([
@@ -22,7 +24,7 @@ export default function RevenuePage() {
       grossAmount: 1800000,
       fee: 1800000 * 0.03,
       netAmount: 1746000,
-      type: "RECEIVE", // Nhận tiền từ Job
+      type: "RECEIVE",
       status: "SUCCESS",
       date: "12/05/2026",
     },
@@ -33,7 +35,7 @@ export default function RevenuePage() {
       grossAmount: 2000000,
       fee: 0,
       netAmount: 2000000,
-      type: "WITHDRAW", // Rút tiền ra
+      type: "WITHDRAW",
       status: "SUCCESS",
       date: "05/05/2026",
     },
@@ -51,157 +53,348 @@ export default function RevenuePage() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* TIÊU ĐỀ TRANG */}
-      <div>
-        <h1 className="text-2xl font-black text-gray-950">Ví doanh thu</h1>
-        <p className="text-xs text-gray-500">Quản lý thu nhập, theo dõi dòng tiền đóng băng bảo hiểm và thực hiện rút tiền.</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 pt-6">
 
-      {/* KHỐI HIỂN THỊ SỐ DƯ (THẺ TÀI CHÍNH) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Số dư khả dụng */}
-        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-xs flex flex-col justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Số dư khả dụng</span>
-            <h2 className="text-3xl font-black text-purple-600">{wallet.available.toLocaleString()}đ</h2>
-          </div>
-          <button 
-            onClick={() => setShowWithdrawModal(true)}
-            className="mt-6 w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-md shadow-purple-50 transition cursor-pointer text-center"
-          >
-            🏧 Rút tiền về Ngân hàng
-          </button>
-        </div>
+        {/* HEADER */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-700 p-8 md:p-12 shadow-xl">
+          <div className="absolute -right-20 -top-20 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
+          <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-indigo-400/10 rounded-full blur-3xl" />
 
-        {/* Đang đóng băng bảo hiểm */}
-        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-xs flex flex-col justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Đang giữ trung gian</span>
-              <span className="text-xs cursor-help" title="Tiền Shop đã nạp và được Castme đóng băng an toàn, sẽ giải ngân ngay khi bạn hoàn thành Job">🔒</span>
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-1.5 rounded-full mb-4">
+              <span className="text-xs font-semibold text-white/90">💼 Quản lý tài chính</span>
             </div>
-            <h2 className="text-3xl font-black text-amber-500">{wallet.escrow.toLocaleString()}đ</h2>
+            <h1 className="text-3xl md:text-4xl font-black text-white mb-3 tracking-tight">
+              Ví doanh thu
+            </h1>
+            <p className="text-sm text-purple-100 max-w-2xl leading-relaxed">
+              Theo dõi thu nhập, quản lý dòng tiền bảo hiểm và thực hiện rút tiền nhanh chóng, an toàn.
+            </p>
           </div>
-          <p className="text-[11px] text-gray-400 leading-relaxed mt-6">
-            Dòng tiền được bảo đảm an toàn 100% từ phía Chủ Shop trước khi bạn bắt đầu sản xuất nội dung.
-          </p>
         </div>
 
-        {/* Tổng thu nhập tích lũy */}
-        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-xs flex flex-col justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Tổng thu nhập tích lũy</span>
-            <h2 className="text-3xl font-black text-gray-900">{wallet.totalEarned.toLocaleString()}đ</h2>
+        {/* WALLET CARDS */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Số dư khả dụng */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-300">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  Số dư khả dụng
+                </p>
+                <h2 className="text-4xl font-black text-gray-900 mb-1">
+                  {wallet.available.toLocaleString()}
+                  <span className="text-2xl ml-1">đ</span>
+                </h2>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center">
+                <span className="text-2xl">💰</span>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-gray-100">
+              <button
+                onClick={() => setShowWithdrawModal(true)}
+                className="w-full py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5"
+              >
+                Rút tiền về ngân hàng →
+              </button>
+            </div>
           </div>
-          <p className="text-[11px] text-emerald-600 font-semibold leading-relaxed mt-6">
-            📈 Chiết khấu cố định 3% phí vận hành trên mỗi giao dịch thành công.
-          </p>
+
+          {/* Đang giữ trung gian */}
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl shadow-sm border border-amber-100 p-6 hover:shadow-md transition-shadow duration-300">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">
+                    Đang giữ trung gian
+                  </p>
+                  <span
+                    className="text-amber-600 cursor-help"
+                    title="Tiền Shop đã nạp và được Castme đóng băng an toàn"
+                  >
+                    🔒
+                  </span>
+                </div>
+                <h2 className="text-4xl font-black text-amber-600 mb-1">
+                  {wallet.escrow.toLocaleString()}
+                  <span className="text-2xl ml-1">đ</span>
+                </h2>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                <span className="text-2xl">🔐</span>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-amber-200/50">
+              <p className="text-xs text-amber-800 leading-relaxed flex items-start gap-2">
+                <span className="text-sm flex-shrink-0">ℹ️</span>
+                <span>Dòng tiền được bảo đảm an toàn 100% từ Shop trước khi bạn bắt đầu sản xuất.</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Tổng thu nhập */}
+          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl shadow-sm border border-purple-100 p-6 hover:shadow-md transition-shadow duration-300">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-xs font-bold text-purple-700 uppercase tracking-wider mb-2">
+                  Tổng thu nhập tích lũy
+                </p>
+                <h2 className="text-4xl font-black text-purple-600 mb-1">
+                  {wallet.totalEarned.toLocaleString()}
+                  <span className="text-2xl ml-1">đ</span>
+                </h2>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                <span className="text-2xl">📊</span>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-purple-200/50">
+              <p className="text-xs text-purple-800 leading-relaxed flex items-start gap-2">
+                <span className="text-sm flex-shrink-0">💡</span>
+                <span>Phí vận hành cố định 3% trên mỗi giao dịch thành công.</span>
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* DANH SÁCH LỊCH SỬ GIAO DỊCH */}
-      <section className="space-y-4">
-        <h3 className="text-base font-bold text-gray-950">Lịch sử giao dịch</h3>
-        
-        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50/70 border-b border-gray-100 text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                  <th className="p-4 pl-6">Mã GD / Ngày</th>
-                  <th className="p-4">Nội dung chi tiết</th>
-                  <th className="p-4 text-right">Số tiền gốc</th>
-                  <th className="p-4 text-right">Phí sàn (3%)</th>
-                  <th className="p-4 text-right pr-6">Thực nhận / Chi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 text-sm">
-                {transactions.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-gray-50/40 transition">
-                    {/* Mã GD & Ngày */}
-                    <td className="p-4 pl-6 space-y-0.5">
-                      <span className="font-mono text-xs font-bold text-gray-500 block">{tx.id}</span>
-                      <span className="text-xs text-gray-400 block">{tx.date}</span>
-                    </td>
-                    
-                    {/* Chi tiết nội dung */}
-                    <td className="p-4 space-y-0.5 max-w-xs md:max-w-md">
-                      <span className="font-semibold text-gray-900 block line-clamp-1">{tx.jobTitle}</span>
-                      <span className="text-xs text-gray-400 block">Đối tác: {tx.shopName}</span>
-                    </td>
+        {/* LỊCH SỬ GIAO DỊCH */}
+        <section className="space-y-5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-gray-900">Lịch sử giao dịch</h3>
+            <span className="text-sm text-gray-500">{transactions.length} giao dịch</span>
+          </div>
 
-                    {/* Tiền gốc */}
-                    <td className="p-4 text-right text-gray-600 font-medium">
-                      {tx.grossAmount.toLocaleString()}đ
-                    </td>
-
-                    {/* Phí 3% */}
-                    <td className="p-4 text-right text-red-400 text-xs font-medium">
-                      {tx.fee > 0 ? `-${tx.fee.toLocaleString()}đ` : "-"}
-                    </td>
-
-                    {/* Thực nhận */}
-                    <td className={`p-4 text-right font-bold pr-6 ${tx.type === "RECEIVE" ? "text-emerald-600" : "text-gray-900"}`}>
-                      {tx.type === "RECEIVE" ? "+" : "-"}{tx.netAmount.toLocaleString()}đ
-                    </td>
+          {/* Desktop Table */}
+          <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr className="border-b border-gray-200">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                      Mã GD
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                      Chi tiết
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">
+                      Số tiền gốc
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">
+                      Phí (3%)
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">
+                      Thực nhận
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {transactions.map((tx) => (
+                    <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="space-y-1">
+                          <p className="font-mono text-sm font-semibold text-gray-900">{tx.id}</p>
+                          <p className="text-xs text-gray-500">{tx.date}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="space-y-1 max-w-md">
+                          <p className="text-sm font-semibold text-gray-900 line-clamp-1">
+                            {tx.jobTitle}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            <span className="inline-flex items-center gap-1">
+                              🏪 {tx.shopName}
+                            </span>
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className="text-sm font-medium text-gray-700">
+                          {tx.grossAmount.toLocaleString()}đ
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className="text-sm font-medium text-red-500">
+                          {tx.fee > 0 ? `-${tx.fee.toLocaleString()}đ` : "—"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className={`text-sm font-bold ${tx.type === "RECEIVE" ? "text-emerald-600" : "text-gray-900"
+                          }`}>
+                          {tx.type === "RECEIVE" ? "+" : "−"}{tx.netAmount.toLocaleString()}đ
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      </section>
 
-      {/* --- MODAL RÚT TIỀN (POPUP) --- */}
-      {showWithdrawModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-gray-100 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-gray-900">Tạo lệnh rút tiền</h3>
-              <button onClick={() => setShowWithdrawModal(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer text-lg">✕</button>
-            </div>
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-4">
+            {transactions.map((tx) => (
+              <div
+                key={tx.id}
+                className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-3"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <p className="font-mono text-xs font-semibold text-gray-900">{tx.id}</p>
+                    <p className="text-xs text-gray-500">{tx.date}</p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${tx.type === "RECEIVE"
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-gray-100 text-gray-700"
+                    }`}>
+                    {tx.type === "RECEIVE" ? "Nhận tiền" : "Rút tiền"}
+                  </span>
+                </div>
 
-            {/* Thông tin tài khoản mặc định */}
-            <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs space-y-1 text-gray-600">
-              <p>🏦 Ngân hàng nhận: <span className="font-bold text-gray-900">{bankInfo.bank}</span></p>
-              <p>🔢 Số tài khoản: <span className="font-bold text-gray-900">{bankInfo.account}</span></p>
-              <p>👤 Chủ tài khoản: <span className="font-bold text-gray-900">{bankInfo.name}</span></p>
-            </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-gray-900">{tx.jobTitle}</p>
+                  <p className="text-xs text-gray-500">🏪 {tx.shopName}</p>
+                </div>
 
-            <form onSubmit={handleWithdrawSubmit} className="space-y-4">
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-gray-600 uppercase">Số tiền muốn rút (đ)</label>
-                <input 
-                  type="number" 
-                  required
-                  placeholder="Ví dụ: 1000000"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500"
-                />
-                <span className="text-[11px] text-gray-400 block pt-0.5">Rút tối đa: {wallet.available.toLocaleString()}đ</span>
+                <div className="pt-3 border-t border-gray-100 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Số tiền gốc:</span>
+                    <span className="font-medium text-gray-900">{tx.grossAmount.toLocaleString()}đ</span>
+                  </div>
+                  {tx.fee > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Phí sàn (3%):</span>
+                      <span className="font-medium text-red-500">−{tx.fee.toLocaleString()}đ</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm pt-2 border-t border-gray-100">
+                    <span className="font-semibold text-gray-900">Thực nhận:</span>
+                    <span className={`font-bold ${tx.type === "RECEIVE" ? "text-emerald-600" : "text-gray-900"
+                      }`}>
+                      {tx.type === "RECEIVE" ? "+" : "−"}{tx.netAmount.toLocaleString()}đ
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* MODAL RÚT TIỀN */}
+        {showWithdrawModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-gray-200 animate-in zoom-in-95 duration-200">
+
+              {/* Header */}
+              <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                    <span className="text-xl">💳</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">Tạo lệnh rút tiền</h3>
+                </div>
+                <button
+                  onClick={() => setShowWithdrawModal(false)}
+                  className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <span className="text-xl">✕</span>
+                </button>
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <button 
-                  type="button" 
-                  onClick={() => setShowWithdrawModal(false)} 
-                  className="w-1/2 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-xs rounded-xl transition cursor-pointer"
-                >
-                  Hủy bỏ
-                </button>
-                <button 
-                  type="submit" 
-                  className="w-1/2 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-md transition cursor-pointer"
-                >
-                  Xác nhận rút
-                </button>
+              {/* Body */}
+              <div className="px-6 py-5 space-y-5">
+
+                {/* Thông tin tài khoản */}
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100 space-y-2.5">
+                  <p className="text-xs font-bold text-blue-900 uppercase tracking-wider mb-2">
+                    Tài khoản nhận tiền
+                  </p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-600">🏦</span>
+                      <span className="text-gray-600">Ngân hàng:</span>
+                      <span className="font-bold text-gray-900 ml-auto">{bankInfo.bank}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-600">🔢</span>
+                      <span className="text-gray-600">Số tài khoản:</span>
+                      <span className="font-mono font-bold text-gray-900 ml-auto">{bankInfo.account}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-600">👤</span>
+                      <span className="text-gray-600">Chủ tài khoản:</span>
+                      <span className="font-bold text-gray-900 ml-auto">{bankInfo.name}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Form nhập số tiền */}
+                <form onSubmit={handleWithdrawSubmit} className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-900">
+                      Số tiền muốn rút
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        required
+                        placeholder="Nhập số tiền"
+                        value={withdrawAmount}
+                        onChange={(e) => setWithdrawAmount(e.target.value)}
+                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base font-medium focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition-all"
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
+                        đ
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500">Số dư khả dụng:</span>
+                      <span className="font-bold text-emerald-600">{wallet.available.toLocaleString()}đ</span>
+                    </div>
+                  </div>
+
+                  {/* Quick amount buttons */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {[500000, 1000000, wallet.available].map((amount) => (
+                      <button
+                        key={amount}
+                        type="button"
+                        onClick={() => setWithdrawAmount(amount.toString())}
+                        className="px-3 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 transition-colors"
+                      >
+                        {amount >= wallet.available ? 'Tất cả' : `${(amount / 1000000).toFixed(1)}M`}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowWithdrawModal(false)}
+                      className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-colors"
+                    >
+                      Hủy bỏ
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-500/30 transition-all hover:shadow-xl hover:shadow-emerald-500/40"
+                    >
+                      Xác nhận rút tiền
+                    </button>
+                  </div>
+                </form>
               </div>
-            </form>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

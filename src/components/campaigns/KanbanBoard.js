@@ -43,7 +43,7 @@ export default function KanbanBoard() {
 
   return (
     <div className="flex gap-6 overflow-x-auto pb-6 snap-x animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
+
       {/* CỘT 1: CHỜ GỬI HÀNG */}
       <div className="w-80 shrink-0 snap-start flex flex-col h-full bg-gray-50 rounded-2xl p-4 border border-gray-100">
         <div className="flex items-center gap-2 mb-4">

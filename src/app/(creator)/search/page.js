@@ -1,11 +1,28 @@
 "use client";
 import React, { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { AdvancedSearchAction, getPublicShopProfile, applyToJobAction } from "#/app/(creator)/actions";
 
 function SearchResultsContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const query = searchParams.get("q") || "";
+
+  const [searchVal, setSearchVal] = useState(query);
+
+  useEffect(() => {
+    setSearchVal(query);
+  }, [query]);
+
+  const handleSearch = (val) => {
+    const params = new URLSearchParams(window.location.search);
+    if (val.trim()) {
+      params.set("q", val);
+    } else {
+      params.delete("q");
+    }
+    router.replace(`/search?${params.toString()}`);
+  };
 
   const [activeTab, setActiveTab] = useState("jobs"); // jobs | shops
   const [loading, setLoading] = useState(true);
@@ -72,6 +89,38 @@ function SearchResultsContent() {
           Tìm thấy <span className="font-bold text-purple-600">{jobs.length}</span> tin tuyển dụng và{" "}
           <span className="font-bold text-purple-600">{shops.length}</span> thương hiệu cho từ khóa "{query}"
         </p> 
+      </div>
+
+      {/* Khối tìm kiếm */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-2xl border border-gray-100 shadow-xs">
+        <div className="relative w-full sm:max-w-md flex items-center">
+          <input
+            type="text"
+            placeholder="Tìm kiếm tin tuyển dụng, thương hiệu..."
+            value={searchVal}
+            onChange={(e) => setSearchVal(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSearch(searchVal);
+              }
+            }}
+            className="w-full px-4 py-2.5 pl-11 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 transition-all"
+          />
+          <svg
+            className="w-4 h-4 text-gray-400 absolute left-4 pointer-events-none"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <button
+          onClick={() => handleSearch(searchVal)}
+          className="w-full sm:w-auto px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-xl transition cursor-pointer"
+        >
+          Tìm kiếm
+        </button>
       </div>
 
       {/* Bộ lọc Tabs thanh nhã */}

@@ -15,7 +15,7 @@ export default function JobProgressStepper({ job, role = "shop" }) {
   const [feedbackValue, setFeedbackValue] = useState("");
   const [isScriptModalOpen, setIsScriptModalOpen] = useState(false);
   const [currentMilestoneId, setCurrentMilestoneId] = useState(null);
-  
+
   // Viewer Modal State
   const [isViewerModalOpen, setIsViewerModalOpen] = useState(false);
   const [viewerContent, setViewerContent] = useState("");
@@ -39,7 +39,7 @@ export default function JobProgressStepper({ job, role = "shop" }) {
     setIsSubmitting(true);
     const res = await syncContractStatus(application.id);
     setIsSubmitting(false);
-    
+
     if (res.success) {
       if (res.status === "COMPLETED") {
         alert("Hợp đồng đã được các bên ký thành công!");
@@ -141,14 +141,14 @@ export default function JobProgressStepper({ job, role = "shop" }) {
                 <FileText size={16} /> Xem hợp đồng nháp
               </a>
             )}
-             <button 
-               onClick={handleCheckSignature} 
-               disabled={isSubmitting}
-               className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-blue-700 transition cursor-pointer disabled:opacity-50 flex items-center gap-2"
-             >
-               {isSubmitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <CheckCircle size={16} />}
-               Cập nhật trạng thái ký
-             </button>
+            <button
+              onClick={handleCheckSignature}
+              disabled={isSubmitting}
+              className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-blue-700 transition cursor-pointer disabled:opacity-50 flex items-center gap-2"
+            >
+              {isSubmitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <CheckCircle size={16} />}
+              Cập nhật trạng thái ký
+            </button>
           </div>
         </div>
       )}
@@ -163,21 +163,21 @@ export default function JobProgressStepper({ job, role = "shop" }) {
             </div>
           </div>
           <div className="flex gap-2">
-             {application.contractUrl && (
-               <a
-                 href={application.contractUrl}
-                 target="_blank"
-                 rel="noreferrer"
-                 className="px-4 py-2 bg-white border border-emerald-200 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-100 transition shadow-sm"
-               >
-                 Xem hợp đồng
-               </a>
-             )}
-             {application.auditTrailUrl && (
-               <a href={application.auditTrailUrl} target="_blank" rel="noreferrer" className="px-4 py-2 bg-white border border-emerald-200 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-100 transition shadow-sm hidden sm:block">
-                 Biên bản Audit
-               </a>
-             )}
+            {application.contractUrl && (
+              <a
+                href={application.contractUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2 bg-white border border-emerald-200 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-100 transition shadow-sm"
+              >
+                Xem hợp đồng
+              </a>
+            )}
+            {application.auditTrailUrl && (
+              <a href={application.auditTrailUrl} target="_blank" rel="noreferrer" className="px-4 py-2 bg-white border border-emerald-200 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-100 transition shadow-sm hidden sm:block">
+                Biên bản Audit
+              </a>
+            )}
           </div>
         </div>
       )}
@@ -192,38 +192,35 @@ export default function JobProgressStepper({ job, role = "shop" }) {
 
           return (
             <div key={milestone.id} className="relative flex items-start justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-              
+
               {/* Cột 1: Thông tin Icon (Giữa) */}
-              <div className={`flex items-center justify-center w-9 h-9 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm z-10 ${
-                isCompleted ? 'bg-emerald-500 text-white' : 
-                isInProgress ? 'bg-blue-600 text-white animate-pulse' : 
-                isReviewing ? 'bg-purple-500 text-white animate-bounce' : 'bg-gray-100 text-gray-400'
-              }`}>
+              <div className={`flex items-center justify-center w-9 h-9 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm z-10 ${isCompleted ? 'bg-emerald-500 text-white' :
+                  isInProgress ? 'bg-blue-600 text-white animate-pulse' :
+                    isReviewing ? 'bg-purple-500 text-white animate-bounce' : 'bg-gray-100 text-gray-400'
+                }`}>
                 {milestone.type === "SCRIPT" ? <FileText size={16} /> :
-                 milestone.type === "VIDEO" ? <Video size={16} /> :
-                 milestone.type === "LINK" ? <LinkIcon size={16} /> :
-                 <DollarSign size={16} />}
+                  milestone.type === "VIDEO" ? <Video size={16} /> :
+                    milestone.type === "LINK" ? <LinkIcon size={16} /> :
+                      <DollarSign size={16} />}
               </div>
 
               {/* Cột 2: Nội dung */}
-              <div className={`w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border transition-all ${
-                isCompleted ? 'bg-emerald-50 border-emerald-100' : 
-                isInProgress ? 'bg-blue-50/50 border-blue-200 shadow-md ring-4 ring-blue-50' : 
-                isReviewing ? 'bg-purple-50 border-purple-200 shadow-md' : 'bg-gray-50 border-gray-100 opacity-60'
-              }`}>
-                
+              <div className={`w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border transition-all ${isCompleted ? 'bg-emerald-50 border-emerald-100' :
+                  isInProgress ? 'bg-blue-50/50 border-blue-200 shadow-md ring-4 ring-blue-50' :
+                    isReviewing ? 'bg-purple-50 border-purple-200 shadow-md' : 'bg-gray-50 border-gray-100 opacity-60'
+                }`}>
+
                 <div className="flex flex-col gap-1">
                   <div className="flex justify-between items-center">
                     <span className={`text-[10px] font-black tracking-wider uppercase 
                       ${isCompleted ? 'text-emerald-600' : isInProgress ? 'text-blue-600' : isReviewing ? 'text-purple-600' : 'text-gray-500'}`}>
                       Bước {idx + 1} • {milestone.type}
                     </span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      isCompleted ? "bg-emerald-100 text-emerald-700" :
-                      isInProgress && !isRejected ? "bg-blue-100 text-blue-700" :
-                      isRejected ? "bg-red-100 text-red-700" :
-                      isReviewing ? "bg-purple-100 text-purple-700" : "bg-gray-200 text-gray-500"
-                    }`}>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isCompleted ? "bg-emerald-100 text-emerald-700" :
+                        isInProgress && !isRejected ? "bg-blue-100 text-blue-700" :
+                          isRejected ? "bg-red-100 text-red-700" :
+                            isReviewing ? "bg-purple-100 text-purple-700" : "bg-gray-200 text-gray-500"
+                      }`}>
                       {isCompleted ? "HOÀN THÀNH" : isRejected ? "CẦN SỬA LẠI" : isReviewing ? "CHỜ DUYỆT" : isInProgress ? "ĐANG LÀM" : "CHƯA TỚI"}
                     </span>
                   </div>
@@ -240,15 +237,15 @@ export default function JobProgressStepper({ job, role = "shop" }) {
                           {milestone.submission.startsWith('<') ? (
                             <div dangerouslySetInnerHTML={{ __html: milestone.submission }} className="leading-relaxed opacity-70" />
                           ) : milestone.submission.startsWith('http') ? (
-                             <a href={milestone.submission} target="_blank" rel="noreferrer" className="text-blue-600 font-medium underline break-all">
-                               {milestone.submission}
-                             </a>
+                            <a href={milestone.submission} target="_blank" rel="noreferrer" className="text-blue-600 font-medium underline break-all">
+                              {milestone.submission}
+                            </a>
                           ) : (
                             <p className="whitespace-pre-wrap opacity-70">{milestone.submission}</p>
                           )}
                           <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
                         </div>
-                        <button 
+                        <button
                           onClick={() => {
                             setViewerContent(milestone.submission);
                             setIsViewerModalOpen(true);
@@ -281,7 +278,7 @@ export default function JobProgressStepper({ job, role = "shop" }) {
                 {role === "creator" && isInProgress && milestone.type !== "PAYMENT" && (
                   <div className="mt-4 flex flex-col gap-2">
                     {milestone.type === "SCRIPT" ? (
-                      <button 
+                      <button
                         onClick={() => {
                           setCurrentMilestoneId(milestone.id);
                           setIsScriptModalOpen(true);
@@ -299,7 +296,7 @@ export default function JobProgressStepper({ job, role = "shop" }) {
                           value={submissionValue}
                           onChange={(e) => setSubmissionValue(e.target.value)}
                         />
-                        <button 
+                        <button
                           onClick={() => handleCreatorSubmit(milestone.id)}
                           disabled={isSubmitting}
                           className="py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50"
@@ -315,7 +312,7 @@ export default function JobProgressStepper({ job, role = "shop" }) {
                 {role === "shop" && isReviewing && milestone.type !== "PAYMENT" && (
                   <div className="mt-4 flex flex-col gap-2">
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={() => handleShopApprove(milestone.id)}
                         disabled={isSubmitting}
                         className="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition shadow-md shadow-emerald-100 cursor-pointer disabled:opacity-50"
@@ -331,7 +328,7 @@ export default function JobProgressStepper({ job, role = "shop" }) {
                         value={feedbackValue}
                         onChange={(e) => setFeedbackValue(e.target.value)}
                       />
-                      <button 
+                      <button
                         onClick={() => handleShopReject(milestone.id)}
                         disabled={isSubmitting}
                         className="w-full py-2 bg-white border border-red-200 hover:bg-red-50 text-red-600 text-xs font-bold rounded-lg transition cursor-pointer disabled:opacity-50"
@@ -345,7 +342,7 @@ export default function JobProgressStepper({ job, role = "shop" }) {
                 {/* HÀNH ĐỘNG CỦA SHOP DÀNH RIÊNG CHO PAYMENT */}
                 {role === "shop" && isInProgress && milestone.type === "PAYMENT" && (
                   <div className="mt-4">
-                    <button 
+                    <button
                       onClick={() => handleShopApprove(milestone.id)}
                       disabled={isSubmitting}
                       className="w-full py-3 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition shadow-md shadow-emerald-100 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
@@ -366,11 +363,11 @@ export default function JobProgressStepper({ job, role = "shop" }) {
           );
         })}
       </div>
-      
-      <ScriptEditorModal 
-        isOpen={isScriptModalOpen} 
-        onClose={() => setIsScriptModalOpen(false)} 
-        onSubmit={(content) => handleCreatorSubmit(currentMilestoneId, content)} 
+
+      <ScriptEditorModal
+        isOpen={isScriptModalOpen}
+        onClose={() => setIsScriptModalOpen(false)}
+        onSubmit={(content) => handleCreatorSubmit(currentMilestoneId, content)}
       />
 
       <ScriptViewerModal

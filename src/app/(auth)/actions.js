@@ -86,3 +86,28 @@ export async function loginAction(formData) {
     return { error: "Có lỗi xảy ra phía máy chủ" };
   }
 }
+
+// 3. ACTION LẤY SESSION HIỆN TẠI
+export async function getSessionAction() {
+  try {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get("castme_session");
+    if (!sessionCookie) return null;
+    return JSON.parse(sessionCookie.value);
+  } catch (error) {
+    console.error("Lỗi lấy session:", error);
+    return null;
+  }
+}
+
+// 4. ACTION ĐĂNG XUẤT
+export async function logoutAction() {
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete("castme_session");
+    return { success: true };
+  } catch (error) {
+    console.error("Lỗi đăng xuất:", error);
+    return { error: "Có lỗi xảy ra khi đăng xuất" };
+  }
+}

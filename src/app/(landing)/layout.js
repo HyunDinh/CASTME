@@ -1,11 +1,21 @@
 // src/app/(landing)/layout.js
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { getSessionAction } from "../(auth)/actions";
+import AuthModals from "../../components/AuthModals";
 
 export default function LandingLayout({ children }) {
   const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    async function loadSession() {
+      const res = await getSessionAction();
+      if (res) setSession(res);
+    }
+    loadSession();
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -14,19 +24,22 @@ export default function LandingLayout({ children }) {
   }, []);
 
   const navLinks = [
-    { label: "Tính năng", href: "#features" },
+    { label: "Trang Chủ", href: "/" },
+    { label: "Tính Năng", href: "#features" },
     { label: "AI Matching", href: "#ai-matching" },
-    { label: "Bảng giá", href: "#pricing" },
+    { label: "Bảng Giá", href: "#pricing" },
+    { label: "Tin Tức", href: "#news" },
+    { label: "Liên Hệ", href: "#contact" },
   ];
 
   return (
     <div
+      className="landing-light"
       style={{
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        background: "var(--bg)",
-        color: "var(--slate)",
+        background: "transparent",
         fontFamily: "var(--font-body)",
       }}
     >
@@ -39,49 +52,68 @@ export default function LandingLayout({ children }) {
           right: 0,
           zIndex: 100,
           padding: "0 2rem",
-          height: "68px",
+          height: "72px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           transition: "all 0.3s ease",
           background: scrolled
-            ? "rgba(250,250,249,0.90)"
-            : "rgba(250,250,249,0.60)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
+            ? "rgba(255, 255, 255, 0.85)"
+            : "transparent",
+          backdropFilter: scrolled ? "blur(20px)" : "none",
+          WebkitBackdropFilter: scrolled ? "blur(20px)" : "none",
           borderBottom: scrolled
             ? "1px solid rgba(226,232,240,0.8)"
             : "1px solid transparent",
-          boxShadow: scrolled ? "0 2px 20px -4px rgba(124,58,237,0.08)" : "none",
+          boxShadow: scrolled ? "0 4px 20px -4px rgba(120,140,180,0.08)" : "none",
         }}
       >
         {/* Logo */}
         <Link
           href="/"
           style={{
-            fontFamily: "var(--font-heading)",
-            fontSize: "1.5rem",
-            fontWeight: 800,
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
             textDecoration: "none",
-            background: "linear-gradient(135deg, var(--primary) 0%, var(--rose) 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            letterSpacing: "-0.03em",
           }}
         >
-          castme
-          <span style={{ WebkitTextFillColor: "var(--rose)", fontWeight: 900 }}>.</span>
+          <div
+            style={{
+              width: "28px",
+              height: "28px",
+              background: "#2563eb",
+              borderRadius: "6px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 2px 8px rgba(37,99,235,0.2)",
+            }}
+          >
+            <span style={{ color: "white", fontSize: "14px", fontWeight: "bold" }}>✓</span>
+          </div>
+          <span
+            style={{
+              fontFamily: "var(--font-heading)",
+              fontSize: "1.25rem",
+              fontWeight: 800,
+              letterSpacing: "0.04em",
+              color: "#1a2b4a",
+            }}
+          >
+            CASTME
+          </span>
         </Link>
 
-        {/* Desktop Nav */}
+        {/* Desktop Nav - Pill Shape Capsule */}
         <nav
+          className="hidden-mobile glass-capsule-nav"
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "2rem",
+            gap: "0.5rem",
+            padding: "0.35rem 0.5rem",
           }}
-          className="hidden-mobile"
         >
           {navLinks.map((link) => (
             <a
@@ -89,15 +121,22 @@ export default function LandingLayout({ children }) {
               href={link.href}
               style={{
                 fontFamily: "var(--font-body)",
-                fontSize: "0.875rem",
-                fontWeight: 500,
-                color: "var(--muted)",
+                fontSize: "0.8125rem",
+                fontWeight: 600,
+                color: "#5a6b82",
                 textDecoration: "none",
-                transition: "color 0.2s",
-                letterSpacing: "0.01em",
+                transition: "all 0.2s",
+                padding: "0.5rem 1rem",
+                borderRadius: "999px",
               }}
-              onMouseEnter={(e) => (e.target.style.color = "var(--primary)")}
-              onMouseLeave={(e) => (e.target.style.color = "var(--muted)")}
+              onMouseEnter={(e) => {
+                e.target.style.color = "#2563eb";
+                e.target.style.background = "rgba(255, 255, 255, 0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = "#5a6b82";
+                e.target.style.background = "transparent";
+              }}
             >
               {link.label}
             </a>
@@ -105,50 +144,72 @@ export default function LandingLayout({ children }) {
         </nav>
 
         {/* Auth CTA */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <Link
-            href="/login"
-            style={{
-              fontFamily: "var(--font-body)",
-              fontSize: "0.875rem",
-              fontWeight: 500,
-              color: "var(--muted)",
-              textDecoration: "none",
-              padding: "0.5rem 1rem",
-              borderRadius: "var(--radius-full)",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--primary)";
-              e.currentTarget.style.background = "var(--primary-light)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--muted)";
-              e.currentTarget.style.background = "transparent";
-            }}
-          >
-            Đăng nhập
-          </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          {session ? (
+            <Link
+              href={session.role === "SHOP" ? "/shop-dashboard" : "/creator-dashboard"}
+              className="glow-btn-peach"
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: "0.875rem",
+                fontWeight: 700,
+                padding: "0.5625rem 1.5rem",
+                textDecoration: "none",
+              }}
+            >
+              Vào Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                style={{
+                  fontFamily: "var(--font-body)",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  color: "#5a6b82",
+                  textDecoration: "none",
+                  padding: "0.5rem 1rem",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#2563eb";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "#5a6b82";
+                }}
+              >
+                Đăng nhập
+              </Link>
 
-          <Link
-            href="/register"
-            className="btn btn-primary"
-            style={{ fontSize: "0.875rem", padding: "0.5625rem 1.25rem" }}
-          >
-            Dùng thử miễn phí ✨
-          </Link>
+              <Link
+                href="/register"
+                className="glow-btn-peach"
+                style={{
+                  fontFamily: "var(--font-body)",
+                  fontSize: "0.875rem",
+                  fontWeight: 700,
+                  padding: "0.5625rem 1.5rem",
+                  textDecoration: "none",
+                }}
+              >
+                Đăng ký
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
       {/* MAIN */}
-      <main style={{ flex: 1, paddingTop: "68px" }}>{children}</main>
+      <main style={{ flex: 1 }}>{children}</main>
 
       {/* ── FOOTER ── */}
       <footer
         style={{
-          borderTop: "1px solid var(--border)",
+          borderTop: "1px solid rgba(255,255,255,0.45)",
           padding: "3rem 2rem 2rem",
-          background: "var(--surface)",
+          background: "rgba(255, 255, 255, 0.15)",
+          backdropFilter: "blur(10px)",
         }}
       >
         <div
@@ -167,31 +228,28 @@ export default function LandingLayout({ children }) {
                 fontFamily: "var(--font-heading)",
                 fontSize: "1.25rem",
                 fontWeight: 800,
-                background: "linear-gradient(135deg, var(--primary) 0%, var(--rose) 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
+                color: "#1a2b4a",
                 marginBottom: "0.75rem",
                 letterSpacing: "-0.03em",
               }}
             >
               castme.
             </div>
-            <p style={{ fontSize: "0.8125rem", color: "var(--muted)", lineHeight: 1.7, maxWidth: "220px" }}>
+            <p style={{ fontSize: "0.8125rem", color: "#5a6b82", lineHeight: 1.7, maxWidth: "220px" }}>
               Nền tảng kết nối thông minh giữa Shop & Creators tại Việt Nam.
             </p>
           </div>
 
           {/* Platform */}
           <div>
-            <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--slate)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.75rem" }}>
+            <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#2d4263", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.75rem" }}>
               Nền tảng
             </p>
             {["Tính năng", "AI Matching", "Bảng giá", "Đăng ký"].map((item) => (
               <div key={item} style={{ marginBottom: "0.4rem" }}>
-                <a href="#" style={{ fontSize: "0.875rem", color: "var(--muted)", textDecoration: "none", transition: "color 0.2s" }}
-                  onMouseEnter={(e) => (e.target.style.color = "var(--primary)")}
-                  onMouseLeave={(e) => (e.target.style.color = "var(--muted)")}
+                <a href="#" style={{ fontSize: "0.875rem", color: "#5a6b82", textDecoration: "none", transition: "color 0.2s" }}
+                  onMouseEnter={(e) => (e.target.style.color = "#2563eb")}
+                  onMouseLeave={(e) => (e.target.style.color = "#5a6b82")}
                 >{item}</a>
               </div>
             ))}
@@ -199,14 +257,14 @@ export default function LandingLayout({ children }) {
 
           {/* Resources */}
           <div>
-            <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--slate)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.75rem" }}>
+            <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#2d4263", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.75rem" }}>
               Hỗ trợ
             </p>
             {["Hướng dẫn sử dụng", "Câu hỏi thường gặp", "Liên hệ", "Blog"].map((item) => (
               <div key={item} style={{ marginBottom: "0.4rem" }}>
-                <a href="#" style={{ fontSize: "0.875rem", color: "var(--muted)", textDecoration: "none", transition: "color 0.2s" }}
-                  onMouseEnter={(e) => (e.target.style.color = "var(--primary)")}
-                  onMouseLeave={(e) => (e.target.style.color = "var(--muted)")}
+                <a href="#" style={{ fontSize: "0.875rem", color: "#5a6b82", textDecoration: "none", transition: "color 0.2s" }}
+                  onMouseEnter={(e) => (e.target.style.color = "#2563eb")}
+                  onMouseLeave={(e) => (e.target.style.color = "#5a6b82")}
                 >{item}</a>
               </div>
             ))}
@@ -218,7 +276,7 @@ export default function LandingLayout({ children }) {
             maxWidth: "1200px",
             margin: "2rem auto 0",
             paddingTop: "1.5rem",
-            borderTop: "1px solid var(--border)",
+            borderTop: "1px solid rgba(255,255,255,0.25)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -226,10 +284,10 @@ export default function LandingLayout({ children }) {
             gap: "0.5rem",
           }}
         >
-          <p style={{ fontSize: "0.8125rem", color: "var(--subtle)" }}>
+          <p style={{ fontSize: "0.8125rem", color: "#7a8b9f" }}>
             © 2026 Castme Inc. All rights reserved.
           </p>
-          <p style={{ fontSize: "0.8125rem", color: "var(--subtle)" }}>
+          <p style={{ fontSize: "0.8125rem", color: "#7a8b9f" }}>
             Được làm với ❤️ tại Việt Nam
           </p>
         </div>
@@ -240,6 +298,10 @@ export default function LandingLayout({ children }) {
           .hidden-mobile { display: none !important; }
         }
       `}</style>
+
+      <Suspense fallback={null}>
+        <AuthModals />
+      </Suspense>
     </div>
   );
 }
