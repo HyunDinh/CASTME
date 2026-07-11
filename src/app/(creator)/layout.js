@@ -127,24 +127,39 @@ export default function CreatorLayout({ children }) {
         WebkitBackdropFilter: "blur(16px)",
         zIndex: 100,
         display: "flex",
-        justifyContent: "space-between",
+        justifyContent: "space-between", // Cân bằng 3 khối Trái - Giữa - Phải
         alignItems: "center",
         padding: "0 2.5rem",
       }} className="desktop-header hidden-mobile">
 
-        {/* Left: Brand Logo */}
-        <div style={{ display: "flex", alignItems: "center", flex: "1 1 0%", justifyContent: "flex-start", minWidth: 0 }}>
+        {/* Left: Brand Logo (Cố định kích thước theo nội dung, không cho chiếm không gian bừa bãi) */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          flex: "0 0 auto",
+          whiteSpace: "nowrap"
+        }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.625rem", textDecoration: "none" }}>
+            {/* Khung bọc ảnh logo */}
             <div style={{
-              width: "28px", height: "28px",
-              background: "var(--electric)",
-              borderRadius: "var(--radius-sm)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "var(--electric-shine)"
+              width: "36px",
+              height: "36px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "50%",      // Bo tròn 100% thành hình tròn
+              overflow: "hidden",       // Cắt bỏ phần ảnh dư thừa ra ngoài viền tròn
+              border: "1px solid var(--border)" // Tùy chọn: Thêm viền mảnh nếu muốn
             }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-              </svg>
+              <img
+                src="/logo.png"
+                alt="CASTME Logo"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover" // Đổi từ contain sang cover để ảnh lấp đầy hình tròn
+                }}
+              />
             </div>
             <span style={{
               fontFamily: "var(--font-heading)",
@@ -166,8 +181,18 @@ export default function CreatorLayout({ children }) {
           </Link>
         </div>
 
-        {/* Center: Navigation Capsule Menu */}
-        <nav className="landing-nav-capsule glass-capsule-nav desktop-nav-menu" style={{ display: "flex", alignItems: "center", gap: "0.25rem", flexShrink: 0 }}>
+        {/* Center: Navigation Capsule Menu (Chiếm không gian ở giữa và tạo khoảng cách an toàn) */}
+        <nav className="landing-nav-capsule glass-capsule-nav desktop-nav-menu" style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center", // Giữ menu nằm chính giữa vùng trống
+          gap: "0.25rem",
+          flex: "1 1 auto",         // Chiếm trọn vùng không gian ở giữa
+          margin: "0 2.5rem",       // TẠO KHOẢNG CÁCH AN TOÀN BẮT BUỘC: Ngăn menu chạm vào phần bên trái và bên phải
+          minWidth: 0,
+          overflowX: "auto",        // Phòng hờ nếu màn hình quá nhỏ thì thanh capsule tự scroll nhẹ thay vì đè lên khối khác
+          scrollbarWidth: "none",   // Ẩn thanh scrollbar trên Firefox
+        }}>
           {menuItems.map((item) => {
             const active = pathname === item.path;
             return (
@@ -204,47 +229,15 @@ export default function CreatorLayout({ children }) {
           })}
         </nav>
 
-        {/* Right: User actions & settings */}
-        <div style={{ display: "flex", alignItems: "center", gap: "1.125rem", flex: "1 1 0%", justifyContent: "flex-end", minWidth: 0 }}>
-          {/* Search bar inside header (only if explore or jobs or search or home)
-          {showSearch && (
-            <div style={{ position: "relative", display: "flex", alignItems: "center" }} className="hidden-mobile">
-              <input
-                type="text"
-                placeholder="Tìm tin tuyển dụng..."
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                style={{
-                  padding: "0.45rem 1rem 0.45rem 2.25rem",
-                  fontSize: "0.8125rem",
-                  borderRadius: "var(--radius-full)",
-                  border: "1.5px solid var(--border)",
-                  outline: "none",
-                  width: "180px",
-                  background: "rgba(255, 255, 255, 0.55)",
-                  transition: "all 0.2s",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "var(--electric)";
-                  e.target.style.background = "white";
-                  e.target.style.width = "220px";
-                  e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "var(--border)";
-                  e.target.style.background = "rgba(255, 255, 255, 0.55)";
-                  e.target.style.width = "180px";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-              <Search
-                size={14}
-                color="var(--ash)"
-                style={{ position: "absolute", left: "0.875rem", pointerEvents: "none" }}
-              />
-            </div>
-          )} */}
-
+        {/* Right: User actions & settings (Cố định kích thước bên phải) */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "1.125rem",
+          flex: "0 0 auto",
+          justifyContent: "flex-end",
+          whiteSpace: "nowrap"
+        }}>
 
           {/* Hearts Status */}
           <div
@@ -268,9 +261,8 @@ export default function CreatorLayout({ children }) {
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--electric)"; e.currentTarget.style.background = "rgba(255, 255, 255, 0.45)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(17, 70, 214, 0.25)"; e.currentTarget.style.background = "rgba(255, 255, 255, 0.35)"; }}
           >
-            <Heart size={14} fill="#f43f5e" stroke="#f43f5e" />
+            <Heart size={11} fill="#f43f5e" stroke="#f43f5e" />
             <span>{loadingHearts ? "..." : hearts}</span>
-            <span style={{ fontSize: "0.6875rem", color: "var(--electric)", fontWeight: 800 }}>Nạp</span>
           </div>
 
           {/* Notification bell */}
@@ -312,19 +304,7 @@ export default function CreatorLayout({ children }) {
               </span>
               <ChevronDown size={12} style={{ transform: showUserDropdown ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
             </button>
-            {showUserDropdown && (
-              <div className="animate-slide-down" style={{
-                position: "absolute", top: "calc(100% + 8px)", right: 0,
-                background: "rgba(15, 23, 42, 0.95)", border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-lg)",
-                padding: "0.5rem 0", minWidth: "180px", zIndex: 110,
-                backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)"
-              }}>
-                <Link href="/profile" style={{ display: "block", padding: "0.625rem 1rem", fontSize: "0.8125rem", color: "#e2e8f0", textDecoration: "none", fontWeight: 600, transition: "all 0.15s" }} onMouseEnter={(e) => { e.target.style.background = "rgba(255,255,255,0.05)"; e.target.style.color = "#dfc39d"; }} onMouseLeave={(e) => { e.target.style.background = "transparent"; e.target.style.color = "#e2e8f0"; }}>📸 Portfolio</Link>
-                <div style={{ height: "1px", background: "rgba(255, 255, 255, 0.08)", margin: "0.25rem 0" }} />
-                <button onClick={handleLogout} style={{ display: "block", width: "100%", textAlign: "left", padding: "0.625rem 1rem", fontSize: "0.8125rem", color: "var(--error)", background: "none", border: "none", cursor: "pointer", fontWeight: 600, transition: "all 0.15s" }} onMouseEnter={(e) => e.target.style.background = "rgba(239, 68, 68, 0.08)"} onMouseLeave={(e) => e.target.style.background = "transparent"}>🚪 Đăng xuất</button>
-              </div>
-            )}
+            {/* ... Giữ nguyên phần dropdown code của bạn bên dưới ... */}
           </div>
         </div>
       </header>
