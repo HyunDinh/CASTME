@@ -89,7 +89,7 @@ export default function ShopLayout({ children }) {
       }} className="desktop-header hidden-mobile">
 
         {/* Left: Brand Logo (Cố định chiều rộng, không tự co giãn bừa bãi) */}
-        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", flex: "0 0 auto", whiteSpace: "nowrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", flex: "1", justifyContent: "flex-start", whiteSpace: "nowrap" }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.625rem", textDecoration: "none" }}>
             {/* Khung bọc ảnh logo */}
             <div style={{
@@ -136,13 +136,11 @@ export default function ShopLayout({ children }) {
         <nav className="landing-nav-capsule glass-capsule-nav desktop-nav-menu" style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
           gap: "0.25rem",
-          flex: "1 1 auto",
-          margin: "0 2.5rem", // TẠO KHOẢNG TRỐNG BẮT BUỘC để không bao giờ chạm Trái / Phải
+          flex: "0 1 auto",         // CHỈNH Ở ĐÂY: Thay "1 1 auto" thành "0 1 auto" để menu không bị phình to vô lý
+          margin: "0 auto",         // CHỈNH Ở ĐÂY: Tự động căn giữa toàn bộ khối menu và đẩy đều khoảng trống sang 2 bên
+          padding: "0.375rem",      // Tạo khoảng đệm nhẹ bên trong thanh capsule
           minWidth: 0,
-          overflowX: "auto",
-          scrollbarWidth: "none",
         }}>
           {menuItems.map((item) => {
             const active = pathname === item.path;
@@ -181,8 +179,7 @@ export default function ShopLayout({ children }) {
         </nav>
 
         {/* Right: User actions & settings (Cố định bên phải, không co kéo làm đè menu) */}
-        <div style={{ display: "flex", alignItems: "center", gap: "1.125rem", flex: "0 0 auto", justifyContent: "flex-end", whiteSpace: "nowrap" }}>
-
+        <div style={{ display: "flex", alignItems: "center", gap: "1.125rem", flex: "1", justifyContent: "flex-end", whiteSpace: "nowrap" }}>
           {/* Wallet Status (Chỉ hiển thị số dư, đã bỏ nút Nạp) */}
 
 
