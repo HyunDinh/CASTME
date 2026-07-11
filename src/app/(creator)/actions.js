@@ -20,8 +20,22 @@ async function getAuthCreator() {
 
 // Lấy danh sách việc làm đang mở
 export async function getAvailableJobs() {
+  const user = await getAuthCreator();
+
+  let excludeJobIds = [];
+  if (user && user.role === "CREATOR") {
+    const applications = await prisma.application.findMany({
+      where: { creatorId: user.id },
+      select: { jobId: true }
+    });
+    excludeJobIds = applications.map(app => app.jobId);
+  }
+
   const jobs = await prisma.job.findMany({
-    where: { status: "RECRUITING" },
+    where: { 
+      status: "RECRUITING",
+      id: { notIn: excludeJobIds }
+    },
     orderBy: { createdAt: "desc" },
     include: { shop: true },
   });
@@ -335,14 +349,25 @@ export async function getPublicShopProfile(shopUserId) {
 // ==================== TÌM KIẾM NÂNG CAO ====================
 export async function AdvancedSearchAction(keyword) {
   if (!keyword) return { success: true, jobs: [], shops: [] };
+  const user = await getAuthCreator();
 
   try {
     const cleanKeyword = keyword.toLowerCase();
+
+    let excludeJobIds = [];
+    if (user && user.role === "CREATOR") {
+      const applications = await prisma.application.findMany({
+        where: { creatorId: user.id },
+        select: { jobId: true }
+      });
+      excludeJobIds = applications.map(app => app.jobId);
+    }
 
     // 1. Tìm các Job phù hợp (Theo title, description hoặc mảng vibeTags)
     const jobs = await prisma.job.findMany({
       where: {
         status: "RECRUITING",
+        id: { notIn: excludeJobIds },
         OR: [
           { title: { contains: cleanKeyword, mode: "insensitive" } },
           { description: { contains: cleanKeyword, mode: "insensitive" } },

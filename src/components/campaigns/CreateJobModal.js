@@ -134,10 +134,14 @@ export default function CreateJobModal({ isOpen, onClose, onSuccess }) {
               <input
                 type="text"
                 required
-                placeholder="VD: 5,000,000 VND"
+                placeholder="VD: 5,000,000"
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm font-medium"
                 value={formData.budget}
-                onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                onChange={(e) => {
+                  const rawValue = e.target.value.replace(/\D/g, "");
+                  const formattedValue = rawValue ? Number(rawValue).toLocaleString("en-US") : "";
+                  setFormData({ ...formData, budget: formattedValue });
+                }}
               />
             </div>
           </div>
