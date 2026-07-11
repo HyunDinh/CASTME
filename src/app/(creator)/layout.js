@@ -127,34 +127,16 @@ export default function CreatorLayout({ children }) {
         WebkitBackdropFilter: "blur(16px)",
         zIndex: 100,
         display: "flex",
-        justifyContent: "space-between", // Cân bằng 3 khối Trái - Giữa - Phải
+        justifyContent: "space-between",
         alignItems: "center",
-        padding: "0 2.5rem",
+        padding: "0 2rem", // Giảm padding 2 bên một chút để tăng không gian cho menu
       }} className="desktop-header hidden-mobile">
 
-        {/* Left: Brand Logo (Cố định kích thước theo nội dung, không cho chiếm không gian bừa bãi) */}
-        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", flex: "1", justifyContent: "flex-start", whiteSpace: "nowrap" }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.625rem", textDecoration: "none" }}>
-            {/* Khung bọc ảnh logo */}
-            <div style={{
-              width: "36px",
-              height: "36px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: "50%",      // Bo tròn 100% thành hình tròn
-              overflow: "hidden",       // Cắt bỏ phần ảnh dư thừa ra ngoài viền tròn
-              border: "1px solid var(--border)" // Tùy chọn: Thêm viền mảnh nếu muốn
-            }}>
-              <img
-                src="/logo.png"
-                alt="CASTME Logo"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover" // Đổi từ contain sang cover để ảnh lấp đầy hình tròn
-                }}
-              />
+        {/* Left: Brand Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: "1 0 auto", justifyContent: "flex-start", whiteSpace: "nowrap" }}>
+          <Link href="/shop-dashboard" style={{ display: "flex", alignItems: "center", gap: "0.625rem", textDecoration: "none", flexShrink: 0 }}>
+            <div style={{ width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <img src="/logo.png" alt="CASTME Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             </div>
             <span style={{
               fontFamily: "var(--font-heading)",
@@ -166,25 +148,25 @@ export default function CreatorLayout({ children }) {
             <span style={{
               fontSize: "0.55rem",
               fontWeight: 800,
-              background: "rgba(37, 99, 235, 0.08)",
-              color: "var(--electric)",
+              background: "rgba(124, 58, 237, 0.08)",
+              color: "var(--primary)",
               padding: "0.15rem 0.5rem",
               borderRadius: "99px",
-              marginLeft: "0.25rem",
               letterSpacing: "0.06em",
-            }}>CREATOR</span>
+            }}>Creator</span>
           </Link>
         </div>
 
-        {/* Center: Navigation Capsule Menu (Chiếm không gian ở giữa và tạo khoảng cách an toàn) */}
+        {/* Center: Navigation Capsule Menu (Tự co giãn theo kích thước tab) */}
         <nav className="landing-nav-capsule glass-capsule-nav desktop-nav-menu" style={{
           display: "flex",
           alignItems: "center",
-          gap: "0.25rem",
-          flex: "0 1 auto",         // CHỈNH Ở ĐÂY: Thay "1 1 auto" thành "0 1 auto" để menu không bị phình to vô lý
-          margin: "0 auto",         // CHỈNH Ở ĐÂY: Tự động căn giữa toàn bộ khối menu và đẩy đều khoảng trống sang 2 bên
-          padding: "0.375rem",      // Tạo khoảng đệm nhẹ bên trong thanh capsule
+          justifyContent: "center",
+          gap: "0.15rem",
+          flex: "0 2 auto", // Cho phép co giãn mạnh hơn (shrink: 2) để nhường không gian
+          margin: "0 1.5rem",
           minWidth: 0,
+          padding: "0.25rem",
         }}>
           {menuItems.map((item) => {
             const active = pathname === item.path;
@@ -195,13 +177,11 @@ export default function CreatorLayout({ children }) {
                 className="desktop-nav-link"
                 style={{
                   fontFamily: "var(--font-heading)",
-                  fontSize: "0.8125rem",
                   fontWeight: active ? 700 : 600,
                   color: active ? "#c2410c" : "var(--charcoal)",
                   textDecoration: "none",
                   transition: "all 0.2s ease",
                   letterSpacing: "0.01em",
-                  padding: "0.4375rem 1.125rem",
                   borderRadius: "999px",
                   whiteSpace: "nowrap",
                   ...(active ? {
@@ -222,9 +202,8 @@ export default function CreatorLayout({ children }) {
           })}
         </nav>
 
-        {/* Right: User actions & settings (Cố định kích thước bên phải) */}
-        <div style={{ display: "flex", alignItems: "center", gap: "1.125rem", flex: "1", justifyContent: "flex-end", whiteSpace: "nowrap" }}>
-
+        {/* Right: User actions & settings */}
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem", flex: "1 0 auto", justifyContent: "flex-end", whiteSpace: "nowrap" }}>
           {/* Hearts Status */}
           <div
             id="header-hearts-trigger"
@@ -290,7 +269,31 @@ export default function CreatorLayout({ children }) {
               </span>
               <ChevronDown size={12} style={{ transform: showUserDropdown ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
             </button>
-            {/* ... Giữ nguyên phần dropdown code của bạn bên dưới ... */}
+            {showUserDropdown && (
+
+              <div className="animate-slide-down" style={{
+
+                position: "absolute", top: "calc(100% + 8px)", right: 0,
+
+                background: "rgba(15, 23, 42, 0.95)", border: "1px solid rgba(255, 255, 255, 0.08)",
+
+                borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-lg)",
+
+                padding: "0.5rem 0", minWidth: "180px", zIndex: 110,
+
+                backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)"
+
+              }}>
+
+                <Link href="/profile" style={{ display: "block", padding: "0.625rem 1rem", fontSize: "0.8125rem", color: "#e2e8f0", textDecoration: "none", fontWeight: 600, transition: "all 0.15s" }} onMouseEnter={(e) => { e.target.style.background = "rgba(255,255,255,0.05)"; e.target.style.color = "#dfc39d"; }} onMouseLeave={(e) => { e.target.style.background = "transparent"; e.target.style.color = "#e2e8f0"; }}>📸 Portfolio</Link>
+
+                <div style={{ height: "1px", background: "rgba(255, 255, 255, 0.08)", margin: "0.25rem 0" }} />
+
+                <button onClick={handleLogout} style={{ display: "block", width: "100%", textAlign: "left", padding: "0.625rem 1rem", fontSize: "0.8125rem", color: "var(--error)", background: "none", border: "none", cursor: "pointer", fontWeight: 600, transition: "all 0.15s" }} onMouseEnter={(e) => e.target.style.background = "rgba(239, 68, 68, 0.08)"} onMouseLeave={(e) => e.target.style.background = "transparent"}>🚪 Đăng xuất</button>
+
+              </div>
+
+            )}
           </div>
         </div>
       </header>
@@ -411,43 +414,64 @@ export default function CreatorLayout({ children }) {
       />
 
       <style>{`
-        .show-mobile { display: none !important; }
-        .creator-workspace-content { zoom: 0.9; }
-        .creator-workspace-content.messages-active {
-          height: calc((100vh - 72px) / 0.9);
-        }
-        /* Override workspace background image for messages page */
-        .creator-workspace.messages-bg-override {
-          background-color: transparent !important;
-        }
-        @media (max-width: 1280px) {
-          .desktop-header {
-            padding: 0 1.5rem !important;
-          }
-          .desktop-nav-menu {
-            gap: 0.15rem !important;
-          }
-          .desktop-nav-link {
-            font-size: 0.75rem !important;
-            padding: 0.35rem 0.75rem !important;
-          }
-        }
-        @media (max-width: 1120px) {
-          .desktop-nav-link {
-            font-size: 0.72rem !important;
-            padding: 0.3rem 0.55rem !important;
-          }
-        }
-        @media (max-width: 1024px) {
-          .hidden-mobile { display: none !important; }
-          .show-mobile { display: flex !important; }
-          .creator-workspace { margin-left: 0 !important; }
-          .creator-workspace-content { padding: 1.5rem 1.25rem !important; margin-top: 0 !important; zoom: 1 !important; }
-          .creator-workspace-content.messages-active {
-            height: calc(100vh - 64px) !important;
-          }
-        }
-      `}</style>
+  /* ── CẤU HÌNH MAC ĐỊNH & MESSAGES OVERRIDE ── */
+  .show-mobile { display: none !important; }
+  .creator-workspace-content { zoom: 0.9; }
+  .creator-workspace-content.messages-active {
+    height: calc((100vh - 72px) / 0.9);
+  }
+  /* Override workspace background image for messages page */
+  .creator-workspace.messages-bg-override {
+    background-color: transparent !important;
+  }
+
+  /* ── HỆ THỐNG MENU CO GIÃN THEO ĐỘ RỘNG MÀN HÌNH (RESPONSIVE) ── */
+  
+  /* 1. Kích thước mặc định khi màn hình PC rộng rãi (Trên 1300px) */
+  @media (min-width: 1301px) {
+    .desktop-nav-link {
+      font-size: 0.75rem !important;      /* Hạ size chữ mặc định giúp menu thanh thoát */
+      padding: 0.4rem 0.95rem !important;  /* Bóp gọn padding hai bên để tăng không gian trống */
+    }
+  }
+
+  /* 2. Khi tab bị thu hẹp vừa phải (Từ 1121px đến 1300px) */
+  @media (max-width: 1300px) {
+    .desktop-header {
+      padding: 0 1.5rem !important;
+    }
+    .desktop-nav-menu {
+      gap: 0.1rem !important;
+    }
+    .desktop-nav-link {
+      font-size: 0.72rem !important;       /* Chữ tự động nhỏ lại một chút */
+      padding: 0.35rem 0.75rem !important; /* Thu hẹp khoảng cách các item để không bị tràn */
+    }
+  }
+
+  /* 3. Khi màn hình nhỏ hẳn trước khi nhảy sang mobile (Từ 1025px đến 1120px) */
+  @media (max-width: 1120px) {
+    .desktop-nav-link {
+      font-size: 0.68rem !important;       /* Đưa về size chữ tối thiểu gọn gàng nhất */
+      padding: 0.3rem 0.55rem !important;  /* Giảm tối đa khoảng cách padding thừa */
+    }
+  }
+
+  /* 4. Điểm kích hoạt giao diện Mobile hoàn toàn (Dưới 1024px) */
+  @media (max-width: 1024px) {
+    .hidden-mobile { display: none !important; }
+    .show-mobile { display: flex !important; }
+    .creator-workspace { margin-left: 0 !important; }
+    .creator-workspace-content { 
+      padding: 1.5rem 1.25rem !important; 
+      margin-top: 0 !important; 
+      zoom: 1 !important; 
+    }
+    .creator-workspace-content.messages-active {
+      height: calc(100vh - 64px) !important;
+    }
+  }
+`}</style>
     </div>
   );
 }
