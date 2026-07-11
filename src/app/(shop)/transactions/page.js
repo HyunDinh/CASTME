@@ -104,7 +104,7 @@ export default function TransactionsPage() {
 
   const handleDepositSubmit = (e) => {
     e.preventDefault();
-    alert(`Yêu cầu nạp ${Number(depositAmount.replace(/[^0-9]/g, "")).toLocaleString()}đ đã được gửi lên hệ thống. Đang chờ xác nhận giao dịch!`);
+    alert(`Yêu cầu nạp ${Number(depositAmount.replace(/[^0-9]/g, "")).toLocaleString('vi-VN')}đ đã được gửi lên hệ thống. Đang chờ xác nhận giao dịch!`);
     setShowDepositModal(false);
     setDepositAmount("");
   };
@@ -195,7 +195,7 @@ export default function TransactionsPage() {
                   Số dư khả dụng
                 </p>
                 <h2 className="text-4xl font-black text-gray-900 mb-1">
-                  {wallet.available.toLocaleString()}
+                  {wallet.available.toLocaleString('vi-VN')}
                   <span className="text-2xl ml-1">đ</span>
                 </h2>
               </div>
@@ -225,7 +225,7 @@ export default function TransactionsPage() {
                   <span className="text-amber-600 cursor-help" title="Tiền đang đóng băng để bảo đảm chi trả cho Creator">🔒</span>
                 </div>
                 <h2 className="text-4xl font-black text-amber-600 mb-1">
-                  {wallet.escrow.toLocaleString()}
+                  {wallet.escrow.toLocaleString('vi-VN')}
                   <span className="text-2xl ml-1">đ</span>
                 </h2>
               </div>
@@ -250,7 +250,7 @@ export default function TransactionsPage() {
                   Tổng chi tiêu (Tháng này)
                 </p>
                 <h2 className="text-4xl font-black text-purple-600 mb-1">
-                  {wallet.totalSpent.toLocaleString()}
+                  {wallet.totalSpent.toLocaleString('vi-VN')}
                   <span className="text-2xl ml-1">đ</span>
                 </h2>
               </div>
@@ -364,7 +364,7 @@ export default function TransactionsPage() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <span className={`text-base font-black ${isPlus ? "text-emerald-600" : "text-gray-900"}`}>
-                            {isPlus ? "+" : "-"}{txn.amount.toLocaleString()}đ
+                            {isPlus ? "+" : "-"}{txn.amount.toLocaleString('vi-VN')}đ
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right pr-8">
@@ -417,7 +417,7 @@ export default function TransactionsPage() {
 
                   <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
                     <span className={`text-lg font-black ${isPlus ? "text-emerald-600" : "text-gray-950"}`}>
-                      {isPlus ? "+" : "-"}{txn.amount.toLocaleString()}đ
+                      {isPlus ? "+" : "-"}{txn.amount.toLocaleString('vi-VN')}đ
                     </span>
                     <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-bold border ${getStatusStyles(txn.status)}`}>
                       {getStatusLabel(txn.status)}
@@ -470,10 +470,10 @@ export default function TransactionsPage() {
                       <button 
                         type="button"
                         key={val}
-                        onClick={() => setDepositAmount(val.toLocaleString())}
+                        onClick={() => setDepositAmount(val.toLocaleString('vi-VN'))}
                         className="px-3 py-1.5 bg-purple-50 text-purple-600 hover:bg-purple-100 text-xs font-bold rounded-lg transition-colors cursor-pointer border-none"
                       >
-                        {val.toLocaleString()}đ
+                        {val.toLocaleString('vi-VN')}đ
                       </button>
                     ))}
                   </div>

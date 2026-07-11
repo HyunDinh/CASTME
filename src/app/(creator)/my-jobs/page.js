@@ -4,7 +4,9 @@ import { getMyAppliedJobs } from "#/app/(creator)/actions";
 import CreatorJobDetails from "#/components/campaigns/CreatorJobDetails";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
-import { Store, Zap, Clock, CheckCircle2, FileText, Calendar, Briefcase, Search } from "lucide-react";
+import { Store, Zap, Clock, CheckCircle2, FileText, Calendar, Briefcase, Search, Mail, Check, X } from "lucide-react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function formatBudget(budget) {
   if (!budget) return "0";
@@ -44,6 +46,37 @@ function MyJobsPageContent() {
     fetchJobs();
   }, []);
 
+  const handleAcceptInvite = async (applicationId) => {
+    setLoading(true);
+    const { acceptJobInvitation } = await import("#/app/(creator)/actions");
+    const res = await acceptJobInvitation(applicationId);
+    if (res.success) {
+      toast.success("Đã đồng ý hợp tác và ký hợp đồng thành công!");
+      // reload
+      const resJobs = await getMyAppliedJobs();
+      if (resJobs.success) setMyJobs(resJobs.data);
+      setActiveTab("PROCESSING");
+    } else {
+      toast.error(res.error || "Có lỗi xảy ra");
+    }
+    setLoading(false);
+  };
+
+  const handleRejectInvite = async (applicationId) => {
+    setLoading(true);
+    const { rejectJobInvitation } = await import("#/app/(creator)/actions");
+    const res = await rejectJobInvitation(applicationId);
+    if (res.success) {
+      toast.success("Đã từ chối lời mời hợp tác.");
+      // reload
+      const resJobs = await getMyAppliedJobs();
+      if (resJobs.success) setMyJobs(resJobs.data);
+    } else {
+      toast.error(res.error || "Có lỗi xảy ra");
+    }
+    setLoading(false);
+  };
+
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -71,6 +104,13 @@ function MyJobsPageContent() {
       icon: Clock,
       color: "blue",
       gradient: "from-blue-500 to-indigo-500"
+    },
+    {
+      key: "INVITED",
+      label: "Lời mời",
+      icon: Mail,
+      color: "pink",
+      gradient: "from-pink-500 to-rose-500"
     },
     {
       key: "PROCESSING",
@@ -201,6 +241,12 @@ function MyJobsPageContent() {
                     icon: Clock,
                     iconColor: "text-blue-500"
                   },
+                  INVITED: {
+                    badge: "Lời mời hợp tác",
+                    badgeColor: "bg-pink-50 text-pink-700 border-pink-200",
+                    icon: Mail,
+                    iconColor: "text-pink-500"
+                  },
                   PROCESSING: {
                     badge: "Đang làm việc",
                     badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
@@ -299,6 +345,22 @@ function MyJobsPageContent() {
                                 Đã hoàn thành
                               </div>
                             )}
+                            {job.uiStatus === "INVITED" && (
+                              <div className="flex flex-col gap-2 w-full lg:w-48">
+                                <button
+                                  onClick={() => handleAcceptInvite(job.applicationId)}
+                                  className="w-full px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition-colors shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                  <Check size={16} /> Đồng ý
+                                </button>
+                                <button
+                                  onClick={() => handleRejectInvite(job.applicationId)}
+                                  className="w-full px-5 py-2.5 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 font-bold text-sm rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                  <X size={16} /> Từ chối
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -322,6 +384,7 @@ function MyJobsPageContent() {
         )}
 
       </div>
+      <ToastContainer />
     </div>
   );
 }

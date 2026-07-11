@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import {
@@ -23,16 +23,11 @@ import {
   CheckCircle2
 } from "lucide-react";
 
+import { checkHasInvited } from "#/app/(shop)/search-creator/actions";
+import InviteCastingModal from "#/components/campaigns/InviteCastingModal";
+
 const skillPool = ["Makeup", "Model", "Review", "UGC", "Photography", "Content Creator", "Video Editing", "Livestream"];
 const stylePool = ["Streetwear", "Vintage", "Minimalism", "Y2K", "Hàn Quốc", "Cá tính", "GenZ", "Beauty", "Lifestyle"];
-
-const premiumPlaceholders = [
-  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=600&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=600&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?q=80&w=600&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=600&auto=format&fit=crop"
-];
 
 export default function CreatorProfilePage() {
   const router = useRouter();
@@ -40,6 +35,8 @@ export default function CreatorProfilePage() {
   
   const [creator, setCreator] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [hasInvited, setHasInvited] = useState(false);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [isViewAllOpen, setIsViewAllOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
 
@@ -53,6 +50,11 @@ export default function CreatorProfilePage() {
           setCreator(result.data);
         } else {
           console.error("Failed to load creator:", result.error);
+        }
+        
+        const inviteRes = await checkHasInvited(params.id);
+        if (inviteRes.success) {
+          setHasInvited(inviteRes.data);
         }
       } catch (error) {
         console.error("Error fetching creator:", error);
@@ -157,19 +159,21 @@ export default function CreatorProfilePage() {
                   <span className="inline-flex items-center justify-center w-6 h-6 bg-indigo-600 rounded-full text-white text-xs font-bold shrink-0 shadow-sm">✓</span>
                 </div>
                 <div className="flex items-center gap-3 justify-center lg:justify-end flex-wrap">
-                  <Link
-                    href={`/messages`}
-                    className="px-5 py-3 border-2 border-gray-200 hover:bg-gray-50 text-gray-800 font-bold text-sm rounded-xl flex items-center gap-2 transition cursor-pointer whitespace-nowrap text-center text-decoration-none"
-                  >
-                    <MessageSquare className="w-4 h-4 text-gray-500" /> Nhắn tin
-                  </Link>
-                  
-                  <Link
-                    href={`/my-casting`}
-                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-200 transition cursor-pointer whitespace-nowrap text-center text-decoration-none"
-                  >
-                    <Mail className="w-4 h-4" /> Mời Casting
-                  </Link>
+                  {hasInvited ? (
+                    <Link
+                      href={`/messages?userId=${params.id}`}
+                      className="px-5 py-3 border-2 border-gray-200 hover:bg-gray-50 text-gray-800 font-bold text-sm rounded-xl flex items-center gap-2 transition cursor-pointer whitespace-nowrap text-center text-decoration-none"
+                    >
+                      <MessageSquare className="w-4 h-4 text-gray-500" /> Nhắn tin
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => setInviteModalOpen(true)}
+                      className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-200 transition cursor-pointer whitespace-nowrap text-center text-decoration-none"
+                    >
+                      <Mail className="w-4 h-4" /> Mời Casting
+                    </button>
+                  )}
                   
                   <button className="p-3 border-2 border-gray-200 hover:bg-gray-50 rounded-xl transition cursor-pointer shrink-0">
                     <Bookmark className="w-5 h-5 text-gray-500" />
@@ -499,6 +503,19 @@ export default function CreatorProfilePage() {
           />
         </div>
       )}
+
+      <InviteCastingModal
+        isOpen={inviteModalOpen}
+        onClose={() => {
+          setInviteModalOpen(false);
+          // Refresh invite status
+          checkHasInvited(params.id).then(res => {
+            if (res.success) setHasInvited(res.data);
+          });
+        }}
+        creatorId={params.id}
+        creatorName={creator?.name}
+      />
     </div>
   );
 }

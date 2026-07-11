@@ -66,7 +66,10 @@ async function uploadToCloudinary(buffer, filename) {
   return data.secure_url;
 }
 
-export async function createSignatureRequest(shopEmail, kolEmail, shopName = "Bên A", kolName = "Bên B", budget = "Thỏa thuận") {
+export async function createSignatureRequest(appRecord) {
+  const shopEmail = appRecord.job.shop.email;
+  const kolEmail = appRecord.creator.email;
+
   if (!API_KEY && !CLIENT_ID) {
     console.log("Mocking SignNow (No credentials provided)");
     return { success: true, documentId: `mock_signnow_${Date.now()}` };
@@ -78,7 +81,7 @@ export async function createSignatureRequest(shopEmail, kolEmail, shopName = "B�
 
     // Step 0: Tạo PDF trong RAM rồi upload lên Cloudinary thay vì lưu local
     const filename = `contract_${Date.now()}.pdf`;
-    const pdfBuffer = await generateContractPDFBuffer(shopName, kolName, budget);
+    const { pdfBuffer, signatureLocations } = await generateContractPDFBuffer(appRecord);
     const cloudinaryUrl = await uploadToCloudinary(pdfBuffer, filename);
 
     // Upload lên SignNow
@@ -101,8 +104,28 @@ export async function createSignatureRequest(shopEmail, kolEmail, shopName = "B�
       headers: { "Authorization": authHeader, "Content-Type": "application/json" },
       body: JSON.stringify({
         fields: [
-          { x: 75, y: 675, width: 150, height: 50, type: "signature", page_number: 0, role: "Shop", required: true, name: "shop_sig" },
-          { x: 370, y: 675, width: 150, height: 50, type: "signature", page_number: 0, role: "KOL", required: true, name: "kol_sig" }
+          { 
+            x: signatureLocations.shopSignature.x, 
+            y: signatureLocations.shopSignature.y, 
+            width: signatureLocations.shopSignature.width, 
+            height: signatureLocations.shopSignature.height, 
+            type: "signature", 
+            page_number: signatureLocations.page_number, 
+            role: "Shop", 
+            required: true, 
+            name: "shop_sig" 
+          },
+          { 
+            x: signatureLocations.creatorSignature.x, 
+            y: signatureLocations.creatorSignature.y, 
+            width: signatureLocations.creatorSignature.width, 
+            height: signatureLocations.creatorSignature.height, 
+            type: "signature", 
+            page_number: signatureLocations.page_number, 
+            role: "KOL", 
+            required: true, 
+            name: "kol_sig" 
+          }
         ]
       })
     });

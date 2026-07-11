@@ -3,7 +3,8 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, X, Star, MessageSquare, ArrowRight, SlidersHorizontal } from "lucide-react";
+import { Search, X, Star, MessageSquare, ArrowRight, SlidersHorizontal, Mail } from "lucide-react";
+import InviteCastingModal from "#/components/campaigns/InviteCastingModal";
 
 // List of available categories for filter chips
 const STATIC_STYLES = [
@@ -21,6 +22,8 @@ function SearchContent() {
   const q = searchParams.get("q") || "";
   const style = searchParams.get("style") || "";
 
+  // State để lưu Creator đang được chọn mời casting
+  const [inviteCreator, setInviteCreator] = useState(null);
   const [creators, setCreators] = useState([]);
   const [loading, setLoading] = useState(true);
   const [inputValue, setInputValue] = useState(q);
@@ -309,7 +312,7 @@ function SearchContent() {
                   }
                 }}
               >
-                {item.icon} {item.name}
+                {item.name}
               </button>
             );
           })}
@@ -520,8 +523,8 @@ function SearchContent() {
                 paddingTop: "0.75rem",
                 borderTop: "1.5px solid rgba(0,0,0,0.03)"
               }}>
-                <Link
-                  href={`/messages`}
+                <button
+                  onClick={() => setInviteCreator(creator)}
                   style={{
                     flex: 1,
                     display: "flex",
@@ -531,19 +534,19 @@ function SearchContent() {
                     fontFamily: "var(--font-body)",
                     fontSize: "0.8125rem",
                     fontWeight: 700,
-                    textDecoration: "none",
                     color: "var(--charcoal)",
                     background: "rgba(255,255,255,0.7)",
                     border: "1.5px solid rgba(0,0,0,0.06)",
                     borderRadius: "12px",
                     padding: "0.55rem 0",
                     transition: "all 0.15s ease",
+                    cursor: "pointer"
                   }}
                   className="btn-light-action"
                 >
-                  <MessageSquare size={13} />
-                  Nhắn tin
-                </Link>
+                  <Mail size={13} />
+                  Mời casting
+                </button>
 
                 <Link
                   href={`/creator/${creator.id}`}
@@ -652,6 +655,13 @@ function SearchContent() {
           box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25) !important;
         }
       `}</style>
+
+      <InviteCastingModal
+        isOpen={!!inviteCreator}
+        onClose={() => setInviteCreator(null)}
+        creatorId={inviteCreator?.id}
+        creatorName={inviteCreator?.name}
+      />
     </div>
   );
 }
