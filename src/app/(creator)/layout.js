@@ -226,7 +226,7 @@ export default function CreatorLayout({ children }) {
         <div style={{ display: "flex", alignItems: "center", gap: "1.125rem", flex: "1", justifyContent: "flex-end", whiteSpace: "nowrap" }}>
 
           {/* Hearts Status */}
-          <div
+          {/* <div
             id="header-hearts-trigger"
             onClick={() => setShowRechargeModal(true)}
             style={{
@@ -249,7 +249,7 @@ export default function CreatorLayout({ children }) {
           >
             <Heart size={11} fill="#f43f5e" stroke="#f43f5e" />
             <span>{loadingHearts ? "..." : hearts}</span>
-          </div>
+          </div> */}
 
           {/* Notification bell */}
           <button style={{ width: "36px", height: "36px", borderRadius: "50%", background: "rgba(255, 255, 255, 0.25)", border: "1px solid rgba(255, 255, 255, 0.4)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--ash)", position: "relative" }}
@@ -290,7 +290,31 @@ export default function CreatorLayout({ children }) {
               </span>
               <ChevronDown size={12} style={{ transform: showUserDropdown ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
             </button>
-            {/* ... Giữ nguyên phần dropdown code của bạn bên dưới ... */}
+            {showUserDropdown && (
+
+              <div className="animate-slide-down" style={{
+
+                position: "absolute", top: "calc(100% + 8px)", right: 0,
+
+                background: "rgba(15, 23, 42, 0.95)", border: "1px solid rgba(255, 255, 255, 0.08)",
+
+                borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-lg)",
+
+                padding: "0.5rem 0", minWidth: "180px", zIndex: 110,
+
+                backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)"
+
+              }}>
+
+                <Link href="/profile" style={{ display: "block", padding: "0.625rem 1rem", fontSize: "0.8125rem", color: "#e2e8f0", textDecoration: "none", fontWeight: 600, transition: "all 0.15s" }} onMouseEnter={(e) => { e.target.style.background = "rgba(255,255,255,0.05)"; e.target.style.color = "#dfc39d"; }} onMouseLeave={(e) => { e.target.style.background = "transparent"; e.target.style.color = "#e2e8f0"; }}>📸 Portfolio</Link>
+
+                <div style={{ height: "1px", background: "rgba(255, 255, 255, 0.08)", margin: "0.25rem 0" }} />
+
+                <button onClick={handleLogout} style={{ display: "block", width: "100%", textAlign: "left", padding: "0.625rem 1rem", fontSize: "0.8125rem", color: "var(--error)", background: "none", border: "none", cursor: "pointer", fontWeight: 600, transition: "all 0.15s" }} onMouseEnter={(e) => e.target.style.background = "rgba(239, 68, 68, 0.08)"} onMouseLeave={(e) => e.target.style.background = "transparent"}>🚪 Đăng xuất</button>
+
+              </div>
+
+            )}
           </div>
         </div>
       </header>
