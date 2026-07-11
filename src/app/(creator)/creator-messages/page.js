@@ -105,7 +105,7 @@ export default function CreatorMessagesPage() {
   };
 
   return (
-    <div className="flex h-full w-full bg-white overflow-hidden animate-in fade-in duration-500">
+    <div className="flex h-full w-full bg-transparent overflow-hidden animate-in fade-in duration-500">
       
       {/* Cột trái: Chat List */}
       <CreatorChatList 

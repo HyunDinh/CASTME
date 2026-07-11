@@ -41,6 +41,7 @@ export default function CreatorProfilePage() {
   const [creator, setCreator] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isViewAllOpen, setIsViewAllOpen] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   useEffect(() => {
     async function fetchCreator() {
@@ -117,7 +118,7 @@ export default function CreatorProfilePage() {
     <div className="w-full bg-gray-50 min-h-screen">
       {/* Banner Cover Image */}
       <div className="relative w-full h-[280px]">
-        <img src={creator.coverImage} alt="Cover" className="w-full h-full object-cover" />
+        <img src={creator.coverImage} alt="Cover" className="w-full h-full object-cover cursor-zoom-in" onClick={() => setLightboxImage(creator.coverImage)} />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-50"></div>
         
         {/* Quay lại button */}
@@ -137,7 +138,7 @@ export default function CreatorProfilePage() {
             <div className="w-40 h-40 rounded-full p-1.5 bg-white shadow-xl flex-shrink-0 relative border-4 border-white lg:-mt-20 overflow-hidden">
               <div className="w-full h-full rounded-full overflow-hidden bg-indigo-50 flex items-center justify-center font-black text-4xl text-indigo-600">
                 {creator.avatar && creator.avatar.length > 1 ? (
-                  <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" />
+                  <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover cursor-zoom-in" onClick={() => setLightboxImage(creator.avatar)} />
                 ) : (
                   creator.avatar
                 )}
@@ -337,8 +338,8 @@ export default function CreatorProfilePage() {
                         <img
                           src={img}
                           alt={`Gallery ${idx}`}
-                          className="w-full h-full object-cover group-hover/img:scale-105 transition duration-500 cursor-pointer"
-                          onClick={() => setIsViewAllOpen(true)}
+                          className="w-full h-full object-cover group-hover/img:scale-105 transition duration-500 cursor-zoom-in"
+                          onClick={() => setLightboxImage(img)}
                         />
                         {idx < 2 && (
                           <div className="absolute bottom-2 left-2 bg-black/40 backdrop-blur-md w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] shadow-md pointer-events-none">
@@ -461,7 +462,8 @@ export default function CreatorProfilePage() {
                     <img
                       src={img}
                       alt={`Gallery ${idx}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500 cursor-zoom-in"
+                      onClick={() => setLightboxImage(img)}
                       onError={(e) => { e.target.src = 'https://placehold.co/400?text=Lỗi+Ảnh' }}
                     />
                   </div>
@@ -474,6 +476,27 @@ export default function CreatorProfilePage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Lightbox Preview Modal */}
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition backdrop-blur-md cursor-pointer border-none"
+            onClick={() => setLightboxImage(null)}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img 
+            src={lightboxImage} 
+            alt="Lightbox Preview" 
+            className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </div>

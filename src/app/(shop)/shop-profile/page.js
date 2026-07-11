@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getShopProfile, updateShopProfile } from "#/app/(shop)/shop-profile/actions";
 import { CldUploadWidget } from "next-cloudinary";
 import {
@@ -35,6 +35,7 @@ export default function ShopProfilePage() {
   const [loading, setLoading] = useState(true);
   const [savingField, setSavingField] = useState(null);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+  const uploadedUrlsRef = useRef([]);
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
@@ -75,6 +76,7 @@ export default function ShopProfilePage() {
   const [descExpanded, setDescExpanded] = useState(false);
   const [vibeExpanded, setVibeExpanded] = useState(false);
   const [savedData, setSavedData] = useState({});
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   const categoryPool = [
     "Thời trang", "Mỹ phẩm", "Phụ kiện", "Điện tử",
@@ -98,8 +100,8 @@ export default function ShopProfilePage() {
       setConnects(d.connects || 0);
       setAverageRating(d.averageRating || 0);
       setTotalJobs(d.totalJobs || 0);
-      setMainImage(d.mainImage || "https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=400");
-      setCoverImage(d.coverImage || "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1200");
+      setMainImage(d.mainImage || "");
+      setCoverImage(d.coverImage || "");
       setGallery(d.gallery || []);
 
       setSavedData({
@@ -255,11 +257,17 @@ export default function ShopProfilePage() {
       </div>
 
       {/* Cover Image */}
-      <div className="relative w-full h-[280px] group/cover">
-        <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-50"></div>
+      <div className="relative w-full h-[280px] group/cover bg-gray-100">
+        {coverImage ? (
+          <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-slate-800 to-purple-950 flex items-center justify-center text-gray-400 text-sm font-semibold">
+            Nhãn hàng chưa tải lên ảnh bìa
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-50 pointer-events-none"></div>
         {!isEditingCover && (
-          <div className="absolute bottom-6 right-6 flex gap-2 opacity-0 group-hover/cover:opacity-100 transition-opacity z-10">
+          <div className="absolute top-6 right-6 flex gap-2 z-10 transition-opacity duration-200 opacity-100 lg:opacity-0 lg:group-hover/cover:opacity-100">
             <CldUploadWidget
               uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "default_preset"}
               onSuccess={(result) => {
@@ -297,9 +305,15 @@ export default function ShopProfilePage() {
           <div className="flex flex-col lg:flex-row gap-8 items-center lg:items-start">
             {/* Logo Shop Column */}
             <div className="w-40 h-40 rounded-full p-1.5 bg-white shadow-xl flex-shrink-0 relative group/avatar border-4 border-white lg:-mt-20">
-              <img src={mainImage} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+              {mainImage ? (
+                <img src={mainImage} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+              ) : (
+                <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
+                  <Store className="w-16 h-16" />
+                </div>
+              )}
               <div className="absolute bottom-2 right-2 w-6 h-6 bg-purple-500 border-4 border-white rounded-full"></div>
-              <div className="absolute inset-1.5 rounded-full bg-black/50 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer">
+              <div className="absolute inset-1.5 rounded-full transition-opacity duration-200 flex flex-col items-center justify-center cursor-pointer opacity-100 bg-black/40 lg:opacity-0 lg:group-hover/avatar:opacity-100 lg:bg-black/50">
                 <CldUploadWidget
                   uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "default_preset"}
                   onSuccess={(result) => {
@@ -379,9 +393,13 @@ export default function ShopProfilePage() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
-                  {selectedCategories.slice(0, 5).map((cat, idx) => (
-                    <span key={idx} className="px-3 py-1.5 bg-purple-50 text-purple-600 font-bold text-xs rounded-full border border-purple-100 whitespace-nowrap">{cat}</span>
-                  ))}
+                  {selectedCategories.length > 0 ? (
+                    selectedCategories.slice(0, 5).map((cat, idx) => (
+                      <span key={idx} className="px-3 py-1.5 bg-purple-50 text-purple-600 font-bold text-xs rounded-full border border-purple-100 whitespace-nowrap">{cat}</span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-gray-400 italic">Chưa chọn danh mục</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -404,7 +422,6 @@ export default function ShopProfilePage() {
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-2 text-gray-500"><Clock className="w-4 h-4" /> Trái Tim</span><span className="font-bold text-gray-900">{hearts} ❤️</span></div>
                   <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-2 text-gray-500"><CheckCircle2 className="w-4 h-4" /> Chiến dịch</span><span className="font-bold text-gray-900">{totalJobs} bài</span></div>
-                  <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-2 text-gray-500"><Calendar className="w-4 h-4" /> Ngày tham gia</span><span className="font-bold text-gray-900">Castme Shop</span></div>
                   <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-2 text-gray-500"><Phone className="w-4 h-4" /> Điện thoại</span><span className="font-bold text-purple-600">{phone || "Chưa cập nhật"}</span></div>
                 </div>
               </div>
@@ -473,7 +490,7 @@ export default function ShopProfilePage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {gallery.slice(0, 8).map((img, idx) => (
                     <div key={idx} className="relative rounded-xl overflow-hidden aspect-[10/9] group/img bg-gray-100 border border-gray-200">
-                      <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover group-hover/img:scale-105 transition duration-500" />
+                      <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover group-hover/img:scale-105 transition duration-500 cursor-pointer" onClick={() => setLightboxImage(img)} />
                       <button onClick={(e) => { e.stopPropagation(); setImageToDelete(idx); }} className="absolute top-2 right-2 w-7 h-7 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition shadow-md cursor-pointer border-none">
                         ✕
                       </button>
@@ -487,11 +504,25 @@ export default function ShopProfilePage() {
                 </div>
               </div>
               <div className="flex justify-end gap-2 items-center">
-                <CldUploadWidget
+                 <CldUploadWidget
                   uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "default_preset"}
+                  options={{ multiple: true }}
                   onSuccess={(result) => {
-                    const url = result?.info?.secure_url;
-                    handleAddGalleryImage(url);
+                    if (result?.info?.secure_url) {
+                      uploadedUrlsRef.current.push(result.info.secure_url);
+                    }
+                  }}
+                  onQueuesEnd={(result, { widget }) => {
+                    if (uploadedUrlsRef.current.length > 0) {
+                      const newUrls = uploadedUrlsRef.current;
+                      uploadedUrlsRef.current = [];
+                      setGallery(prev => {
+                        const updated = [...newUrls, ...prev];
+                        handlePartialSave('gallery', { gallery: updated });
+                        return updated;
+                      });
+                    }
+                    widget.close();
                   }}
                 >
                   {({ open }) => (
@@ -527,18 +558,8 @@ export default function ShopProfilePage() {
               <div className="flex items-center justify-between"><h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Đánh giá từ KOC / KOL</h3><button className="text-xs font-bold text-purple-600 hover:text-purple-700 cursor-pointer border-none bg-transparent">Xem tất cả →</button></div>
               <div className="flex items-center gap-2">{getRatingStars(averageRating)}<span className="text-sm font-black text-gray-900 ml-1">{averageRating.toFixed(1)}</span><span className="text-xs text-gray-400">({totalJobs} đánh giá)</span></div>
               <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="text-sm text-gray-700 italic mb-3 leading-relaxed">"Shop hỗ trợ mẫu sản phẩm rất nhanh, thanh toán thù lao đúng hạn và kịch bản rõ ràng dễ quay. Rất thích hợp tác lâu dài!"</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center font-black text-purple-600 text-sm">B</div>
-                      <div>
-                        <h4 className="text-xs font-bold text-gray-900">Bảo Trân Creator</h4>
-                        <p className="text-[10px] text-gray-500">Chiến dịch: Review sản phẩm mùa hè</p>
-                      </div>
-                    </div>
-                    <span className="text-[10px] text-gray-400 font-medium">10/05/2026</span>
-                  </div>
+                <div className="py-8 text-center text-gray-400 text-sm">
+                  Chưa có đánh giá nào từ KOC / KOL.
                 </div>
               </div>
             </div>
@@ -549,7 +570,7 @@ export default function ShopProfilePage() {
 
       {/* Gallery Image Delete Modal */}
       {imageToDelete !== null && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[250]">
           <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl space-y-4">
             <h3 className="text-lg font-bold text-gray-900 mb-2">Xóa hình ảnh?</h3>
             <p className="text-gray-500 mb-6 text-sm leading-relaxed">Bạn có chắc chắn muốn xóa hình ảnh này khỏi Bộ sưu tập?</p>
@@ -609,6 +630,26 @@ export default function ShopProfilePage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition backdrop-blur-md cursor-pointer border-none"
+            onClick={() => setLightboxImage(null)}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img 
+            src={lightboxImage} 
+            alt="Lightbox Preview" 
+            className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
 

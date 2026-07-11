@@ -77,6 +77,23 @@ export async function updateCreatorProfile(data) {
         where: { id: user.id },
         data: { name: data.name }
       });
+      // Cập nhật session cookie để đồng bộ hóa tên hiển thị trên header
+      const cookieStore = await cookies();
+      const sessionCookie = cookieStore.get("castme_session");
+      if (sessionCookie) {
+        try {
+          const sessionData = JSON.parse(sessionCookie.value);
+          sessionData.name = data.name;
+          cookieStore.set("castme_session", JSON.stringify(sessionData), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 60 * 60 * 24 * 7,
+            path: "/",
+          });
+        } catch (e) {
+          console.error("Update session cookie error:", e);
+        }
+      }
     }
 
     await prisma.creatorProfile.upsert({

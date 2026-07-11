@@ -18,7 +18,7 @@ export default function CreatorChatList({ chats, selectedChatId, onSelectChat })
   });
 
   return (
-    <div className="flex flex-col h-full bg-white border-r border-gray-100 w-full sm:w-[350px] lg:w-[400px] shrink-0 overflow-hidden">
+    <div className="flex flex-col h-full bg-white/70 backdrop-blur-md border-r border-gray-200/40 w-full sm:w-[350px] lg:w-[400px] shrink-0 overflow-hidden">
       
       {/* HEADER & LỌC */}
       <div className="p-4 border-b border-gray-100 space-y-4">

@@ -33,7 +33,7 @@ export async function getShopProfile() {
     return {
       success: true,
       data: {
-        shopName: profile?.shopName || "",
+        shopName: profile?.shopName || dbUser.name || "",
         description: profile?.description || "",
         categories: profile?.categories || [],
         vibeText: profile?.vibeText || "",
@@ -88,6 +88,30 @@ export async function updateShopProfile(formData) {
         ...shopFields
       },
     });
+
+    if (shopName) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { name: shopName }
+      });
+      // Cập nhật session cookie để đồng bộ hóa tên hiển thị trên header
+      const cookieStore = await cookies();
+      const sessionCookie = cookieStore.get("castme_session");
+      if (sessionCookie) {
+        try {
+          const sessionData = JSON.parse(sessionCookie.value);
+          sessionData.name = shopName;
+          cookieStore.set("castme_session", JSON.stringify(sessionData), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 60 * 60 * 24 * 7,
+            path: "/",
+          });
+        } catch (e) {
+          console.error("Update session cookie error:", e);
+        }
+      }
+    }
 
     return { success: true };
   } catch (error) {

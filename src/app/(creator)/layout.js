@@ -305,7 +305,7 @@ export default function CreatorLayout({ children }) {
                 {session?.name ? session.name[0].toUpperCase() : "C"}
               </div>
               <span style={{ maxWidth: "80px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {session?.name || "Bảo Trân"}
+                {session?.name || "CREATOR"}
               </span>
               <ChevronDown size={12} style={{ transform: showUserDropdown ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
             </button>
@@ -449,8 +449,7 @@ export default function CreatorLayout({ children }) {
         }
         /* Override workspace background image for messages page */
         .creator-workspace.messages-bg-override {
-          background-image: none !important;
-          background-color: white !important;
+          background-color: transparent !important;
         }
         @media (max-width: 768px) {
           .hidden-mobile { display: none !important; }

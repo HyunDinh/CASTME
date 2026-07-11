@@ -10,6 +10,17 @@ const STATUS_CONFIG = {
   DRAFT: { label: "Bản nháp", color: "var(--warning)", bg: "var(--warning-light)", dot: false },
 };
 
+const parseBudget = (budgetStr) => {
+  if (!budgetStr) return { amount: "", note: "" };
+  const index = budgetStr.indexOf("(");
+  if (index === -1) {
+    return { amount: budgetStr, note: "" };
+  }
+  const amount = budgetStr.substring(0, index).trim();
+  const note = budgetStr.substring(index).trim();
+  return { amount, note };
+};
+
 export default function JobCard({ job, role = "koc", onAction, actionLabel, onRefresh }) {
   const isShop = role === "shop";
   const statusKey = job.status?.toUpperCase();
@@ -20,6 +31,8 @@ export default function JobCard({ job, role = "koc", onAction, actionLabel, onRe
     const result = await updateJobStatus(job.id, "RECRUITING");
     if (result.success && onRefresh) onRefresh();
   };
+
+  const { amount: budgetAmount, note: budgetNote } = parseBudget(job.budget);
 
   return (
     <div style={{
@@ -163,15 +176,20 @@ export default function JobCard({ job, role = "koc", onAction, actionLabel, onRe
         alignItems: "flex-end",
         justifyContent: "space-between",
         gap: "0.875rem",
-        minWidth: "150px",
+        width: "220px",
       }}>
         <div style={{ textAlign: "right" }}>
           <span style={{ display: "block", fontSize: "0.625rem", fontWeight: 700, color: "var(--subtle)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.2rem" }}>
             Thù lao
           </span>
           <span style={{ fontFamily: "var(--font-heading)", fontSize: "1.125rem", fontWeight: 800, color: "var(--primary)" }}>
-            {job.budget}
+            {budgetAmount}
           </span>
+          {budgetNote && (
+            <span style={{ display: "block", fontSize: "0.725rem", color: "var(--primary)", marginTop: "0.2rem", fontWeight: 600 }}>
+              {budgetNote}
+            </span>
+          )}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", width: "100%" }}>

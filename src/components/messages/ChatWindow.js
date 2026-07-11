@@ -16,8 +16,8 @@ export default function ChatWindow({ chat, messages, onSendMessage, onSendPropos
 
   if (!chat) {
     return (
-      <div className="flex-1 h-full bg-white flex flex-col items-center justify-center p-8 text-center border-l border-gray-100 shrink-0 min-w-0">
-        <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-4xl shadow-sm mb-4 border border-gray-100">
+      <div className="flex-1 h-full bg-white/50 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center border-l border-gray-200/40 shrink-0 min-w-0">
+        <div className="w-20 h-20 bg-white/60 rounded-full flex items-center justify-center text-4xl shadow-sm mb-4 border border-gray-200/40">
           💬
         </div>
         <h3 className="text-xl font-bold text-gray-900 mb-2">Tin nhắn & Thương lượng</h3>
@@ -60,10 +60,10 @@ export default function ChatWindow({ chat, messages, onSendMessage, onSendPropos
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-white relative min-w-0 overflow-hidden">
+    <div className="flex-1 flex flex-col h-full bg-white/50 backdrop-blur-md relative min-w-0 overflow-hidden">
       
       {/* 1. CHAT HEADER */}
-      <div className="h-20 border-b border-gray-100 flex items-center justify-between px-6 bg-white shrink-0">
+      <div className="h-20 border-b border-gray-200/40 flex items-center justify-between px-6 bg-white/60 backdrop-blur-sm shrink-0">
         {/* KOC Info */}
         <div className="flex items-center gap-4">
           <div className="relative">
@@ -101,7 +101,7 @@ export default function ChatWindow({ chat, messages, onSendMessage, onSendPropos
       </div>
 
       {/* 2. MESSAGE FEED */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-transparent">
         {messages.map((msg, idx) => {
           const isShop = msg.sender === "shop";
           
@@ -184,7 +184,7 @@ export default function ChatWindow({ chat, messages, onSendMessage, onSendPropos
       </div>
 
       {/* 3. CHAT INPUT BAR */}
-      <div className="p-4 bg-white border-t border-gray-100 shrink-0">
+      <div className="p-4 bg-white/60 backdrop-blur-sm border-t border-gray-200/40 shrink-0">
         <form onSubmit={handleSendText} className="flex items-end gap-3 max-w-5xl mx-auto">
           {/* Nút Tạo thẻ Hợp đồng nhanh */}
           <button

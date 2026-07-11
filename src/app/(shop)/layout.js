@@ -377,8 +377,7 @@ export default function ShopLayout({ children }) {
         }
         /* Override workspace background image for messages page */
         .shop-workspace.messages-bg-override {
-          background-image: none !important;
-          background-color: white !important;
+          background-color: transparent !important;
         }
         @media (max-width: 768px) {
           .hidden-mobile { display: none !important; }
