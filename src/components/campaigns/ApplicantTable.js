@@ -2,10 +2,13 @@
 import React, { useState, useEffect } from "react";
 import { MessageSquare, Check, X } from "lucide-react";
 import { getJobApplicants, approveApplicant, rejectApplicant } from "#/app/(shop)/my-casting/applications.actions";
+import { useRouter } from "next/navigation";
+import { getOrCreateConversation } from "#/app/(shop)/messages/actions";
 
 export default function ApplicantTable({ job, onActionComplete }) {
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   const fetchApplicants = async () => {
     if (!job?.id) return;
@@ -48,8 +51,13 @@ export default function ApplicantTable({ job, onActionComplete }) {
     }
   };
 
-  const handleMessage = (name) => {
-    alert(`Đang mở hộp thoại nhắn tin với ${name}...`);
+  const handleMessage = async (creatorId) => {
+    const res = await getOrCreateConversation(creatorId, job.id);
+    if (res.success) {
+      router.push(`/messages`);
+    } else {
+      alert("Lỗi tạo phòng chat: " + res.error);
+    }
   };
 
   if (loading) {
@@ -164,7 +172,7 @@ export default function ApplicantTable({ job, onActionComplete }) {
                     )}
 
                     <button
-                      onClick={() => handleMessage(app.creator.name)}
+                      onClick={() => handleMessage(app.creator.id)}
                       className="flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-blue-600 px-2 py-1 rounded-md hover:bg-blue-50 transition-colors cursor-pointer mt-1"
                     >
                       <MessageSquare size={14} /> Nhắn tin
