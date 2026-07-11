@@ -29,6 +29,12 @@ function SearchResultsContent() {
   const [jobs, setJobs] = useState([]);
   const [shops, setShops] = useState([]);
   const [applyingId, setApplyingId] = useState(null);
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
+  };
 
   // States quản lý Modal xem hồ sơ shop giống dashboard
   const [shopModalOpen, setShopModalOpen] = useState(false);
@@ -57,9 +63,10 @@ function SearchResultsContent() {
     setApplyingId(jobId);
     const result = await applyToJobAction(jobId);
     if (result.success) {
-      alert("✅ Ứng tuyển thành công!");
+      showToast("✅ Ứng tuyển thành công!");
+      setJobs(prev => prev.filter(j => j.id !== jobId));
     } else {
-      alert(`❌ ${result.error}`);
+      showToast(`❌ ${result.error}`, "error");
     }
     setApplyingId(null);
   };
@@ -317,6 +324,43 @@ function SearchResultsContent() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <>
+          <style>{`
+            @keyframes toastProgress {
+              from { width: 100%; }
+              to { width: 0%; }
+            }
+          `}</style>
+          <div className="fixed top-24 right-6 z-50 w-[380px] overflow-hidden rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 bg-white transition-all animate-in slide-in-from-top-5">
+            <div className="px-5 py-4 flex items-start gap-4">
+              <div className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                toast.type === "success" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+              }`}>
+                {toast.type === "success" ? (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                )}
+              </div>
+              <div className="pt-1 flex-1">
+                <h4 className="text-[15px] font-bold text-gray-900 leading-none mb-1.5">
+                  {toast.type === "success" ? "Thành công" : "Có lỗi xảy ra"}
+                </h4>
+                <div className="text-[13px] font-medium text-gray-500 leading-snug">{toast.message}</div>
+              </div>
+            </div>
+            <div className="h-1 w-full bg-gray-50">
+              <div 
+                className={`h-full ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}`} 
+                style={{ animation: "toastProgress 3s linear forwards" }}
+              />
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
