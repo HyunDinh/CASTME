@@ -1,10 +1,14 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { getConversations, getMessages, sendMessage } from "#/app/(shop)/messages/actions";
+import { getConversations, getMessages, sendMessage, getOrCreateConversation } from "#/app/(shop)/messages/actions";
 import { Send, Image as ImageIcon, Paperclip, MoreVertical, Search, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 export default function MessagesClient({ currentUser }) {
+  const searchParams = useSearchParams();
+  const targetUserId = searchParams.get("userId");
+  
   const [conversations, setConversations] = useState([]);
   const [activeConvId, setActiveConvId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -16,10 +20,21 @@ export default function MessagesClient({ currentUser }) {
 
   // Lấy danh sách hội thoại
   const fetchConversations = async () => {
+    let convIdToSelect = activeConvId;
+
+    if (targetUserId && !activeConvId) {
+      const resCreate = await getOrCreateConversation(targetUserId);
+      if (resCreate.success) {
+        convIdToSelect = resCreate.data;
+      }
+    }
+
     const res = await getConversations();
     if (res.success) {
       setConversations(res.data);
-      if (!activeConvId && res.data.length > 0) {
+      if (convIdToSelect) {
+        setActiveConvId(convIdToSelect);
+      } else if (!activeConvId && res.data.length > 0) {
         // Tự động chọn hội thoại đầu tiên nếu chưa có
         setActiveConvId(res.data[0].id);
       }

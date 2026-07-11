@@ -54,7 +54,7 @@ export default function ApplicantTable({ job, onActionComplete }) {
   const handleMessage = async (creatorId) => {
     const res = await getOrCreateConversation(creatorId, job.id);
     if (res.success) {
-      router.push(`/messages`);
+      router.push(`/messages?userId=${creatorId}`);
     } else {
       alert("Lỗi tạo phòng chat: " + res.error);
     }

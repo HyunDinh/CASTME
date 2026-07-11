@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import MessagesClient from "#/components/messages/MessagesClient";
 
 export const metadata = {
@@ -20,7 +21,9 @@ export default async function MessagesPage() {
 
   return (
     <div className="h-full w-full">
-      <MessagesClient currentUser={user} />
+      <Suspense fallback={<div className="p-10 flex justify-center">Đang tải...</div>}>
+        <MessagesClient currentUser={user} />
+      </Suspense>
     </div>
   );
 }

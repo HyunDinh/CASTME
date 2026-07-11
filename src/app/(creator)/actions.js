@@ -1,6 +1,7 @@
 "use server";
 import { prisma } from "#/lib/prisma";
 import { cookies } from "next/headers";
+import { createSignatureRequest } from "#/lib/signnow";
 
 // ==================== HÀM CHUNG ====================
 async function getAuthCreator() {
@@ -249,6 +250,8 @@ export async function getMyAppliedJobs() {
         else if (job.status === "COMPLETED") uiStatus = "COMPLETED";
       } else if (app.status === "REJECTED") {
         uiStatus = "REJECTED"; // Hoặc ẩn đi
+      } else if (app.status === "INVITED") {
+        uiStatus = "INVITED";
       }
 
       return {
@@ -300,6 +303,112 @@ export async function submitMilestone(milestoneId, submissionText) {
   } catch (error) {
     console.error(error);
     return { success: false, error: "Lỗi khi nộp bài" };
+  }
+}
+
+// ==================== INVITATION ====================
+export async function acceptJobInvitation(applicationId) {
+  const user = await getAuthCreator();
+  if (!user || user.role !== "CREATOR") return { success: false, error: "Unauthorized" };
+
+  try {
+    const app = await prisma.application.findUnique({
+      where: { id: applicationId },
+      include: { job: true }
+    });
+
+    if (!app || app.creatorId !== user.id || app.status !== "INVITED") {
+      return { success: false, error: "Lời mời không hợp lệ" };
+    }
+
+    // 1. Cập nhật trạng thái Job và tự động tạo 4 Milestones chuẩn (nếu chưa có)
+    const existingMilestonesCount = await prisma.milestone.count({ where: { jobId: app.jobId } });
+    if (existingMilestonesCount === 0) {
+      await prisma.job.update({
+        where: { id: app.jobId },
+        data: { 
+          status: "IN_PROGRESS",
+          milestones: {
+            create: [
+              { title: "Nộp kịch bản", type: "SCRIPT", order: 1, status: "IN_PROGRESS" },
+              { title: "Nộp video mẫu", type: "VIDEO", order: 2, status: "PENDING" },
+              { title: "Đăng video lên kênh", type: "LINK", order: 3, status: "PENDING" },
+              { title: "Nghiệm thu & Thanh toán", type: "PAYMENT", order: 4, status: "PENDING" },
+            ]
+          }
+        }
+      });
+    } else {
+      await prisma.job.update({
+        where: { id: app.jobId },
+        data: { status: "IN_PROGRESS" }
+      });
+    }
+
+    // 2. Lấy lại Application với đầy đủ thông tin (kèm milestones) để làm hợp đồng
+    const appRecord = await prisma.application.findUnique({
+      where: { id: applicationId },
+      include: {
+        job: { 
+          include: { 
+            shop: true,
+            milestones: { orderBy: { order: "asc" } }
+          } 
+        },
+        creator: {
+          include: { creatorProfile: true }
+        }
+      }
+    });
+
+    // 3. Tạo yêu cầu chữ ký điện tử
+    const signQuickRes = await createSignatureRequest(appRecord);
+
+    // 4. Chuyển Application này thành ACCEPTED và lưu trạng thái Hợp đồng
+    await prisma.application.update({
+      where: { id: applicationId },
+      data: { 
+        status: "ACCEPTED",
+        contractDocumentId: signQuickRes.success ? signQuickRes.documentId : null,
+        contractStatus: "PENDING",
+        contractUrl: signQuickRes.success ? signQuickRes.pdfUrl : null,
+        signUrl: signQuickRes.success ? signQuickRes.signUrl : null
+      }
+    });
+
+    // 5. Chuyển tất cả Application khác (nếu có) thành REJECTED (tùy chọn)
+    await prisma.application.updateMany({
+      where: {
+        jobId: app.jobId,
+        id: { not: applicationId }
+      },
+      data: { status: "REJECTED" }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Lỗi chấp nhận lời mời:", error);
+    return { success: false, error: "Đã có lỗi xảy ra" };
+  }
+}
+
+export async function rejectJobInvitation(applicationId) {
+  const user = await getAuthCreator();
+  if (!user || user.role !== "CREATOR") return { success: false, error: "Unauthorized" };
+
+  try {
+    const app = await prisma.application.findUnique({ where: { id: applicationId } });
+    if (!app || app.creatorId !== user.id) return { success: false, error: "Không hợp lệ" };
+
+    await prisma.application.update({
+      where: { id: applicationId },
+      data: { status: "REJECTED" }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Lỗi từ chối lời mời:", error);
+    return { success: false, error: "Lỗi hệ thống" };
   }
 }
 
