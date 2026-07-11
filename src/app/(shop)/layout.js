@@ -1,6 +1,6 @@
 // src/app/(shop)/layout.js
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -9,7 +9,6 @@ import {
   Megaphone,
   MessageSquare,
   CreditCard,
-  Search,
   Bell,
   LogOut,
   Wallet,
@@ -19,23 +18,14 @@ import {
 } from "lucide-react";
 import { logoutAction, getSessionAction } from "../(auth)/actions";
 
-const STATIC_STYLES = [
-  { type: "style", name: "Food Review", icon: "🍔" },
-  { type: "style", name: "Model", icon: "👗" },
-  { type: "style", name: "Beauty", icon: "💄" },
-  { type: "style", name: "Tech", icon: "💻" },
-  { type: "style", name: "Travel", icon: "✈️" },
-];
-
 const menuItems = [
   { name: "TRANG CHỦ", path: "/shop-dashboard", icon: LayoutDashboard },
-  { name: "KHÁM PHÁ KOL/KOC", path: "/search-creator" },
+  { name: "KHÁM PHÁ", path: "/search-creator" },
   { name: "HỒ SƠ CỬA HÀNG", path: "/shop-profile", icon: Store },
   { name: "QUẢN LÝ CASTING", path: "/my-casting", icon: Megaphone },
   { name: "TIN NHẮN", path: "/messages", icon: MessageSquare },
   { name: "GIAO DỊCH", path: "/transactions", icon: CreditCard },
   { name: "GIỚI THIỆU", path: "/" },
-
 ];
 
 export default function ShopLayout({ children }) {
@@ -97,19 +87,30 @@ export default function ShopLayout({ children }) {
         alignItems: "center",
         padding: "0 2.5rem",
       }} className="desktop-header hidden-mobile">
-        {/* Left: Brand Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", flex: "1 1 0%", justifyContent: "flex-start", minWidth: 0 }}>
-          <Link href="/shop-dashboard" style={{ display: "flex", alignItems: "center", gap: "0.625rem", textDecoration: "none", flexShrink: 0 }}>
+
+        {/* Left: Brand Logo (Cố định chiều rộng, không tự co giãn bừa bãi) */}
+        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", flex: "0 0 auto", whiteSpace: "nowrap" }}>
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.625rem", textDecoration: "none" }}>
+            {/* Khung bọc ảnh logo */}
             <div style={{
-              width: "28px", height: "28px",
-              background: "linear-gradient(135deg, var(--primary) 0%, #9333ea 100%)",
-              borderRadius: "var(--radius-sm)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 4px 12px rgba(124, 58, 237, 0.2)"
+              width: "36px",
+              height: "36px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "50%",      // Bo tròn 100% thành hình tròn
+              overflow: "hidden",       // Cắt bỏ phần ảnh dư thừa ra ngoài viền tròn
+              border: "1px solid var(--border)" // Tùy chọn: Thêm viền mảnh nếu muốn
             }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-              </svg>
+              <img
+                src="/logo.png"
+                alt="CASTME Logo"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover" // Đổi từ contain sang cover để ảnh lấp đầy hình tròn
+                }}
+              />
             </div>
             <span style={{
               fontFamily: "var(--font-heading)",
@@ -121,8 +122,8 @@ export default function ShopLayout({ children }) {
             <span style={{
               fontSize: "0.55rem",
               fontWeight: 800,
-              background: "rgba(124, 58, 237, 0.08)",
-              color: "var(--primary)",
+              background: "rgba(37, 99, 235, 0.08)",
+              color: "var(--electric)",
               padding: "0.15rem 0.5rem",
               borderRadius: "99px",
               marginLeft: "0.25rem",
@@ -131,8 +132,18 @@ export default function ShopLayout({ children }) {
           </Link>
         </div>
 
-        {/* Center: Navigation Capsule Menu */}
-        <nav className="landing-nav-capsule glass-capsule-nav desktop-nav-menu" style={{ display: "flex", alignItems: "center", gap: "0.25rem", flexShrink: 0 }}>
+        {/* Center: Navigation Capsule Menu (Tạo vùng đệm cách ly an toàn ở 2 đầu) */}
+        <nav className="landing-nav-capsule glass-capsule-nav desktop-nav-menu" style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "0.25rem",
+          flex: "1 1 auto",
+          margin: "0 2.5rem", // TẠO KHOẢNG TRỐNG BẮT BUỘC để không bao giờ chạm Trái / Phải
+          minWidth: 0,
+          overflowX: "auto",
+          scrollbarWidth: "none",
+        }}>
           {menuItems.map((item) => {
             const active = pathname === item.path;
             return (
@@ -169,33 +180,11 @@ export default function ShopLayout({ children }) {
           })}
         </nav>
 
-        {/* Right: User actions & settings */}
-        <div style={{ display: "flex", alignItems: "center", gap: "1.125rem", flex: "1 1 0%", justifyContent: "flex-end", minWidth: 0 }}>
-          {/* Wallet Status */}
-          <div
-            onClick={() => router.push("/transactions")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.45rem",
-              padding: "0.42rem 0.875rem",
-              background: "rgba(255, 255, 255, 0.35)",
-              border: "1.2px solid rgba(124, 58, 237, 0.25)",
-              borderRadius: "var(--radius-full)",
-              cursor: "pointer",
-              fontSize: "0.8125rem",
-              fontWeight: 700,
-              color: "var(--charcoal)",
-              transition: "all 0.2s",
-              userSelect: "none",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; e.currentTarget.style.background = "rgba(255, 255, 255, 0.45)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(124, 58, 237, 0.25)"; e.currentTarget.style.background = "rgba(255, 255, 255, 0.35)"; }}
-          >
-            <Wallet size={14} color="#7c3aed" strokeWidth={2.5} />
-            <span>1.5M₫</span>
-            <span style={{ fontSize: "0.6875rem", color: "var(--primary)", fontWeight: 800 }}>Nạp</span>
-          </div>
+        {/* Right: User actions & settings (Cố định bên phải, không co kéo làm đè menu) */}
+        <div style={{ display: "flex", alignItems: "center", gap: "1.125rem", flex: "0 0 auto", justifyContent: "flex-end", whiteSpace: "nowrap" }}>
+
+          {/* Wallet Status (Chỉ hiển thị số dư, đã bỏ nút Nạp) */}
+
 
           {/* Notification bell */}
           <button style={{ width: "36px", height: "36px", borderRadius: "50%", background: "rgba(255, 255, 255, 0.25)", border: "1px solid rgba(255, 255, 255, 0.4)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--ash)", position: "relative" }}
@@ -283,10 +272,7 @@ export default function ShopLayout({ children }) {
       {/* MOBILE DRAWER SIDEBAR */}
       {sidebarOpen && (
         <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex" }}>
-          {/* Overlay */}
           <div onClick={() => setSidebarOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} />
-
-          {/* Menu Drawer */}
           <div style={{
             position: "relative",
             width: "270px",
@@ -317,7 +303,7 @@ export default function ShopLayout({ children }) {
                     onClick={() => setSidebarOpen(false)}
                     className={`sidebar-nav-item ${active ? "active" : ""}`}
                   >
-                    <Icon size={16} />
+                    {Icon && <Icon size={16} />}
                     {item.name}
                   </Link>
                 );
@@ -325,7 +311,7 @@ export default function ShopLayout({ children }) {
             </nav>
 
             <div style={{ borderTop: "1px solid var(--border)", paddingTop: "1rem", marginBottom: "1rem" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyBox: "space-between", padding: "0.5rem" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                   <Wallet size={16} color="var(--primary)" />
                   <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--charcoal)" }}>Số dư ví:</span>
@@ -358,7 +344,7 @@ export default function ShopLayout({ children }) {
           flex: 1,
           padding: pathname.startsWith("/messages") ? "0" : "0.75rem 2.5rem 2rem 2.5rem",
           boxSizing: "border-box",
-          marginTop: "72px", // Fixed space for the desktop top navbar
+          marginTop: "72px",
           marginLeft: "auto",
           marginRight: "auto",
           marginBottom: 0,
@@ -370,42 +356,30 @@ export default function ShopLayout({ children }) {
         </main>
       </div>
 
+      {/* STYLES OVERRIDES */}
       <style>{`
         .show-mobile { display: none !important; }
         .shop-workspace-content { zoom: 0.9; }
         .shop-workspace-content.messages-active {
           height: calc((100vh - 72px) / 0.9);
         }
-        /* Override workspace background image for messages page */
         .shop-workspace.messages-bg-override {
           background-color: transparent !important;
         }
         @media (max-width: 1280px) {
-          .desktop-header {
-            padding: 0 1.5rem !important;
-          }
-          .desktop-nav-menu {
-            gap: 0.15rem !important;
-          }
-          .desktop-nav-link {
-            font-size: 0.75rem !important;
-            padding: 0.35rem 0.75rem !important;
-          }
+          .desktop-header { padding: 0 1.5rem !important; }
+          .desktop-nav-menu { gap: 0.15rem !important; }
+          .desktop-nav-link { font-size: 0.75rem !important; padding: 0.35rem 0.75rem !important; }
         }
         @media (max-width: 1120px) {
-          .desktop-nav-link {
-            font-size: 0.72rem !important;
-            padding: 0.3rem 0.55rem !important;
-          }
+          .desktop-nav-link { font-size: 0.72rem !important; padding: 0.3rem 0.55rem !important; }
         }
         @media (max-width: 1024px) {
           .hidden-mobile { display: none !important; }
           .show-mobile { display: flex !important; }
           .shop-workspace { margin-left: 0 !important; }
           .shop-workspace-content { padding: 1.5rem 1.25rem !important; margin-top: 0 !important; zoom: 1 !important; }
-          .shop-workspace-content.messages-active {
-            height: calc(100vh - 64px) !important;
-          }
+          .shop-workspace-content.messages-active { height: calc(100vh - 64px) !important; }
         }
       `}</style>
     </div>
