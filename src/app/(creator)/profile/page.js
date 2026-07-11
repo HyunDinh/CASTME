@@ -316,12 +316,7 @@ export default function CreatorProfileEditor() {
                   <span className="inline-flex items-center justify-center w-6 h-6 bg-indigo-600 rounded-full text-white text-xs font-bold shrink-0 shadow-sm">✓</span>
                   {renderSaveButton('name', name)}
                 </div>
-                <div className="flex items-center gap-3 justify-center lg:justify-end flex-wrap">
-                  <button className="px-5 py-3 border-2 border-gray-200 hover:bg-gray-50 text-gray-800 font-bold text-sm rounded-xl flex items-center gap-2 transition cursor-pointer whitespace-nowrap"><MessageSquare className="w-4 h-4" /> Nhắn tin</button>
-                  <button className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-200 transition cursor-pointer whitespace-nowrap"><Mail className="w-4 h-4" /> Mời Casting</button>
-                  <button className="p-3 border-2 border-gray-200 hover:bg-gray-50 rounded-xl transition cursor-pointer shrink-0"><Bookmark className="w-5 h-5 text-gray-500" /></button>
-                  <button className="p-3 border-2 border-gray-200 hover:bg-gray-50 rounded-xl transition cursor-pointer shrink-0"><MoreHorizontal className="w-5 h-5 text-gray-500" /></button>
-                </div>
+                  {/* Removed action buttons (Nhắn tin, Mời Casting, Bookmark) since this is the creator's own profile */}
               </div>
 
               {/* Row 2: Headline and Location */}
