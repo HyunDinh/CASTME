@@ -28,7 +28,7 @@ const STATIC_STYLES = [
 ];
 
 const menuItems = [
-  { name: "TỔNG QUAN SHOP", path: "/shop-dashboard", icon: LayoutDashboard },
+  { name: "TRANG CHỦ", path: "/shop-dashboard", icon: LayoutDashboard },
   { name: "KHÁM PHÁ KOL/KOC", path: "/search-creator" },
   { name: "HỒ SƠ CỬA HÀNG", path: "/shop-profile", icon: Store },
   { name: "QUẢN LÝ CASTING", path: "/my-casting", icon: Megaphone },
@@ -92,13 +92,13 @@ export default function ShopLayout({ children }) {
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
         zIndex: 100,
-        display: "grid",
-        gridTemplateColumns: "1.2fr auto 1fr",
+        display: "flex",
+        justifyContent: "space-between",
         alignItems: "center",
         padding: "0 2.5rem",
-      }} className="hidden-mobile">
+      }} className="desktop-header hidden-mobile">
         {/* Left: Brand Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", justifySelf: "start", width: "100%" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", flex: "1 1 0%", justifyContent: "flex-start", minWidth: 0 }}>
           <Link href="/shop-dashboard" style={{ display: "flex", alignItems: "center", gap: "0.625rem", textDecoration: "none", flexShrink: 0 }}>
             <div style={{
               width: "28px", height: "28px",
@@ -132,13 +132,14 @@ export default function ShopLayout({ children }) {
         </div>
 
         {/* Center: Navigation Capsule Menu */}
-        <nav className="landing-nav-capsule glass-capsule-nav" style={{ display: "flex", alignItems: "center", gap: "0.25rem", justifySelf: "center" }}>
+        <nav className="landing-nav-capsule glass-capsule-nav desktop-nav-menu" style={{ display: "flex", alignItems: "center", gap: "0.25rem", flexShrink: 0 }}>
           {menuItems.map((item) => {
             const active = pathname === item.path;
             return (
               <Link
                 key={item.path}
                 href={item.path}
+                className="desktop-nav-link"
                 style={{
                   fontFamily: "var(--font-heading)",
                   fontSize: "0.8125rem",
@@ -169,7 +170,7 @@ export default function ShopLayout({ children }) {
         </nav>
 
         {/* Right: User actions & settings */}
-        <div style={{ display: "flex", alignItems: "center", gap: "1.125rem", justifySelf: "end" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1.125rem", flex: "1 1 0%", justifyContent: "flex-end", minWidth: 0 }}>
           {/* Wallet Status */}
           <div
             onClick={() => router.push("/transactions")}
@@ -379,7 +380,25 @@ export default function ShopLayout({ children }) {
         .shop-workspace.messages-bg-override {
           background-color: transparent !important;
         }
-        @media (max-width: 768px) {
+        @media (max-width: 1280px) {
+          .desktop-header {
+            padding: 0 1.5rem !important;
+          }
+          .desktop-nav-menu {
+            gap: 0.15rem !important;
+          }
+          .desktop-nav-link {
+            font-size: 0.75rem !important;
+            padding: 0.35rem 0.75rem !important;
+          }
+        }
+        @media (max-width: 1120px) {
+          .desktop-nav-link {
+            font-size: 0.72rem !important;
+            padding: 0.3rem 0.55rem !important;
+          }
+        }
+        @media (max-width: 1024px) {
           .hidden-mobile { display: none !important; }
           .show-mobile { display: flex !important; }
           .shop-workspace { margin-left: 0 !important; }

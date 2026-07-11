@@ -29,6 +29,19 @@ export default function ShopDashboard() {
   const [session, setSession] = useState(null);
   const [inProgressJobs, setInProgressJobs] = useState([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
+  const [vibeCreators, setVibeCreators] = useState([]);
+
+  const handleCardMouseEnter = (e, hoverColor = "rgba(37, 99, 235, 0.2)") => {
+    e.currentTarget.style.transform = "translateY(-6px)";
+    e.currentTarget.style.boxShadow = "0 16px 36px rgba(0, 0, 0, 0.08)";
+    e.currentTarget.style.borderColor = hoverColor;
+  };
+
+  const handleCardMouseLeave = (e) => {
+    e.currentTarget.style.transform = "translateY(0)";
+    e.currentTarget.style.boxShadow = "0 8px 32px rgba(120, 140, 180, 0.06)";
+    e.currentTarget.style.borderColor = "rgba(0, 0, 0, 0.08)";
+  };
 
   // Thống kê giả lập
   const metricsData = {
@@ -47,6 +60,12 @@ export default function ShopDashboard() {
         const jobsRes = await getMyCastingJobs();
         if (jobsRes.success) {
           setInProgressJobs(jobsRes.data.filter((j) => j.status === "IN_PROGRESS" || j.status === "in-progress"));
+        }
+
+        const creatorsRes = await fetch("/api/creators/search");
+        const creatorsData = await creatorsRes.json();
+        if (creatorsData.success) {
+          setVibeCreators(creatorsData.data.slice(0, 3));
         }
       } catch (err) {
         console.error("Lỗi khi tải dữ liệu tổng quan shop:", err);
@@ -151,6 +170,7 @@ export default function ShopDashboard() {
 
         {/* CARD 1: TỔNG NGÂN SÁCH ĐÃ CHI */}
         <div
+          onClick={() => router.push("/transactions")}
           style={{
             background: "white",
             border: "1px solid rgba(0, 0, 0, 0.08)",
@@ -160,10 +180,11 @@ export default function ShopDashboard() {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            transition: "all 0.3s ease"
+            transition: "all 0.3s ease",
+            cursor: "pointer"
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
+          onMouseEnter={(e) => handleCardMouseEnter(e, "rgba(16, 185, 129, 0.25)")}
+          onMouseLeave={handleCardMouseLeave}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
             <div>
@@ -187,7 +208,7 @@ export default function ShopDashboard() {
           </div>
           <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Bảo chứng dòng tiền an toàn</span>
-            <Link href="/transactions" style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
+            <Link href="/transactions" onClick={(e) => e.stopPropagation()} style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
               Chi tiết ví <ArrowRight size={10} />
             </Link>
           </div>
@@ -195,6 +216,7 @@ export default function ShopDashboard() {
 
         {/* CARD 2: CHIẾN DỊCH ĐANG CHẠY */}
         <div
+          onClick={() => router.push("/my-casting")}
           style={{
             background: "white",
             border: "1px solid rgba(0, 0, 0, 0.08)",
@@ -204,10 +226,11 @@ export default function ShopDashboard() {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            transition: "all 0.3s ease"
+            transition: "all 0.3s ease",
+            cursor: "pointer"
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
+          onMouseEnter={(e) => handleCardMouseEnter(e, "rgba(37, 99, 235, 0.25)")}
+          onMouseLeave={handleCardMouseLeave}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
             <div>
@@ -231,7 +254,7 @@ export default function ShopDashboard() {
           </div>
           <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Cập nhật phản hồi từ KOC</span>
-            <Link href="/my-casting" style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
+            <Link href="/my-casting" onClick={(e) => e.stopPropagation()} style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
               Xem danh sách <ArrowRight size={10} />
             </Link>
           </div>
@@ -239,6 +262,7 @@ export default function ShopDashboard() {
 
         {/* CARD 3: KOC ĐANG HỢP TÁC */}
         <div
+          onClick={() => router.push("/my-casting")}
           style={{
             background: "white",
             border: "1px solid rgba(0, 0, 0, 0.08)",
@@ -248,10 +272,11 @@ export default function ShopDashboard() {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            transition: "all 0.3s ease"
+            transition: "all 0.3s ease",
+            cursor: "pointer"
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
+          onMouseEnter={(e) => handleCardMouseEnter(e, "rgba(168, 85, 247, 0.25)")}
+          onMouseLeave={handleCardMouseLeave}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
             <div>
@@ -275,7 +300,7 @@ export default function ShopDashboard() {
           </div>
           <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Tiến độ sản xuất nội dung</span>
-            <Link href="/my-casting" style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
+            <Link href="/my-casting" onClick={(e) => e.stopPropagation()} style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
               Quản lý <ArrowRight size={10} />
             </Link>
           </div>
@@ -283,6 +308,7 @@ export default function ShopDashboard() {
 
         {/* CARD 4: TỔNG LƯỢT TIẾP CẬN */}
         <div
+          onClick={() => router.push("/shop-profile")}
           style={{
             background: "white",
             border: "1px solid rgba(0, 0, 0, 0.08)",
@@ -292,10 +318,11 @@ export default function ShopDashboard() {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            transition: "all 0.3s ease"
+            transition: "all 0.3s ease",
+            cursor: "pointer"
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
+          onMouseEnter={(e) => handleCardMouseEnter(e, "rgba(244, 63, 94, 0.25)")}
+          onMouseLeave={handleCardMouseLeave}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
             <div>
@@ -319,7 +346,7 @@ export default function ShopDashboard() {
           </div>
           <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Tăng trưởng độ phủ thương hiệu</span>
-            <Link href="/shop-profile" style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
+            <Link href="/shop-profile" onClick={(e) => e.stopPropagation()} style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
               Xem hồ sơ <ArrowRight size={10} />
             </Link>
           </div>
@@ -401,61 +428,98 @@ export default function ShopDashboard() {
               </span>
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.5rem" }}>
+                {vibeCreators.length > 0 ? (
+                  vibeCreators.map((c, idx) => {
+                    const matchPercent = 98 - idx * 3;
+                    const firstChar = c.name ? c.name.charAt(0).toUpperCase() : "?";
+                    return (
+                      <div 
+                        key={c.id} 
+                        onClick={() => router.push(`/creator/${c.id}`)}
+                        style={{
+                          background: "#f8fafc",
+                          border: "1px solid rgba(0, 0, 0, 0.05)",
+                          borderRadius: "16px",
+                          padding: "0.75rem 0.5rem",
+                          textAlign: "center",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: "0.25rem",
+                          boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)",
+                          cursor: "pointer",
+                          transition: "transform 0.2s"
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+                      >
+                        {c.avatar && c.avatar.length > 1 ? (
+                          <img src={c.avatar} alt={c.name} style={{ width: "24px", height: "24px", borderRadius: "50%", objectFit: "cover" }} />
+                        ) : (
+                          <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: idx === 0 ? "linear-gradient(135deg, #3b82f6, #9333ea)" : idx === 1 ? "linear-gradient(135deg, #ec4899, #f43f5e)" : "linear-gradient(135deg, #10b981, #059669)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>{firstChar}</div>
+                        )}
+                        <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>{c.name}</span>
+                        <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>{matchPercent}%</span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <>
+                    {/* Creator 1 */}
+                    <div style={{
+                      background: "#f8fafc",
+                      border: "1px solid rgba(0, 0, 0, 0.05)",
+                      borderRadius: "16px",
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "center",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "0.25rem",
+                      boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)"
+                    }}>
+                      <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #3b82f6, #9333ea)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>T</div>
+                      <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>Thảo Vy</span>
+                      <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>98%</span>
+                    </div>
 
-                {/* Creator 1 */}
-                <div style={{
-                  background: "#f8fafc",
-                  border: "1px solid rgba(0, 0, 0, 0.05)",
-                  borderRadius: "16px",
-                  padding: "0.75rem 0.5rem",
-                  textAlign: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "0.25rem",
-                  boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)"
-                }}>
-                  <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #3b82f6, #9333ea)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>T</div>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>Thảo Vy</span>
-                  <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>98%</span>
-                </div>
+                    {/* Creator 2 */}
+                    <div style={{
+                      background: "#f8fafc",
+                      border: "1px solid rgba(0, 0, 0, 0.05)",
+                      borderRadius: "16px",
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "center",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "0.25rem",
+                      boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)"
+                    }}>
+                      <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #ec4899, #f43f5e)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>K</div>
+                      <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>Khoa Style</span>
+                      <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>95%</span>
+                    </div>
 
-                {/* Creator 2 */}
-                <div style={{
-                  background: "#f8fafc",
-                  border: "1px solid rgba(0, 0, 0, 0.05)",
-                  borderRadius: "16px",
-                  padding: "0.75rem 0.5rem",
-                  textAlign: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "0.25rem",
-                  boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)"
-                }}>
-                  <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #ec4899, #f43f5e)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>K</div>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>Khoa Style</span>
-                  <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>95%</span>
-                </div>
-
-                {/* Creator 3 */}
-                <div style={{
-                  background: "#f8fafc",
-                  border: "1px solid rgba(0, 0, 0, 0.05)",
-                  borderRadius: "16px",
-                  padding: "0.75rem 0.5rem",
-                  textAlign: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "0.25rem",
-                  boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)"
-                }}>
-                  <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #10b981, #06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>M</div>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>Mai Matcha</span>
-                  <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>92%</span>
-                </div>
-
+                    {/* Creator 3 */}
+                    <div style={{
+                      background: "#f8fafc",
+                      border: "1px solid rgba(0, 0, 0, 0.05)",
+                      borderRadius: "16px",
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "center",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "0.25rem",
+                      boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)"
+                    }}>
+                      <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #10b981, #34d399)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>M</div>
+                      <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>Mai Matcha</span>
+                      <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>92%</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -468,7 +532,7 @@ export default function ShopDashboard() {
             </h3>
             <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "0.85rem" }}>
 
-              <Link href="/my-casting" style={{ textDecoration: "none", color: "inherit" }}>
+              <Link href="/search-creator" style={{ textDecoration: "none", color: "inherit" }}>
                 <div
                   style={{
                     background: "white",
@@ -561,7 +625,23 @@ export default function ShopDashboard() {
         <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
 
           {/* Real-time campaign performance card */}
-          <div style={{ borderRadius: "24px", padding: "1.75rem", display: "flex", flexDirection: "column", gap: "1.25rem", background: "white", border: "1px solid rgba(0, 0, 0, 0.08)", boxShadow: "0 8px 32px rgba(120, 140, 180, 0.06)" }}>
+          <div
+            onClick={() => router.push("/my-casting")}
+            style={{
+              borderRadius: "24px",
+              padding: "1.75rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "1.25rem",
+              background: "white",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
+              boxShadow: "0 8px 32px rgba(120, 140, 180, 0.06)",
+              cursor: "pointer",
+              transition: "all 0.3s ease"
+            }}
+            onMouseEnter={(e) => handleCardMouseEnter(e, "rgba(37, 99, 235, 0.15)")}
+            onMouseLeave={handleCardMouseLeave}
+          >
 
             <div>
               <span style={{ fontSize: "0.6875rem", fontWeight: 800, color: "var(--muted)", textTransform: "lowercase", letterSpacing: "0.07em" }}>
@@ -633,10 +713,33 @@ export default function ShopDashboard() {
               </svg>
             </div>
 
+            {/* Link to details */}
+            <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "flex-end" }}>
+              <Link href="/my-casting" onClick={(e) => e.stopPropagation()} style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
+                Chi tiết chiến dịch & hiệu suất <ArrowRight size={10} />
+              </Link>
+            </div>
+
           </div>
 
           {/* Timeline looking campaigns element */}
-          <div style={{ borderRadius: "24px", padding: "1.75rem", display: "flex", flexDirection: "column", gap: "1.25rem", background: "white", border: "1px solid rgba(0, 0, 0, 0.08)", boxShadow: "0 8px 32px rgba(120, 140, 180, 0.06)" }}>
+          <div
+            onClick={() => router.push("/my-casting")}
+            style={{
+              borderRadius: "24px",
+              padding: "1.75rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "1.25rem",
+              background: "white",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
+              boxShadow: "0 8px 32px rgba(120, 140, 180, 0.06)",
+              cursor: "pointer",
+              transition: "all 0.3s ease"
+            }}
+            onMouseEnter={(e) => handleCardMouseEnter(e, "rgba(168, 85, 247, 0.15)")}
+            onMouseLeave={handleCardMouseLeave}
+          >
 
             <div>
               <span style={{ fontSize: "0.6875rem", fontWeight: 800, color: "var(--muted)", textTransform: "lowercase", letterSpacing: "0.07em" }}>
@@ -691,6 +794,13 @@ export default function ShopDashboard() {
               <div style={{ width: "100%", height: "5px", background: "rgba(37,99,235,0.08)", borderRadius: "99px", overflow: "hidden", position: "relative" }}>
                 <div style={{ width: "70%", height: "100%", background: "linear-gradient(90deg, #10b981 0%, #34d399 100%)", borderRadius: "99px" }} />
               </div>
+            </div>
+
+            {/* Link to milestone progress */}
+            <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "flex-end" }}>
+              <Link href="/my-casting" onClick={(e) => e.stopPropagation()} style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
+                Quản lý tiến độ Milestones <ArrowRight size={10} />
+              </Link>
             </div>
 
           </div>

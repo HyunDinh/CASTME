@@ -126,52 +126,55 @@ export default function CreatorLayout({ children }) {
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
         zIndex: 100,
-        display: "grid",
-        gridTemplateColumns: "1fr auto 1fr",
+        display: "flex",
+        justifyContent: "space-between",
         alignItems: "center",
         padding: "0 2.5rem",
-      }} className="hidden-mobile">
+      }} className="desktop-header hidden-mobile">
 
         {/* Left: Brand Logo */}
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.625rem", textDecoration: "none", justifySelf: "start" }}>
-          <div style={{
-            width: "28px", height: "28px",
-            background: "var(--electric)",
-            borderRadius: "var(--radius-sm)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "var(--electric-shine)"
-          }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
-          </div>
-          <span style={{
-            fontFamily: "var(--font-heading)",
-            fontSize: "1.25rem",
-            fontWeight: 800,
-            letterSpacing: "0.04em",
-            color: "var(--charcoal)",
-          }}>CASTME</span>
-          <span style={{
-            fontSize: "0.55rem",
-            fontWeight: 800,
-            background: "rgba(37, 99, 235, 0.08)",
-            color: "var(--electric)",
-            padding: "0.15rem 0.5rem",
-            borderRadius: "99px",
-            marginLeft: "0.25rem",
-            letterSpacing: "0.06em",
-          }}>CREATOR</span>
-        </Link>
+        <div style={{ display: "flex", alignItems: "center", flex: "1 1 0%", justifyContent: "flex-start", minWidth: 0 }}>
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.625rem", textDecoration: "none" }}>
+            <div style={{
+              width: "28px", height: "28px",
+              background: "var(--electric)",
+              borderRadius: "var(--radius-sm)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "var(--electric-shine)"
+            }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+            </div>
+            <span style={{
+              fontFamily: "var(--font-heading)",
+              fontSize: "1.25rem",
+              fontWeight: 800,
+              letterSpacing: "0.04em",
+              color: "var(--charcoal)",
+            }}>CASTME</span>
+            <span style={{
+              fontSize: "0.55rem",
+              fontWeight: 800,
+              background: "rgba(37, 99, 235, 0.08)",
+              color: "var(--electric)",
+              padding: "0.15rem 0.5rem",
+              borderRadius: "99px",
+              marginLeft: "0.25rem",
+              letterSpacing: "0.06em",
+            }}>CREATOR</span>
+          </Link>
+        </div>
 
         {/* Center: Navigation Capsule Menu */}
-        <nav className="landing-nav-capsule glass-capsule-nav" style={{ display: "flex", alignItems: "center", gap: "0.25rem", justifySelf: "center" }}>
+        <nav className="landing-nav-capsule glass-capsule-nav desktop-nav-menu" style={{ display: "flex", alignItems: "center", gap: "0.25rem", flexShrink: 0 }}>
           {menuItems.map((item) => {
             const active = pathname === item.path;
             return (
               <Link
                 key={item.path}
                 href={item.path}
+                className="desktop-nav-link"
                 style={{
                   fontFamily: "var(--font-heading)",
                   fontSize: "0.8125rem",
@@ -202,7 +205,7 @@ export default function CreatorLayout({ children }) {
         </nav>
 
         {/* Right: User actions & settings */}
-        <div style={{ display: "flex", alignItems: "center", gap: "1.125rem", justifySelf: "end" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1.125rem", flex: "1 1 0%", justifyContent: "flex-end", minWidth: 0 }}>
           {/* Search bar inside header (only if explore or jobs or search or home)
           {showSearch && (
             <div style={{ position: "relative", display: "flex", alignItems: "center" }} className="hidden-mobile">
@@ -451,7 +454,25 @@ export default function CreatorLayout({ children }) {
         .creator-workspace.messages-bg-override {
           background-color: transparent !important;
         }
-        @media (max-width: 768px) {
+        @media (max-width: 1280px) {
+          .desktop-header {
+            padding: 0 1.5rem !important;
+          }
+          .desktop-nav-menu {
+            gap: 0.15rem !important;
+          }
+          .desktop-nav-link {
+            font-size: 0.75rem !important;
+            padding: 0.35rem 0.75rem !important;
+          }
+        }
+        @media (max-width: 1120px) {
+          .desktop-nav-link {
+            font-size: 0.72rem !important;
+            padding: 0.3rem 0.55rem !important;
+          }
+        }
+        @media (max-width: 1024px) {
           .hidden-mobile { display: none !important; }
           .show-mobile { display: flex !important; }
           .creator-workspace { margin-left: 0 !important; }

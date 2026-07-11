@@ -337,6 +337,10 @@ export async function getPublicShopProfile(shopUserId) {
         mainImage: profile?.mainImage || "",
         coverImage: profile?.coverImage || "",
         gallery: profile?.gallery || [],
+        // ─── BỔ SUNG GÓI VÀ LƯỢT KẾT NỐI ───
+        plan: user_data?.plan || "FREE",
+        hearts: user_data?.hearts || 0,
+        connects: user_data?.connects || 0,
         // ──────────────────────────────────
       },
     };
@@ -414,5 +418,57 @@ export async function AdvancedSearchAction(keyword) {
   } catch (error) {
     console.error(error);
     return { success: false, error: "Lỗi hệ thống khi tìm kiếm" };
+  }
+}
+
+export async function getTopShops() {
+  try {
+    const shops = await prisma.shopProfile.findMany({
+      take: 3,
+      orderBy: {
+        averageRating: "desc"
+      }
+    });
+    return {
+      success: true,
+      data: shops.map(s => ({
+        id: s.userId,
+        shopName: s.shopName,
+        categories: s.categories || [],
+        mainImage: s.mainImage || "",
+        coverImage: s.coverImage || "",
+        averageRating: s.averageRating || 0,
+      }))
+    };
+  } catch (error) {
+    console.error("Error in getTopShops:", error);
+    return { success: false, error: "Lỗi hệ thống" };
+  }
+}
+
+export async function getPublicShops() {
+  try {
+    const shops = await prisma.shopProfile.findMany({
+      orderBy: {
+        createdAt: "desc"
+      }
+    });
+    return {
+      success: true,
+      data: shops.map(s => ({
+        id: s.userId,
+        shopName: s.shopName || "Unknown Shop",
+        categories: s.categories || [],
+        mainImage: s.mainImage || "",
+        coverImage: s.coverImage || "",
+        averageRating: s.averageRating || 0,
+        totalJobs: s.totalJobs || 0,
+        description: s.description || "",
+        vibeText: s.vibeText || "",
+      }))
+    };
+  } catch (error) {
+    console.error("Error in getPublicShops:", error);
+    return { success: false, error: "Lỗi hệ thống" };
   }
 }
