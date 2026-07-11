@@ -3,7 +3,9 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSessionAction } from "../../(auth)/actions";
-import { getUserHearts, getMyAppliedJobs } from "../actions";
+import { getUserHearts, getMyAppliedJobs, getTopShops, getPublicShopProfile } from "../actions";
+import ShopProfileModal from "#/components/ShopProfileModal";
+
 import {
   Sparkles,
   Heart,
@@ -28,6 +30,22 @@ export default function CreatorHomePage() {
   const [hearts, setHearts] = useState(0);
   const [appliedCount, setAppliedCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [vibeShops, setVibeShops] = useState([]);
+  const [shopModalOpen, setShopModalOpen] = useState(false);
+  const [shopProfile, setShopProfile] = useState(null);
+  const [loadingShop, setLoadingShop] = useState(false);
+
+  const handleCardMouseEnter = (e, hoverColor = "rgba(37, 99, 235, 0.2)") => {
+    e.currentTarget.style.transform = "translateY(-6px)";
+    e.currentTarget.style.boxShadow = "0 16px 36px rgba(0, 0, 0, 0.08)";
+    e.currentTarget.style.borderColor = hoverColor;
+  };
+
+  const handleCardMouseLeave = (e) => {
+    e.currentTarget.style.transform = "translateY(0)";
+    e.currentTarget.style.boxShadow = "0 8px 32px rgba(120, 140, 180, 0.06)";
+    e.currentTarget.style.borderColor = "rgba(0, 0, 0, 0.08)";
+  };
 
   // Hardcoded wallet details for placeholder/demo matching layout
   const wallet = {
@@ -47,6 +65,9 @@ export default function CreatorHomePage() {
 
         const jobsRes = await getMyAppliedJobs();
         if (jobsRes.success) setAppliedCount(jobsRes.data.length);
+
+        const shopsRes = await getTopShops();
+        if (shopsRes.success) setVibeShops(shopsRes.data);
       } catch (err) {
         console.error("Lỗi khi tải dữ liệu trang chủ:", err);
       } finally {
@@ -55,6 +76,22 @@ export default function CreatorHomePage() {
     }
     loadData();
   }, []);
+
+  const viewShopProfile = async (shopId) => {
+    if (!shopId) return alert("Không tìm thấy cửa hàng");
+    setShopProfile(null);
+    setLoadingShop(true);
+    setShopModalOpen(true);
+    
+    const result = await getPublicShopProfile(shopId);
+    if (result.success) {
+      setShopProfile(result.data);
+    } else {
+      alert(result.error);
+      setShopModalOpen(false);
+    }
+    setLoadingShop(false);
+  };
 
   const getGreeting = () => {
     const hr = new Date().getHours();
@@ -162,6 +199,7 @@ export default function CreatorHomePage() {
 
         {/* CARD 1: TIM HIỆN CÓ */}
         <div
+          onClick={triggerRecharge}
           style={{
             background: "white",
             border: "1px solid rgba(0, 0, 0, 0.08)",
@@ -171,10 +209,11 @@ export default function CreatorHomePage() {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            transition: "all 0.3s ease"
+            transition: "all 0.3s ease",
+            cursor: "pointer"
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
+          onMouseEnter={(e) => handleCardMouseEnter(e, "rgba(244, 63, 94, 0.25)")}
+          onMouseLeave={handleCardMouseLeave}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
             <div>
@@ -199,7 +238,7 @@ export default function CreatorHomePage() {
           <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Nộp hồ sơ (5 Tim/chiến dịch)</span>
             <button
-              onClick={triggerRecharge}
+              onClick={(e) => { e.stopPropagation(); triggerRecharge(); }}
               style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "2px", transition: "color 0.2s" }}
               onMouseEnter={(e) => e.target.style.color = "#1d4ed8"}
               onMouseLeave={(e) => e.target.style.color = "#2563eb"}
@@ -211,6 +250,7 @@ export default function CreatorHomePage() {
 
         {/* CARD 2: CÔNG VIỆC ĐÃ ỨNG TUYỂN */}
         <div
+          onClick={() => router.push("/my-jobs")}
           style={{
             background: "white",
             border: "1px solid rgba(0, 0, 0, 0.08)",
@@ -220,10 +260,11 @@ export default function CreatorHomePage() {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            transition: "all 0.3s ease"
+            transition: "all 0.3s ease",
+            cursor: "pointer"
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
+          onMouseEnter={(e) => handleCardMouseEnter(e, "rgba(37, 99, 235, 0.25)")}
+          onMouseLeave={handleCardMouseLeave}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
             <div>
@@ -247,7 +288,7 @@ export default function CreatorHomePage() {
           </div>
           <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Cập nhật phản hồi từ Shop</span>
-            <Link href="/my-jobs" style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
+            <Link href="/my-jobs" onClick={(e) => e.stopPropagation()} style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
               Xem danh sách <ArrowRight size={10} />
             </Link>
           </div>
@@ -255,6 +296,7 @@ export default function CreatorHomePage() {
 
         {/* CARD 3: SỐ DƯ VÍ KHẢ DỤNG */}
         <div
+          onClick={() => router.push("/revenue")}
           style={{
             background: "white",
             border: "1px solid rgba(0, 0, 0, 0.08)",
@@ -264,10 +306,11 @@ export default function CreatorHomePage() {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            transition: "all 0.3s ease"
+            transition: "all 0.3s ease",
+            cursor: "pointer"
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
+          onMouseEnter={(e) => handleCardMouseEnter(e, "rgba(16, 185, 129, 0.25)")}
+          onMouseLeave={handleCardMouseLeave}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
             <div>
@@ -291,7 +334,7 @@ export default function CreatorHomePage() {
           </div>
           <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Hỗ trợ rút về tài khoản ngân hàng</span>
-            <Link href="/revenue" style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
+            <Link href="/revenue" onClick={(e) => e.stopPropagation()} style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
               Chi tiết ví <ArrowRight size={10} />
             </Link>
           </div>
@@ -299,6 +342,7 @@ export default function CreatorHomePage() {
 
         {/* CARD 4: VIBE MATCH RATING */}
         <div
+          onClick={() => router.push("/profile")}
           style={{
             background: "white",
             border: "1px solid rgba(0, 0, 0, 0.08)",
@@ -308,10 +352,11 @@ export default function CreatorHomePage() {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            transition: "all 0.3s ease"
+            transition: "all 0.3s ease",
+            cursor: "pointer"
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
+          onMouseEnter={(e) => handleCardMouseEnter(e, "rgba(245, 158, 11, 0.25)")}
+          onMouseLeave={handleCardMouseLeave}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
             <div>
@@ -335,7 +380,7 @@ export default function CreatorHomePage() {
           </div>
           <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "0.75rem", color: "var(--subtle)" }}>Tăng tỉ lệ AI match thành công</span>
-            <Link href="/profile" style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
+            <Link href="/profile" onClick={(e) => e.stopPropagation()} style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
               Nâng cấp hồ sơ <ArrowRight size={10} />
             </Link>
           </div>
@@ -371,7 +416,7 @@ export default function CreatorHomePage() {
                 letterSpacing: "0.03em",
                 cursor: "pointer",
                 background: "transparent"
-              }}>Shop Gợi Ý</span>
+              }} onClick={() => router.push("/creator-dashboard")}>Shop Gợi Ý</span>
             </div>
 
             {/* Record Player Cover Container */}
@@ -417,61 +462,98 @@ export default function CreatorHomePage() {
               </span>
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.5rem" }}>
+                {vibeShops.length > 0 ? (
+                  vibeShops.map((s, idx) => {
+                    const matchPercent = 98 - idx * 3;
+                    const firstChar = s.shopName ? s.shopName.charAt(0).toUpperCase() : "?";
+                    return (
+                      <div 
+                        key={s.id} 
+                        onClick={() => viewShopProfile(s.id)}
+                        style={{
+                          background: "#f8fafc",
+                          border: "1px solid rgba(0, 0, 0, 0.05)",
+                          borderRadius: "16px",
+                          padding: "0.75rem 0.5rem",
+                          textAlign: "center",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: "0.25rem",
+                          boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)",
+                          cursor: "pointer",
+                          transition: "transform 0.2s"
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+                      >
+                        {s.mainImage && s.mainImage.length > 1 ? (
+                          <img src={s.mainImage} alt={s.shopName} style={{ width: "24px", height: "24px", borderRadius: "50%", objectFit: "cover" }} />
+                        ) : (
+                          <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: idx === 0 ? "linear-gradient(135deg, #ffb07a, #ff7eb3)" : idx === 1 ? "linear-gradient(135deg, #3b82f6, #60a5fa)" : "linear-gradient(135deg, #10b981, #34d399)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>{firstChar}</div>
+                        )}
+                        <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>{s.shopName}</span>
+                        <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>{matchPercent}%</span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <>
+                    {/* Shop 1 */}
+                    <div style={{
+                      background: "#f8fafc",
+                      border: "1px solid rgba(0, 0, 0, 0.05)",
+                      borderRadius: "16px",
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "center",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "0.25rem",
+                      boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)"
+                    }}>
+                      <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #ffb07a, #ff7eb3)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>C</div>
+                      <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a" }}>Coolmate</span>
+                      <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>98%</span>
+                    </div>
 
-                {/* Shop 1 */}
-                <div style={{
-                  background: "#f8fafc",
-                  border: "1px solid rgba(0, 0, 0, 0.05)",
-                  borderRadius: "16px",
-                  padding: "0.75rem 0.5rem",
-                  textAlign: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "0.25rem",
-                  boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)"
-                }}>
-                  <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #ffb07a, #ff7eb3)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>C</div>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a" }}>Coolmate</span>
-                  <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>98%</span>
-                </div>
+                    {/* Shop 2 */}
+                    <div style={{
+                      background: "#f8fafc",
+                      border: "1px solid rgba(0, 0, 0, 0.05)",
+                      borderRadius: "16px",
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "center",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "0.25rem",
+                      boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)"
+                    }}>
+                      <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #3b82f6, #60a5fa)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>A</div>
+                      <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a" }}>Anker VN</span>
+                      <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>95%</span>
+                    </div>
 
-                {/* Shop 2 */}
-                <div style={{
-                  background: "#f8fafc",
-                  border: "1px solid rgba(0, 0, 0, 0.05)",
-                  borderRadius: "16px",
-                  padding: "0.75rem 0.5rem",
-                  textAlign: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "0.25rem",
-                  boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)"
-                }}>
-                  <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #3b82f6, #60a5fa)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>A</div>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a" }}>Anker VN</span>
-                  <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>95%</span>
-                </div>
-
-                {/* Shop 3 */}
-                <div style={{
-                  background: "#f8fafc",
-                  border: "1px solid rgba(0, 0, 0, 0.05)",
-                  borderRadius: "16px",
-                  padding: "0.75rem 0.5rem",
-                  textAlign: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "0.25rem",
-                  boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)"
-                }}>
-                  <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #10b981, #34d399)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>D</div>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a" }}>Decathlon</span>
-                  <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>92%</span>
-                </div>
-
+                    {/* Shop 3 */}
+                    <div style={{
+                      background: "#f8fafc",
+                      border: "1px solid rgba(0, 0, 0, 0.05)",
+                      borderRadius: "16px",
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "center",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "0.25rem",
+                      boxShadow: "0 4px 12px rgba(120, 140, 180, 0.01)"
+                    }}>
+                      <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #10b981, #34d399)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "9px", fontWeight: 900, lineHeight: 1 }}>D</div>
+                      <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1a2b4a" }}>Decathlon</span>
+                      <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "#10b981", background: "rgba(16,185,129,0.08)", padding: "1px 6px", borderRadius: "99px" }}>92%</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -577,7 +659,23 @@ export default function CreatorHomePage() {
         <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
 
           {/* Real-time campaign performance card */}
-          <div style={{ borderRadius: "24px", padding: "1.75rem", display: "flex", flexDirection: "column", gap: "1.25rem", background: "white", border: "1px solid rgba(0, 0, 0, 0.08)", boxShadow: "0 8px 32px rgba(120, 140, 180, 0.06)" }}>
+          <div
+            onClick={() => router.push("/my-jobs")}
+            style={{
+              borderRadius: "24px",
+              padding: "1.75rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "1.25rem",
+              background: "white",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
+              boxShadow: "0 8px 32px rgba(120, 140, 180, 0.06)",
+              cursor: "pointer",
+              transition: "all 0.3s ease"
+            }}
+            onMouseEnter={(e) => handleCardMouseEnter(e, "rgba(37, 99, 235, 0.15)")}
+            onMouseLeave={handleCardMouseLeave}
+          >
 
             <div>
               <span style={{ fontSize: "0.6875rem", fontWeight: 800, color: "var(--muted)", textTransform: "lowercase", letterSpacing: "0.07em" }}>
@@ -649,10 +747,33 @@ export default function CreatorHomePage() {
               </svg>
             </div>
 
+            {/* Link to details */}
+            <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "flex-end" }}>
+              <Link href="/my-jobs" onClick={(e) => e.stopPropagation()} style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
+                Chi tiết công việc & doanh thu <ArrowRight size={10} />
+              </Link>
+            </div>
+
           </div>
 
           {/* Timeline looking campaigns element */}
-          <div style={{ borderRadius: "24px", padding: "1.75rem", display: "flex", flexDirection: "column", gap: "1.25rem", background: "white", border: "1px solid rgba(0, 0, 0, 0.08)", boxShadow: "0 8px 32px rgba(120, 140, 180, 0.06)" }}>
+          <div
+            onClick={() => router.push("/my-jobs")}
+            style={{
+              borderRadius: "24px",
+              padding: "1.75rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "1.25rem",
+              background: "white",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
+              boxShadow: "0 8px 32px rgba(120, 140, 180, 0.06)",
+              cursor: "pointer",
+              transition: "all 0.3s ease"
+            }}
+            onMouseEnter={(e) => handleCardMouseEnter(e, "rgba(16, 185, 129, 0.15)")}
+            onMouseLeave={handleCardMouseLeave}
+          >
 
             <div>
               <span style={{ fontSize: "0.6875rem", fontWeight: 800, color: "var(--muted)", textTransform: "lowercase", letterSpacing: "0.07em" }}>
@@ -707,6 +828,13 @@ export default function CreatorHomePage() {
               <div style={{ width: "100%", height: "5px", background: "rgba(37,99,235,0.08)", borderRadius: "99px", overflow: "hidden", position: "relative" }}>
                 <div style={{ width: "70%", height: "100%", background: "linear-gradient(90deg, #10b981 0%, #34d399 100%)", borderRadius: "99px" }} />
               </div>
+            </div>
+
+            {/* Link to milestone progress */}
+            <div style={{ borderTop: "1px solid rgba(37, 99, 235, 0.08)", paddingTop: "0.75rem", display: "flex", justifyContent: "flex-end" }}>
+              <Link href="/my-jobs" onClick={(e) => e.stopPropagation()} style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "2px" }}>
+                Nộp bài & cập nhật tiến trình <ArrowRight size={10} />
+              </Link>
             </div>
 
           </div>
@@ -780,6 +908,13 @@ export default function CreatorHomePage() {
         }
       `}</style>
 
+      {/* MODAL HIỂN THỊ CHI TIẾT HỒ SƠ SHOP (TÁI SỬ DỤNG LOGO/COVER/GALLERY) */}
+      <ShopProfileModal
+        isOpen={shopModalOpen}
+        onClose={() => setShopModalOpen(false)}
+        loading={loadingShop}
+        shopProfile={shopProfile}
+      />
     </div>
   );
 }

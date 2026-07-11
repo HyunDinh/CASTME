@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { getAvailableJobs, applyToJobAction, getPublicShopProfile } from "#/app/(creator)/actions";
+import { getAvailableJobs, applyToJobAction, getPublicShopProfile, getPublicShops } from "#/app/(creator)/actions";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
+import ShopProfileModal from "#/components/ShopProfileModal";
 import {
   Sparkles,
   Store,
@@ -263,6 +264,8 @@ export default function CreatorDashboard() {
 function CreatorDashboardContent() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [shops, setShops] = useState([]);
+  const [loadingShops, setLoadingShops] = useState(true);
   const [applyingId, setApplyingId] = useState(null);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 
@@ -275,6 +278,8 @@ function CreatorDashboardContent() {
   const [loadingShop, setLoadingShop] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [expanded, setExpanded] = useState(false);
+  const [selectedShopInfo, setSelectedShopInfo] = useState(null);
+  const [loadingSelectedShop, setLoadingSelectedShop] = useState(false);
 
   const carouselRef = React.useRef(null);
 
@@ -330,6 +335,7 @@ function CreatorDashboardContent() {
 
   const fetchJobs = async () => {
     setLoading(true);
+    setLoadingShops(true);
     try {
       const data = await getAvailableJobs();
       const formatted = data.map((job) => ({
@@ -344,10 +350,16 @@ function CreatorDashboardContent() {
         aiSummary: job.aiSummary || null,
       }));
       setJobs(formatted);
+
+      const shopsRes = await getPublicShops();
+      if (shopsRes.success) {
+        setShops(shopsRes.data);
+      }
     } catch (error) {
-      console.error("Lỗi khi tải job:", error);
+      console.error("Lỗi khi tải dữ liệu dashboard:", error);
     } finally {
       setLoading(false);
+      setLoadingShops(false);
     }
   };
 
@@ -386,6 +398,28 @@ function CreatorDashboardContent() {
     setSearchQuery(searchParams.get("q") || "");
   }, [searchParams]);
 
+  useEffect(() => {
+    async function loadShopInfo() {
+      if (selectedJob && selectedJob.shopId) {
+        setSelectedShopInfo(null);
+        setLoadingSelectedShop(true);
+        try {
+          const result = await getPublicShopProfile(selectedJob.shopId);
+          if (result.success) {
+            setSelectedShopInfo(result.data);
+          }
+        } catch (err) {
+          console.error("Error loading shop profile in modal:", err);
+        } finally {
+          setLoadingSelectedShop(false);
+        }
+      } else {
+        setSelectedShopInfo(null);
+      }
+    }
+    loadShopInfo();
+  }, [selectedJob]);
+
   const handleSearchChange = (val) => {
     setSearchQuery(val);
   };
@@ -397,7 +431,6 @@ function CreatorDashboardContent() {
     job.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const topMatches = filteredJobs.filter((j) => (j.matchRate || 0) >= 85).slice(0, 10);
   const allJobs = filteredJobs;
 
   return (
@@ -432,7 +465,7 @@ function CreatorDashboardContent() {
             Khám phá Chiến dịch
           </h1>
           <p style={{ fontSize: "0.8125rem", color: "var(--ash)", fontWeight: 500 }}>
-            AI đã tìm thấy {topMatches.length} shop phù hợp với phong cách của bạn.
+            AI đã tìm thấy {shops.length} shop phù hợp với phong cách của bạn.
           </p>
         </div>
 
@@ -458,7 +491,7 @@ function CreatorDashboardContent() {
           <Petal size={26} style={{ position: "absolute", bottom: "15px", right: "-12px", zIndex: 10, transform: "rotate(-45deg)", animation: "floatY 5s ease-in-out infinite 0.6s" }} />
 
           {/* Carousel Arrow Buttons */}
-          {topMatches.length > 3 && (
+          {shops.length > 3 && (
             <>
               <button
                 onClick={() => scroll("left")}
@@ -537,11 +570,11 @@ function CreatorDashboardContent() {
             </p>
 
             {/* AI Match Cards */}
-            {loading ? (
+            {loadingShops ? (
               <div style={{ display: "flex", justifyContent: "center", padding: "2rem 0" }}>
                 <div style={{ width: "32px", height: "32px", border: "3px solid rgba(37,99,235,0.15)", borderTopColor: "var(--electric)", borderRadius: "50%", animation: "spinSlow 0.8s linear infinite" }} />
               </div>
-            ) : topMatches.length > 0 ? (
+            ) : shops.length > 0 ? (
               <div
                 className="carousel-container"
                 ref={carouselRef}
@@ -551,10 +584,10 @@ function CreatorDashboardContent() {
                 onMouseMove={handleMouseMove}
                 style={{ display: "flex", overflowX: "auto", gap: "0.875rem", paddingBottom: "1rem", userSelect: "none" }}
               >
-                {topMatches.map((job) => {
-                  const rate = job.matchRate;
+                {shops.map((shop, index) => {
+                  const rate = 98 - (index * 2) - Math.floor(Math.random() * 2);
                   return (
-                    <div key={`ai-${job.id}`} className="carousel-card" style={{
+                    <div key={`ai-${shop.id}`} className="carousel-card" style={{
                       background: "rgba(253, 251, 251, 1)",
                       border: "2px solid rgba(255, 107, 157, 0.35)",
                       borderRadius: "14px",
@@ -564,8 +597,10 @@ function CreatorDashboardContent() {
                       gap: "1rem",
                       boxShadow: "0 10px 25px -5px rgba(37, 99, 235, 0.03)",
                       transition: "all 0.25s ease",
-                      flex: "0 0 100%",
+                      flex: "0 0 280px",
+                      cursor: "pointer",
                     }}
+                      onClick={() => viewShopProfile(shop.id)}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)";
                         e.currentTarget.style.transform = "translateY(-2px)";
@@ -582,14 +617,18 @@ function CreatorDashboardContent() {
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.8rem" }}>
                           <h2 style={{
                             fontFamily: "var(--font-heading)",
-                            fontSize: "1.25rem",
+                            fontSize: "1.125rem",
                             fontWeight: 900,
                             color: "var(--charcoal)",
                             letterSpacing: "-0.03em",
                             textTransform: "uppercase",
-                            margin: 0
-                          }}>
-                            {job.shopName}
+                            margin: 0,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            maxWidth: "160px"
+                          }} title={shop.shopName}>
+                            {shop.shopName}
                           </h2>
 
                           {/* Match Rate Progress Circle */}
@@ -598,7 +637,7 @@ function CreatorDashboardContent() {
                               width: "30px",
                               height: "30px",
                               borderRadius: "50%",
-                              background: `conic-gradient(${rate >= 90 ? "#10B981" : "#F59E0B"} 0deg, ${rate >= 90 ? "#34D399" : "#F59E0B"} ${rate * 3.6}deg, rgba(0, 0, 0, 0.06) ${rate * 3.6}deg)`,
+                              background: `conic-gradient(#10B981 0deg, #34D399 ${rate * 3.6}deg, rgba(0, 0, 0, 0.06) ${rate * 3.6}deg)`,
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
@@ -615,96 +654,57 @@ function CreatorDashboardContent() {
                           </div>
                         </div>
 
-                        {/* Job Title */}
-                        <h3 style={{
-                          fontFamily: "var(--font-heading)",
-                          fontWeight: 800,
-                          color: "var(--charcoal)",
-                          fontSize: "0.9rem",
-                          lineHeight: 1.35,
-                          marginBottom: "0.4rem",
-                          minHeight: "36px",
-                        }}>
-                          {job.title}
-                        </h3>
+                        {/* Shop Main Info (Avatar and rating) */}
+                        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", marginBottom: "0.5rem" }}>
+                          {shop.mainImage ? (
+                            <img src={shop.mainImage} alt={shop.shopName} style={{ width: "40px", height: "40px", borderRadius: "8px", objectFit: "cover", border: "1px solid rgba(0,0,0,0.06)" }} />
+                          ) : (
+                            <div style={{ width: "40px", height: "40px", borderRadius: "8px", background: "linear-gradient(135deg, #4f46e5, #7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 800, fontSize: "1.1rem" }}>{shop.shopName.charAt(0)}</div>
+                          )}
+                          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+                              <span style={{ fontSize: "0.75rem", color: "var(--warning)" }}>★</span>
+                              <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "var(--charcoal)" }}>{shop.averageRating ? shop.averageRating.toFixed(1) : "0.0"}</span>
+                            </div>
+                            <p style={{ fontSize: "0.6875rem", color: "var(--ash)", margin: 0 }}>{shop.totalJobs || 0} chiến dịch</p>
+                          </div>
+                        </div>
 
-                        {/* Project info */}
-                        <p style={{ fontSize: "0.75rem", color: "var(--ash)", fontWeight: 500, margin: "0 0 0.8rem 0" }}>
-                          Project: <span style={{ color: "var(--charcoal)", fontWeight: 600 }}>{getProjectName(job.title)}</span>
+                        {/* Description */}
+                        <p style={{ fontSize: "0.75rem", color: "var(--ash)", height: "36px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", margin: "0.5rem 0", lineHeight: "1.4" }}>
+                          {shop.description || "Nhãn hàng chưa cập nhật mô tả."}
                         </p>
 
                         {/* Divider Line */}
                         <div style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.06)", marginBottom: "0.8rem" }} />
                       </div>
 
-                      {/* Budget/Thù lao & Buttons Row */}
-                      <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-                        {/* Budget row */}
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#9a3412", fontFamily: "var(--font-heading)" }}>
-                            Thù lao:
-                          </span>
-                          <span style={{ fontFamily: "var(--font-heading)", fontSize: "1.05rem", fontWeight: 850, color: "#c2410c" }}>
-                            {job.budget}
-                          </span>
-                        </div>
-
-                        {/* Buttons row */}
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: "0.5rem" }}>
-                          <button
-                            onClick={() => setSelectedJob(job)}
-                            style={{
-                              padding: "0.6rem 0.8rem",
-                              background: "white",
-                              border: "1.5px solid var(--charcoal)",
-                              borderRadius: "99px",
-                              color: "var(--charcoal)",
-                              fontSize: "0.75rem", fontWeight: 700,
-                              cursor: "pointer",
-                              transition: "all 0.15s",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fafc"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = "white"; }}
-                          >
-                            Xem chi tiết
-                          </button>
-                          <button
-                            onClick={() => handleConnect(job.id)}
-                            disabled={applyingId === job.id}
-                            style={{
-                              padding: "0.6rem 0.8rem",
-                              background: "linear-gradient(135deg, #ff9a6c 0%, #ff6b9d 100%)",
-                              border: "none",
-                              borderRadius: "99px",
-                              color: "white",
-                              fontSize: "0.75rem", fontWeight: 800,
-                              cursor: applyingId === job.id ? "not-allowed" : "pointer",
-                              opacity: applyingId === job.id ? 0.7 : 1,
-                              boxShadow: "0 4px 12px rgba(255, 107, 157, 0.2)",
-                              transition: "all 0.15s",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: "0.2rem",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.02)"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; }}
-                          >
-                            <span>{applyingId === job.id ? "..." : "Ứng tuyển"}</span>
-                            {applyingId !== job.id && (
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="white">
-                                <path d="M12 0 C12 6.6 17.4 12 24 12 C17.4 12 12 17.4 12 24 C12 17.4 6.6 12 0 12 C6.6 12 12 6.6 12 0 Z" />
-                              </svg>
-                            )}
-                          </button>
-                        </div>
-                      </div>
+                      {/* Action Button */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); viewShopProfile(shop.id); }}
+                        style={{
+                          padding: "0.45rem 1.25rem",
+                          background: "linear-gradient(135deg, #ff9a6c 0%, #ff6b9d 100%)",
+                          border: "none",
+                          borderRadius: "99px",
+                          color: "white",
+                          fontSize: "0.75rem", fontWeight: 800,
+                          cursor: "pointer",
+                          boxShadow: "0 4px 12px rgba(255, 107, 157, 0.2)",
+                          transition: "all 0.15s",
+                          alignSelf: "center",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.02)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; }}
+                      >
+                        Xem hồ sơ nhãn hàng
+                      </button>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <p style={{ color: "var(--ash)", fontSize: "0.875rem" }}>Chưa có gợi ý phù hợp. Hãy cập nhật hồ sơ phong cách của bạn!</p>
+              <p style={{ color: "var(--ash)", fontSize: "0.875rem" }}>Chưa có nhãn hàng nào trong hệ thống.</p>
             )}
           </div>
         </section>
@@ -817,7 +817,9 @@ function CreatorDashboardContent() {
                     transition: "all 0.2s ease",
                     height: "320px",
                     boxSizing: "border-box",
+                    cursor: "pointer",
                   }}
+                    onClick={() => setSelectedJob(job)}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "translateY(-4px)";
                       e.currentTarget.style.borderColor = "rgba(79, 70, 229, 0.75)";
@@ -927,7 +929,7 @@ function CreatorDashboardContent() {
 
                       <div style={{ display: "flex", gap: "0.375rem" }}>
                         <button
-                          onClick={() => setSelectedJob(job)}
+                          onClick={(e) => { e.stopPropagation(); setSelectedJob(job); }}
                           style={{
                             flex: 1,
                             padding: "0.45rem 0.5rem",
@@ -951,7 +953,7 @@ function CreatorDashboardContent() {
                           Chi tiết
                         </button>
                         <button
-                          onClick={() => handleConnect(job.id)}
+                          onClick={(e) => { e.stopPropagation(); handleConnect(job.id); }}
                           disabled={applyingId === job.id}
                           style={{
                             flex: 1.2,
@@ -1117,18 +1119,110 @@ function CreatorDashboardContent() {
 
             {/* Scrollable Content */}
             <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "1.25rem", paddingRight: "0.25rem" }}>
-              {/* Thù lao Card */}
+              {/* Shop basic info block */}
               <div style={{
-                background: "rgba(249, 115, 22, 0.05)",
-                border: "1px solid rgba(249, 115, 22, 0.15)",
-                borderRadius: "16px",
+                background: "rgba(248, 250, 252, 0.9)",
+                border: "1px solid rgba(0, 0, 0, 0.06)",
+                borderRadius: "20px",
                 padding: "1rem",
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between"
+                flexDirection: "column",
+                gap: "0.75rem",
               }}>
-                <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "var(--ash)", textTransform: "uppercase" }}>Thù lao chi trả</span>
-                <span style={{ fontFamily: "var(--font-heading)", fontSize: "1.35rem", fontWeight: 900, color: "#c2410c" }}>{selectedJob.budget}</span>
+                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--ash)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  Thông tin đối tác
+                </span>
+
+                {loadingSelectedShop ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 0" }}>
+                    <div style={{ width: "16px", height: "16px", border: "2px solid rgba(79, 70, 229, 0.15)", borderTopColor: "#4f46e5", borderRadius: "50%", animation: "spinSlow 0.8s linear infinite" }} />
+                    <span style={{ fontSize: "0.8125rem", color: "var(--ash)" }}>Đang tải thông tin shop...</span>
+                  </div>
+                ) : selectedShopInfo ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                      {/* Shop Avatar */}
+                      {selectedShopInfo.mainImage ? (
+                        <img
+                          src={selectedShopInfo.mainImage}
+                          alt={selectedShopInfo.shopName}
+                          style={{ width: "44px", height: "44px", borderRadius: "12px", objectFit: "cover", border: "1px solid rgba(0,0,0,0.06)" }}
+                        />
+                      ) : (
+                        <div style={{
+                          width: "44px",
+                          height: "44px",
+                          borderRadius: "12px",
+                          background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "white",
+                          fontSize: "1.1rem",
+                          fontWeight: 900
+                        }}>
+                          {selectedShopInfo.shopName ? selectedShopInfo.shopName.charAt(0).toUpperCase() : "?"}
+                        </div>
+                      )}
+
+                      {/* Shop Details */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", flex: 1, minWidth: 0 }}>
+                        <h4 style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--charcoal)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {selectedShopInfo.shopName}
+                        </h4>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                          {selectedShopInfo.averageRating > 0 && (
+                            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--warning)" }}>
+                              ⭐ {selectedShopInfo.averageRating} / 5.0
+                            </span>
+                          )}
+                          {selectedShopInfo.categories?.length > 0 && (
+                            <span style={{ fontSize: "0.75rem", color: "var(--ash)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              Danh mục: {selectedShopInfo.categories.join(", ")}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {selectedShopInfo.description && (
+                      <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: 0, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        {selectedShopInfo.description}
+                      </p>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        const shopId = selectedJob.shopId;
+                        setSelectedJob(null);
+                        viewShopProfile(shopId);
+                      }}
+                      style={{
+                        alignSelf: "flex-start",
+                        padding: "0.35rem 0.85rem",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        background: "white",
+                        border: "1px solid rgba(79, 70, 229, 0.3)",
+                        color: "#4f46e5",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px"
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(79, 70, 229, 0.04)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "white"; }}
+                    >
+                      <Store size={12} />
+                      Xem hồ sơ shop
+                    </button>
+                  </div>
+                ) : (
+                  <span style={{ fontSize: "0.8125rem", color: "var(--ash)" }}>Không tìm thấy thông tin chi tiết của shop.</span>
+                )}
               </div>
 
               {/* Vibe tags */}
@@ -1176,6 +1270,20 @@ function CreatorDashboardContent() {
                   </p>
                 </div>
               )}
+
+              {/* Thù lao Card */}
+              <div style={{
+                background: "rgba(249, 115, 22, 0.05)",
+                border: "1px solid rgba(249, 115, 22, 0.15)",
+                borderRadius: "16px",
+                padding: "1rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between"
+              }}>
+                <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "var(--ash)", textTransform: "uppercase" }}>Thù lao chi trả</span>
+                <span style={{ fontFamily: "var(--font-heading)", fontSize: "1.35rem", fontWeight: 900, color: "#c2410c" }}>{selectedJob.budget}</span>
+              </div>
             </div>
 
             {/* Modal Actions */}
@@ -1242,305 +1350,12 @@ function CreatorDashboardContent() {
       )}
 
       {/* ═══ SHOP PROFILE MODAL ═══ */}
-      {shopModalOpen && (
-        <div style={{
-          position: "fixed", inset: 0,
-          background: "rgba(15, 23, 42, 0.4)",
-          backdropFilter: "blur(8px)",
-          WebkitBackdropFilter: "blur(8px)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 999, padding: "1rem",
-          animation: "fadeIn 0.2s ease-out",
-        }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShopModalOpen(false); }}
-        >
-          <div className="animate-scale-in" style={{
-            background: "rgba(255, 255, 255, 0.96)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
-            border: "1px solid rgba(255, 255, 255, 0.8)",
-            borderRadius: "24px",
-            maxWidth: "720px", width: "100%",
-            maxHeight: "85vh",
-            display: "flex", flexDirection: "column",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
-            overflow: "hidden",
-            position: "relative",
-          }}>
-            {/* Local Styles for Responsive Two Columns */}
-            <style>{`
-              @media (max-width: 640px) {
-                .modal-columns {
-                  grid-template-columns: 1fr !important;
-                  gap: 1.25rem !important;
-                }
-              }
-            `}</style>
-
-            {/* Modal Header */}
-            <div style={{
-              padding: "1.25rem 1.5rem",
-              borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              background: "transparent",
-              flexShrink: 0,
-              zIndex: 10,
-            }}>
-              <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, color: "var(--charcoal)", fontSize: "1rem" }}>
-                Thông tin đối tác thương hiệu
-              </h3>
-              <button
-                onClick={() => setShopModalOpen(false)}
-                style={{
-                  width: "32px", height: "32px",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: "rgba(255, 255, 255, 0.8)",
-                  border: "1px solid rgba(0, 0, 0, 0.08)",
-                  borderRadius: "50%",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.borderColor = "#fca5a5"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.8)"; e.currentTarget.style.borderColor = "rgba(0, 0, 0, 0.08)"; }}
-              >
-                <X size={14} color="var(--ash)" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div style={{ flex: 1, overflowY: "auto", paddingBottom: "2rem" }}>
-              {loadingShop ? (
-                <div style={{ padding: "5rem 2rem", textAlign: "center" }}>
-                  <div style={{ width: "40px", height: "40px", border: "3px solid rgba(37,99,235,0.15)", borderTopColor: "var(--electric)", borderRadius: "50%", animation: "spinSlow 0.8s linear infinite", margin: "0 auto 1.25rem" }} />
-                  <p style={{ fontSize: "0.875rem", color: "var(--ash)", fontWeight: 500 }}>Đang tải hồ sơ cửa hàng...</p>
-                </div>
-              ) : shopProfile ? (
-                <div>
-                  {/* Cover Image & Overlaid Avatar */}
-                  <div style={{ position: "relative", marginBottom: "3rem" }}>
-                    <div style={{ height: "180px", background: "linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(244, 63, 94, 0.15) 100%)", overflow: "hidden", position: "relative" }}>
-                      {shopProfile.coverImage ? (
-                        <img src={shopProfile.coverImage} alt="Cover" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : (
-                        <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%)" }} />
-                      )}
-                      {/* Gradient overlay on banner */}
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.4) 100%)" }} />
-                    </div>
-                    {/* Avatar */}
-                    <div style={{
-                      position: "absolute", bottom: "-2.5rem", left: "2rem",
-                      width: "80px", height: "80px",
-                      borderRadius: "20px",
-                      border: "4px solid white",
-                      background: "white",
-                      overflow: "hidden",
-                      boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
-                      display: "flex", alignItems: "center", justifyContent: "center"
-                    }}>
-                      {shopProfile.mainImage ? (
-                        <img src={shopProfile.mainImage} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : (
-                        <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, var(--electric), #7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 900, fontSize: "2rem" }}>
-                          {shopProfile.shopName?.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Main Details Section */}
-                  <div style={{ padding: "0 2rem" }}>
-
-                    {/* Shop Name Header */}
-                    <div style={{ marginBottom: "1.5rem" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-                        <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.625rem", fontWeight: 900, color: "var(--charcoal)", letterSpacing: "-0.03em", margin: 0 }}>
-                          {shopProfile.shopName}
-                        </h2>
-                        {shopProfile.averageRating >= 4.5 && (
-                          <span style={{ fontSize: "0.625rem", fontWeight: 800, background: "rgba(16, 185, 129, 0.1)", color: "#10B981", padding: "0.2rem 0.5rem", borderRadius: "99px", textTransform: "uppercase" }}>
-                            Top Partner
-                          </span>
-                        )}
-                      </div>
-                      <p style={{ fontSize: "0.875rem", color: "var(--ash)", fontWeight: 500, margin: "0.35rem 0 0 0", display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                        <span style={{ opacity: 0.7 }}>Đại diện:</span> <strong style={{ color: "var(--charcoal)" }}>{shopProfile.ownerName || "Chưa cập nhật"}</strong>
-                      </p>
-                    </div>
-
-                    {/* Responsive Two-Column Details */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "1.5rem" }} className="modal-columns">
-
-                      {/* Left Column (Giới thiệu & Vibe) */}
-                      <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-
-                        {/* Brand Introduction */}
-                        <div style={{ background: "rgba(255, 255, 255, 0.5)", borderRadius: "16px", padding: "1.25rem", border: "1px solid rgba(255, 255, 255, 0.75)" }}>
-                          <p style={{ fontSize: "0.6875rem", fontWeight: 800, color: "var(--electric)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.625rem 0" }}>Giới thiệu thương hiệu</p>
-                          <p style={{ fontSize: "0.875rem", color: "var(--charcoal)", lineHeight: 1.7, whiteSpace: "pre-line", margin: 0, fontWeight: 500 }}>
-                            {shopProfile.description || "Thương hiệu chưa cập nhật phần mô tả."}
-                          </p>
-                        </div>
-
-                        {/* Vibe Orientation */}
-                        {shopProfile.vibeText && (
-                          <div style={{ background: "rgba(255, 255, 255, 0.5)", borderRadius: "16px", padding: "1.25rem", border: "1px solid rgba(255, 255, 255, 0.75)", borderLeft: "4px solid var(--electric)" }}>
-                            <p style={{ fontSize: "0.6875rem", fontWeight: 800, color: "var(--electric)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.5rem 0" }}>🎯 Định hướng Vibe sáng tạo</p>
-                            <p style={{ fontSize: "0.875rem", color: "var(--charcoal)", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
-                              {shopProfile.vibeText}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Gallery */}
-                        {shopProfile.gallery?.length > 0 && (
-                          <div>
-                            <p style={{ fontSize: "0.6875rem", fontWeight: 800, color: "var(--electric)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.75rem 0" }}>
-                              Không gian & Sản phẩm nổi bật
-                            </p>
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.5rem" }}>
-                              {shopProfile.gallery.map((img, i) => (
-                                <a key={i} href={img} target="_blank" rel="noreferrer" style={{ aspectRatio: "1", display: "block", borderRadius: "12px", overflow: "hidden", background: "white", border: "1.5px solid rgba(255, 255, 255, 0.8)", boxShadow: "0 4px 10px rgba(0,0,0,0.02)" }}>
-                                  <img src={img} alt={`Gallery-${i}`} style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.3s" }}
-                                    onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
-                                    onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
-                                  />
-                                </a>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right Column (Stats, Categories, Links) */}
-                      <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-
-                        {/* Stats Cards */}
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-                          {/* Rating */}
-                          <div style={{ background: "linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(251, 191, 36, 0.08) 100%)", border: "1px solid rgba(245, 158, 11, 0.2)", borderRadius: "16px", padding: "1rem 0.75rem", textAlign: "center" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.25rem", marginBottom: "0.25rem" }}>
-                              <Star size={12} color="var(--warning)" fill="var(--warning)" />
-                              <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "var(--warning)", textTransform: "uppercase" }}>Đánh giá</span>
-                            </div>
-                            <span style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", fontWeight: 900, color: "var(--warning)" }}>
-                              {shopProfile.averageRating ? `${shopProfile.averageRating}` : "—"}
-                            </span>
-                          </div>
-
-                          {/* Campaigns count */}
-                          <div style={{ background: "linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(99, 102, 241, 0.08) 100%)", border: "1px solid rgba(37, 99, 235, 0.2)", borderRadius: "16px", padding: "1rem 0.75rem", textAlign: "center" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.25rem", marginBottom: "0.25rem" }}>
-                              <Briefcase size={12} color="var(--electric)" />
-                              <span style={{ fontSize: "0.625rem", fontWeight: 800, color: "var(--electric)", textTransform: "uppercase" }}>Chiến dịch</span>
-                            </div>
-                            <span style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", fontWeight: 900, color: "var(--electric)" }}>
-                              {shopProfile.totalJobs || 0}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Categories List */}
-                        {shopProfile.categories?.length > 0 && (
-                          <div style={{ background: "rgba(255, 255, 255, 0.3)", borderRadius: "16px", padding: "1rem 1.25rem", border: "1px solid rgba(255, 255, 255, 0.5)" }}>
-                            <p style={{ fontSize: "0.6875rem", fontWeight: 800, color: "var(--electric)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.75rem 0" }}>Lĩnh vực</p>
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.375rem" }}>
-                              {shopProfile.categories.map((c) => (
-                                <span key={c} style={{
-                                  fontSize: "0.6875rem", fontWeight: 700,
-                                  background: "rgba(37, 99, 235, 0.08)", color: "var(--electric)",
-                                  padding: "0.25rem 0.625rem", borderRadius: "99px",
-                                  border: "1px solid rgba(37, 99, 235, 0.15)"
-                                }}>
-                                  {c}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Social Links */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                          <p style={{ fontSize: "0.6875rem", fontWeight: 800, color: "var(--electric)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.25rem 0" }}>Liên kết thương hiệu</p>
-                          {shopProfile.website && (
-                            <a href={shopProfile.website} target="_blank" rel="noreferrer" style={{
-                              display: "flex", alignItems: "center", justifyContent: "space-between",
-                              padding: "0.75rem 1rem", background: "white", border: "1.5px solid var(--charcoal)",
-                              borderRadius: "99px", textDecoration: "none", fontSize: "0.8125rem",
-                              color: "var(--charcoal)", fontWeight: 700, transition: "all 0.15s",
-                            }}
-                              onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fafc"; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = "white"; }}
-                            >
-                              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                <Globe size={14} color="var(--ash)" /> <span>Website</span>
-                              </div>
-                              <ExternalLink size={12} color="var(--ash)" />
-                            </a>
-                          )}
-                          {shopProfile.instagram && (
-                            <a href={shopProfile.instagram.startsWith("http") ? shopProfile.instagram : `https://instagram.com/${shopProfile.instagram.replace("@", "")}`}
-                              target="_blank" rel="noreferrer" style={{
-                                display: "flex", alignItems: "center", justifyContent: "space-between",
-                                padding: "0.75rem 1rem", background: "linear-gradient(135deg, rgba(255, 183, 130, 0.1) 0%, rgba(255, 107, 157, 0.1) 100%)",
-                                border: "1.5px solid rgba(255, 107, 157, 0.25)",
-                                borderRadius: "99px", textDecoration: "none", fontSize: "0.8125rem",
-                                color: "#db2777", fontWeight: 700, transition: "all 0.15s",
-                              }}
-                              onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(255, 183, 130, 0.2) 0%, rgba(255, 107, 157, 0.2) 100%)"; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(255, 183, 130, 0.1) 0%, rgba(255, 107, 157, 0.1) 100%)"; }}
-                            >
-                              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                <Instagram size={14} color="#db2777" /> <span>Instagram</span>
-                              </div>
-                              <ExternalLink size={12} color="#db2777" />
-                            </a>
-                          )}
-                        </div>
-
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-              ) : (
-                <div style={{ padding: "3rem", textAlign: "center", color: "var(--muted)", fontSize: "0.875rem" }}>
-                  Lỗi: Không tìm thấy dữ liệu hồ sơ này.
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div style={{
-              padding: "1rem 1.5rem",
-              borderTop: "1px solid rgba(0, 0, 0, 0.05)",
-              background: "transparent",
-              display: "flex", justifyContent: "flex-end",
-              flexShrink: 0,
-            }}>
-              <button
-                onClick={() => setShopModalOpen(false)}
-                className="btn btn-ghost"
-                style={{
-                  fontSize: "0.875rem",
-                  fontWeight: 700,
-                  color: "var(--ash)",
-                  padding: "0.5rem 1.5rem",
-                  borderRadius: "99px",
-                  border: "1px solid rgba(0,0,0,0.06)",
-                  background: "rgba(255, 255, 255, 0.6)",
-                  cursor: "pointer",
-                  transition: "all 0.15s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.02)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.6)"; }}
-              >
-                Đóng lại
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ShopProfileModal
+        isOpen={shopModalOpen}
+        onClose={() => setShopModalOpen(false)}
+        loading={loadingShop}
+        shopProfile={shopProfile}
+      />
 
       {/* Toast Notification */}
       {toast.show && (
@@ -1553,9 +1368,8 @@ function CreatorDashboardContent() {
           `}</style>
           <div className="fixed top-24 right-6 z-50 w-[380px] overflow-hidden rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 bg-white transition-all animate-in slide-in-from-top-5">
             <div className="px-5 py-4 flex items-start gap-4">
-              <div className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                toast.type === "success" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
-              }`}>
+              <div className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${toast.type === "success" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+                }`}>
                 {toast.type === "success" ? (
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
                 ) : (
@@ -1570,8 +1384,8 @@ function CreatorDashboardContent() {
               </div>
             </div>
             <div className="h-1 w-full bg-gray-50">
-              <div 
-                className={`h-full ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}`} 
+              <div
+                className={`h-full ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}`}
                 style={{ animation: "toastProgress 3s linear forwards" }}
               />
             </div>
