@@ -169,7 +169,7 @@ export default function ShopDashboard() {
             <div>
               <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.03em" }}>Tổng ngân sách đã chi</span>
               <h2 style={{ fontSize: "1.625rem", fontWeight: 900, color: "#1a2b4a", margin: "0.45rem 0 0 0" }}>
-                {metricsData.budgetSpent.toLocaleString()} <span style={{ fontSize: "1rem" }}>đ</span>
+                {metricsData.budgetSpent.toLocaleString("vi-VN")} <span style={{ fontSize: "1rem" }}>đ</span>
               </h2>
             </div>
             <div style={{
