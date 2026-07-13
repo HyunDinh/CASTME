@@ -7,9 +7,9 @@ import { createSignatureRequest } from "#/lib/signnow";
 async function getAuthCreator() {
   const cookieStore = await cookies();
   const session = cookieStore.get("castme_session");
-  
+
   if (!session) return null;
-  
+
   try {
     return JSON.parse(session.value);
   } catch (e) {
@@ -33,7 +33,7 @@ export async function getAvailableJobs() {
   }
 
   const jobs = await prisma.job.findMany({
-    where: { 
+    where: {
       status: "RECRUITING",
       id: { notIn: excludeJobIds }
     },
@@ -44,6 +44,11 @@ export async function getAvailableJobs() {
   const formattedJobs = jobs.map((job) => ({
     ...job,
     status: job.status?.toUpperCase() || "RECRUITING",
+    // Xử lý object shop để chuyển Decimal thành Number trước khi gửi về Client Component
+    shop: job.shop ? {
+      ...job.shop,
+      balance: job.shop.balance ? job.shop.balance.toNumber() : 0,
+    } : null,
   }));
 
   return formattedJobs;
@@ -59,9 +64,9 @@ export async function applyToJobAction(jobId) {
   try {
     // Kiểm tra số Tim
     if (user.hearts < 5) {
-      return { 
-        success: false, 
-        error: "Bạn không đủ 5 Trái Tim để ứng tuyển. Hãy nạp thêm Tim." 
+      return {
+        success: false,
+        error: "Bạn không đủ 5 Trái Tim để ứng tuyển. Hãy nạp thêm Tim."
       };
     }
 
@@ -69,7 +74,7 @@ export async function applyToJobAction(jobId) {
     const existing = await prisma.application.findFirst({
       where: { jobId, creatorId: user.id }
     });
-   
+
     if (existing) {
       return { success: false, error: "Bạn đã ứng tuyển công việc này rồi" };
     }
@@ -77,9 +82,9 @@ export async function applyToJobAction(jobId) {
     await prisma.$transaction(async (tx) => {
       // Tạo Application
       await tx.application.create({
-        data: { 
-          jobId, 
-          creatorId: user.id, 
+        data: {
+          jobId,
+          creatorId: user.id,
           status: "PENDING",
           matchRate: Math.floor(Math.random() * 40) + 65, // Tạm thời, sau có thể tính AI thật
         },
@@ -214,9 +219,9 @@ export async function getUserHearts() {
       select: { hearts: true },
     });
 
-    return { 
-      success: true, 
-      data: { hearts: dbUser?.hearts || 0 } 
+    return {
+      success: true,
+      data: { hearts: dbUser?.hearts || 0 }
     };
   } catch (error) {
     return { success: false, error: "Không thể lấy số Tim" };
@@ -305,7 +310,43 @@ export async function submitMilestone(milestoneId, submissionText) {
     return { success: false, error: "Lỗi khi nộp bài" };
   }
 }
+export async function syncCreatorJobCompletion(jobId) {
+  const user = await getAuthenticatedUser();
+  if (!user || user.role !== "CREATOR") {
+    return { success: false, error: "Unauthorized" };
+  }
 
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    select: { id: true, status: true },
+  });
+
+  if (!job) {
+    return { success: false, error: "Không tìm thấy job" };
+  }
+
+  if (job.status === "COMPLETED") {
+    return { success: true, completed: true };
+  }
+
+  const paymentMilestone = await prisma.milestone.findFirst({
+    where: {
+      jobId,
+      type: "PAYMENT",
+    },
+    orderBy: { order: "asc" },
+  });
+
+  if (paymentMilestone?.status === "COMPLETED") {
+    await prisma.job.update({
+      where: { id: jobId },
+      data: { status: "COMPLETED" },
+    });
+    return { success: true, completed: true };
+  }
+
+  return { success: true, completed: false };
+}
 // ==================== INVITATION ====================
 export async function acceptJobInvitation(applicationId) {
   const user = await getAuthCreator();
@@ -326,7 +367,7 @@ export async function acceptJobInvitation(applicationId) {
     if (existingMilestonesCount === 0) {
       await prisma.job.update({
         where: { id: app.jobId },
-        data: { 
+        data: {
           status: "IN_PROGRESS",
           milestones: {
             create: [
@@ -349,11 +390,11 @@ export async function acceptJobInvitation(applicationId) {
     const appRecord = await prisma.application.findUnique({
       where: { id: applicationId },
       include: {
-        job: { 
-          include: { 
+        job: {
+          include: {
             shop: true,
             milestones: { orderBy: { order: "asc" } }
-          } 
+          }
         },
         creator: {
           include: { creatorProfile: true }
@@ -367,7 +408,7 @@ export async function acceptJobInvitation(applicationId) {
     // 4. Chuyển Application này thành ACCEPTED và lưu trạng thái Hợp đồng
     await prisma.application.update({
       where: { id: applicationId },
-      data: { 
+      data: {
         status: "ACCEPTED",
         contractDocumentId: signQuickRes.success ? signQuickRes.documentId : null,
         contractStatus: "PENDING",
@@ -441,7 +482,7 @@ export async function getPublicShopProfile(shopUserId) {
         averageRating: profile?.averageRating || 0,
         totalJobs: profile?.totalJobs || 0,
         ownerName: user_data?.name || "",
-        
+
         // ─── BỔ SUNG CÁC TRƯỜNG ẢNH MỚI ───
         mainImage: profile?.mainImage || "",
         coverImage: profile?.coverImage || "",

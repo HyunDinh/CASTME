@@ -1,12 +1,18 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { CheckCircle, Circle, Clock, MessageSquare, AlertCircle, FileText, Video, Link as LinkIcon, DollarSign, Send, Maximize2 } from "lucide-react";
-import { getJobMilestones, approveMilestone, rejectMilestone, getAcceptedApplication, syncContractStatus } from "#/app/(shop)/my-casting/applications.actions";
+
+import { getJobMilestones, approveMilestone, rejectMilestone, getAcceptedApplication, syncContractStatus, createPaymentLinkForMilestone } from "#/app/(shop)/my-casting/applications.actions";
 import { submitMilestone } from "#/app/(creator)/actions";
+
 import ScriptEditorModal from "./ScriptEditorModal";
 import ScriptViewerModal from "./ScriptViewerModal";
 
 export default function JobProgressStepper({ job, role = "shop" }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   const [milestones, setMilestones] = useState([]);
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,8 +21,6 @@ export default function JobProgressStepper({ job, role = "shop" }) {
   const [feedbackValue, setFeedbackValue] = useState("");
   const [isScriptModalOpen, setIsScriptModalOpen] = useState(false);
   const [currentMilestoneId, setCurrentMilestoneId] = useState(null);
-
-  // Viewer Modal State
   const [isViewerModalOpen, setIsViewerModalOpen] = useState(false);
   const [viewerContent, setViewerContent] = useState("");
 
@@ -34,12 +38,45 @@ export default function JobProgressStepper({ job, role = "shop" }) {
     setLoading(false);
   };
 
+  // TỰ ĐỘNG XÁC NHẬN THANH TOÁN khi redirect từ PayOS về
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    
+    if (paymentStatus === 'success' && role === "shop") {
+      const paymentMilestone = milestones.find(m => 
+        m.type === "PAYMENT" && m.status !== "COMPLETED"
+      );
+
+      if (paymentMilestone) {
+        handleAutoApprovePayment(paymentMilestone.id);
+      }
+
+      const nextUrl = new URL(window.location.href);
+      nextUrl.searchParams.delete("payment");
+      router.replace(`${nextUrl.pathname}${nextUrl.search}`);
+    }
+  }, [searchParams, milestones, role, router]);
+
+  const handleAutoApprovePayment = async (milestoneId) => {
+    try {
+      const res = await approveMilestone(milestoneId);
+      if (res.success) {
+        alert("🎉 Thanh toán thành công! Job đã được hoàn tất.");
+        fetchMilestones();
+      } else {
+        alert("Thanh toán thành công nhưng chưa cập nhật được trạng thái. Vui lòng tải lại trang.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Có lỗi khi tự động xác nhận thanh toán.");
+    }
+  };
+
   const handleCheckSignature = async () => {
     if (!application?.id) return;
     setIsSubmitting(true);
     const res = await syncContractStatus(application.id);
     setIsSubmitting(false);
-
     if (res.success) {
       if (res.status === "COMPLETED") {
         alert("Hợp đồng đã được các bên ký thành công!");
@@ -53,8 +90,27 @@ export default function JobProgressStepper({ job, role = "shop" }) {
   };
 
   useEffect(() => {
-    fetchMilestones();
-  }, [job]);
+    let cancelled = false;
+    const load = async () => {
+      if (!job?.id) return;
+      setLoading(true);
+      const res = await getJobMilestones(job.id);
+      if (!cancelled && res.success) {
+        setMilestones(res.data);
+      }
+      const appRes = await getAcceptedApplication(job.id);
+      if (!cancelled && appRes.success) {
+        setApplication(appRes.data);
+      }
+      if (!cancelled) {
+        setLoading(false);
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [job?.id]);
 
   const handleCreatorSubmit = async (milestoneId, customContent = null) => {
     const content = customContent !== null ? customContent : submissionValue;
@@ -92,6 +148,17 @@ export default function JobProgressStepper({ job, role = "shop" }) {
       fetchMilestones();
     } else {
       alert(res.error || "Lỗi khi từ chối");
+    }
+  };
+
+  const handleCreatePaymentLink = async (milestoneId) => {
+    setIsSubmitting(true);
+    const res = await createPaymentLinkForMilestone(milestoneId);
+    setIsSubmitting(false);
+    if (res.success) {
+      fetchMilestones();
+    } else {
+      alert(res.error || "Lỗi khi tạo link thanh toán");
     }
   };
 
@@ -173,11 +240,6 @@ export default function JobProgressStepper({ job, role = "shop" }) {
                 Xem hợp đồng
               </a>
             )}
-            {application.auditTrailUrl && (
-              <a href={application.auditTrailUrl} target="_blank" rel="noreferrer" className="px-4 py-2 bg-white border border-emerald-200 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-100 transition shadow-sm hidden sm:block">
-                Biên bản Audit
-              </a>
-            )}
           </div>
         </div>
       )}
@@ -185,42 +247,38 @@ export default function JobProgressStepper({ job, role = "shop" }) {
       <div className={`relative space-y-8 before:absolute before:inset-0 before:ml-[1.1rem] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent ${application?.contractStatus === 'PENDING' ? 'opacity-40 pointer-events-none select-none grayscale' : ''}`}>
         {milestones.map((milestone, idx) => {
           const isCompleted = milestone.status === "COMPLETED";
-          const isInProgress = milestone.status === "IN_PROGRESS" || milestone.status === "REJECTED"; // KOC needs to act
-          const isReviewing = milestone.status === "REVIEWING"; // Shop needs to act
-          const isPending = milestone.status === "PENDING";
+          const isInProgress = milestone.status === "IN_PROGRESS" || milestone.status === "REJECTED";
+          const isReviewing = milestone.status === "REVIEWING";
           const isRejected = milestone.status === "REJECTED";
 
           return (
             <div key={milestone.id} className="relative flex items-start justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-
-              {/* Cột 1: Thông tin Icon (Giữa) */}
+              {/* Icon */}
               <div className={`flex items-center justify-center w-9 h-9 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm z-10 ${isCompleted ? 'bg-emerald-500 text-white' :
-                  isInProgress ? 'bg-blue-600 text-white animate-pulse' :
-                    isReviewing ? 'bg-purple-500 text-white animate-bounce' : 'bg-gray-100 text-gray-400'
-                }`}>
+                isInProgress ? 'bg-blue-600 text-white animate-pulse' :
+                isReviewing ? 'bg-purple-500 text-white animate-bounce' : 'bg-gray-100 text-gray-400'
+              }`}>
                 {milestone.type === "SCRIPT" ? <FileText size={16} /> :
                   milestone.type === "VIDEO" ? <Video size={16} /> :
-                    milestone.type === "LINK" ? <LinkIcon size={16} /> :
-                      <DollarSign size={16} />}
+                  milestone.type === "LINK" ? <LinkIcon size={16} /> :
+                  <DollarSign size={16} />}
               </div>
 
-              {/* Cột 2: Nội dung */}
+              {/* Nội dung chính */}
               <div className={`w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border transition-all ${isCompleted ? 'bg-emerald-50 border-emerald-100' :
-                  isInProgress ? 'bg-blue-50/50 border-blue-200 shadow-md ring-4 ring-blue-50' :
-                    isReviewing ? 'bg-purple-50 border-purple-200 shadow-md' : 'bg-gray-50 border-gray-100 opacity-60'
-                }`}>
-
+                isInProgress ? 'bg-blue-50/50 border-blue-200 shadow-md ring-4 ring-blue-50' :
+                isReviewing ? 'bg-purple-50 border-purple-200 shadow-md' : 'bg-gray-50 border-gray-100 opacity-60'
+              }`}>
                 <div className="flex flex-col gap-1">
                   <div className="flex justify-between items-center">
-                    <span className={`text-[10px] font-black tracking-wider uppercase 
+                    <span className={`text-[10px] font-black tracking-wider uppercase
                       ${isCompleted ? 'text-emerald-600' : isInProgress ? 'text-blue-600' : isReviewing ? 'text-purple-600' : 'text-gray-500'}`}>
                       Bước {idx + 1} • {milestone.type}
                     </span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isCompleted ? "bg-emerald-100 text-emerald-700" :
-                        isInProgress && !isRejected ? "bg-blue-100 text-blue-700" :
-                          isRejected ? "bg-red-100 text-red-700" :
-                            isReviewing ? "bg-purple-100 text-purple-700" : "bg-gray-200 text-gray-500"
-                      }`}>
+                      isRejected ? "bg-red-100 text-red-700" :
+                      isReviewing ? "bg-purple-100 text-purple-700" : "bg-gray-200 text-gray-500"
+                    }`}>
                       {isCompleted ? "HOÀN THÀNH" : isRejected ? "CẦN SỬA LẠI" : isReviewing ? "CHỜ DUYỆT" : isInProgress ? "ĐANG LÀM" : "CHƯA TỚI"}
                     </span>
                   </div>
@@ -228,7 +286,7 @@ export default function JobProgressStepper({ job, role = "shop" }) {
                 </div>
 
                 {/* Nội dung Creator đã nộp */}
-                {milestone.submission && (
+                {milestone.submission && milestone.type !== "PAYMENT" && (
                   <div className="mt-3 p-3 bg-white rounded-lg text-sm text-gray-800 border border-gray-200 shadow-sm overflow-hidden break-words tiptap-editor relative group/submission">
                     <span className="block text-[10px] font-bold text-gray-400 mb-1">NỘI DUNG ĐÃ NỘP:</span>
                     {milestone.type === "SCRIPT" ? (
@@ -263,7 +321,7 @@ export default function JobProgressStepper({ job, role = "shop" }) {
                   </div>
                 )}
 
-                {/* Lý do từ chối (Feedback của Shop) */}
+                {/* Lý do từ chối */}
                 {milestone.feedback && (
                   <div className="mt-3 p-3 bg-red-50 text-red-700 rounded-lg text-sm border border-red-100 flex items-start gap-2">
                     <AlertCircle size={16} className="shrink-0 mt-0.5" />
@@ -308,7 +366,7 @@ export default function JobProgressStepper({ job, role = "shop" }) {
                   </div>
                 )}
 
-                {/* HÀNH ĐỘNG CỦA SHOP */}
+                {/* HÀNH ĐỘNG CỦA SHOP (không phải payment) */}
                 {role === "shop" && isReviewing && milestone.type !== "PAYMENT" && (
                   <div className="mt-4 flex flex-col gap-2">
                     <div className="flex gap-2">
@@ -339,20 +397,44 @@ export default function JobProgressStepper({ job, role = "shop" }) {
                   </div>
                 )}
 
-                {/* HÀNH ĐỘNG CỦA SHOP DÀNH RIÊNG CHO PAYMENT */}
-                {role === "shop" && isInProgress && milestone.type === "PAYMENT" && (
-                  <div className="mt-4">
-                    <button
-                      onClick={() => handleShopApprove(milestone.id)}
-                      disabled={isSubmitting}
-                      className="w-full py-3 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition shadow-md shadow-emerald-100 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                    >
-                      <CheckCircle size={18} /> Xác nhận đã Thanh toán
-                    </button>
+                {/* PHẦN THANH TOÁN - ĐÃ BỎ NÚT XÁC NHẬN THỦ CÔNG */}
+                {role === "shop" && milestone.type === "PAYMENT" && (
+                  <div className="mt-4 space-y-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+                      <DollarSign size={16} /> Thanh toán cho chiến dịch
+                    </div>
+
+                    {milestone.status === "COMPLETED" ? (
+                      <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+                        <CheckCircle size={32} className="mx-auto text-emerald-600 mb-3" />
+                        <p className="font-bold text-emerald-800 text-lg">Thanh toán thành công</p>
+                        <p className="text-emerald-600">Job đã hoàn tất. Số tiền đã được chuyển cho KOL.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {milestone.submission ? (
+                          <a
+                            href={milestone.submission}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block w-full rounded-lg border border-amber-300 bg-white px-3 py-3 text-sm font-bold text-amber-700 shadow-sm transition hover:bg-amber-100 text-center"
+                          >
+                            🔗 Mở link thanh toán / QR Code
+                          </a>
+                        ) : null}
+                        <button
+                          onClick={() => handleCreatePaymentLink(milestone.id)}
+                          disabled={isSubmitting}
+                          className="w-full rounded-lg border border-amber-300 bg-white px-3 py-3 text-sm font-bold text-amber-700 shadow-sm transition hover:bg-amber-100 disabled:opacity-50"
+                        >
+                          {milestone.submission ? "🔄 Tạo lại link QR" : "Tạo link thanh toán"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* TRẠNG THÁI CHỜ SHOP (DÀNH CHO CREATOR KHI ĐÃ NỘP BÀI) */}
+                {/* Trạng thái chờ Shop duyệt (dành cho Creator) */}
                 {role === "creator" && isReviewing && (
                   <div className="mt-4 p-3 bg-purple-50 text-purple-700 rounded-lg text-sm border border-purple-100 font-medium flex justify-center items-center gap-2">
                     <Clock size={16} className="animate-spin" /> Đang đợi Shop duyệt...
@@ -369,7 +451,6 @@ export default function JobProgressStepper({ job, role = "shop" }) {
         onClose={() => setIsScriptModalOpen(false)}
         onSubmit={(content) => handleCreatorSubmit(currentMilestoneId, content)}
       />
-
       <ScriptViewerModal
         isOpen={isViewerModalOpen}
         onClose={() => setIsViewerModalOpen(false)}

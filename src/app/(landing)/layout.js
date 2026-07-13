@@ -147,7 +147,7 @@ export default function LandingLayout({ children }) {
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
           {session ? (
             <Link
-              href={session.role === "SHOP" ? "/shop-dashboard" : "/creator-dashboard"}
+              href={session.role === "ADMIN" ? "/admin" : session.role === "SHOP" ? "/shop-dashboard" : "/creator-dashboard"}
               className="glow-btn-peach"
               style={{
                 fontFamily: "var(--font-body)",

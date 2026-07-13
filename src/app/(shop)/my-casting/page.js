@@ -1,14 +1,34 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, Suspense, useEffect } from "react";
 import JobList from "#/components/campaigns/JobList";
 import JobDetails from "#/components/campaigns/JobDetails";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { getMyCastingJobs } from "#/app/(shop)/my-casting/actions";
 
 function MyCastingContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeView, setActiveView] = useState("list"); // 'list' | 'details'
   const [selectedJob, setSelectedJob] = useState(null);
+
+  useEffect(() => {
+    const jobId = searchParams.get("jobId");
+    if (!jobId) return;
+
+    const loadSelectedJob = async () => {
+      const res = await getMyCastingJobs();
+      if (res.success) {
+        const matchedJob = res.data.find((job) => job.id === jobId);
+        if (matchedJob) {
+          setSelectedJob(matchedJob);
+          setActiveView("details");
+        }
+      }
+    };
+
+    void loadSelectedJob();
+  }, [searchParams]);
 
   const handleViewDetails = (job) => {
     setSelectedJob(job);
