@@ -3,13 +3,14 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
 }
 
 enum Role {
   SHOP
   CREATOR
+  ADMIN
 }
 
 enum SubscriptionPlan {
@@ -32,163 +33,195 @@ enum JobStatus {
 }
 
 model User {
-  id             String           @id @default(cuid())
-  name           String
-  email          String           @unique
-  password       String
-  role           Role
-  plan           SubscriptionPlan @default(FREE)
-  hearts         Int              @default(0)      // Số lượng trái tim đang sở hữu
-  connects       Int              @default(0)      // Lượt kết nối còn lại (từ gói cước)
-  trialEndsAt    DateTime?                         // Ngày hết hạn dùng thử free 1 tháng
-  createdAt      DateTime         @default(now())
-  
+  id          String           @id @default(cuid())
+  name        String
+  email       String           @unique
+  password    String
+  role        Role
+  plan        SubscriptionPlan @default(FREE)
+  hearts      Int              @default(0) // Số lượng trái tim đang sở hữu
+  connects    Int              @default(0) // Lượt kết nối còn lại (từ gói cước)
+  trialEndsAt DateTime? // Ngày hết hạn dùng thử free 1 tháng
+  createdAt   DateTime         @default(now())
+
   shopProfile    ShopProfile?
   creatorProfile CreatorProfile?
-  jobs           Job[]                             // Quan hệ: Shop đăng Job
-  transactions   Transaction[]                     // Lịch sử giao dịch ví/nạp tiền
-  applications   Application[]                     // Đơn ứng tuyển của Creator
-  
+  jobs           Job[] // Quan hệ: Shop đăng Job
+  balance        Decimal         @default(0)
+  transactions   Transaction[] // Lịch sử giao dịch ví/nạp tiền
+  applications   Application[] // Đơn ứng tuyển của Creator
+
   givenReviews    Review[] @relation("ShopReviews")
   receivedReviews Review[] @relation("CreatorReviews")
 
-  shopConversations     Conversation[] @relation("ShopConversations")
-  creatorConversations  Conversation[] @relation("CreatorConversations")
-  sentMessages          Message[]      @relation("SentMessages")
+  shopConversations    Conversation[] @relation("ShopConversations")
+  creatorConversations Conversation[] @relation("CreatorConversations")
+  sentMessages         Message[]      @relation("SentMessages")
 }
 
 model ShopProfile {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shopName        String?  // Tên cửa hàng
-  description     String?  // Mô tả chi tiết về cửa hàng
-  categories      String[] // ["Thời trang", "Mỹ phẩm", "Phụ kiện"...]
-  vibeText        String?  // Mô tả vibe phong cách của Shop (AI dùng để so sánh)
-  website         String?  // Link website cửa hàng
-  instagram       String?  // Instagram handle hoặc link
-  phone           String?  // Số điện thoại liên hệ
-  address         String?  // Địa chỉ cửa hàng
-
-  mainImage       String?  // Ảnh đại diện/Logo của Cửa hàng
-  coverImage      String?  // Ảnh bìa Cửa hàng
-  gallery         String[] // Danh sách các ảnh sản phẩm/không gian cửa hàng
-
-  averageRating   Float    @default(0) // Đánh giá trung bình từ Creator
-  totalJobs       Int      @default(0) // Tổng số công việc đã đăng
-  feedback        String?  // Đánh giá đóng góp
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}
-
-model CreatorProfile {
   id          String   @id @default(cuid())
   userId      String   @unique
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bio         String?  // Mô tả bản thân
-  styles      String[] // ["Streetwear", "Vintage", "Minimalism"...]
+  shopName    String? // Tên cửa hàng
+  description String? // Mô tả chi tiết về cửa hàng
+  categories  String[] // ["Thời trang", "Mỹ phẩm", "Phụ kiện"...]
+  vibeText    String? // Mô tả vibe phong cách của Shop (AI dùng để so sánh)
+  website     String? // Link website cửa hàng
+  instagram   String? // Instagram handle hoặc link
+  phone       String? // Số điện thoại liên hệ
+  address     String? // Địa chỉ cửa hàng
+
+  mainImage  String? // Ảnh đại diện/Logo của Cửa hàng
+  coverImage String? // Ảnh bìa Cửa hàng
+  gallery    String[] // Danh sách các ảnh sản phẩm/không gian cửa hàng
+
+  averageRating Float    @default(0) // Đánh giá trung bình từ Creator
+  totalJobs     Int      @default(0) // Tổng số công việc đã đăng
+  feedback      String? // Đánh giá đóng góp
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CreatorProfile {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bio String?
+  styles String[]
   portfolioUrl String?
-  feedback    String?
-  mainImage       String?  // Ảnh chính của Creator
-  gallery         String[] // Danh sách các ảnh phụ
-  coverImage      String?  // Ảnh bìa
-  location        String?  // Địa điểm
-  priceRange      String?  // Ngân sách tham khảo
-  followersCount  String?  // Số lượt theo dõi
-  socialLinks     Json?    // Các MXH
+  feedback String?
+  mainImage String?
+  gallery String[]
+  coverImage String?
+  location String?
+  priceRange String?
+  followersCount String?
+  socialLinks Json?
+
+  // ── THÊM MỚI ──
+  bankName String?        // Tên ngân hàng (ví dụ: Vietcombank)
+  bankAccount String?     // Số tài khoản
+  bankOwner String?       // Tên chủ tài khoản
+  qrCodeUrl String?       // Link ảnh QR (nếu có)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt // Sửa thành dòng này
 }
 
 model Job {
-  id           String        @id @default(cuid())
-  shopId       String
-  shop         User          @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  title        String
-  description  String        // Nội dung tuyển dụng gốc
-  aiSummary    String?       // Đoạn tóm tắt ngầm do AI xử lý
-  budget       String        // Sửa Float thành String nếu bạn muốn lưu định dạng "5,000,000đ - 10,000,000đ" (Hoặc giữ Float và format ở Frontend)
-  status       JobStatus     @default(DRAFT) // Trạng thái bài post
-  vibeTags     String[]      // Mảng lưu các tags: ["GenZ", "Thời trang"]
-  createdAt    DateTime      @default(now())
-  applications Application[]
-  milestones   Milestone[]
-  reviews      Review[]
+  id            String         @id @default(cuid())
+  shopId        String
+  shop          User           @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  title         String
+  description   String // Nội dung tuyển dụng gốc
+  aiSummary     String? // Đoạn tóm tắt ngầm do AI xử lý
+  budget        String // Sửa Float thành String nếu bạn muốn lưu định dạng "5,000,000đ - 10,000,000đ" (Hoặc giữ Float và format ở Frontend)
+  status        JobStatus      @default(DRAFT) // Trạng thái bài post
+  vibeTags      String[] // Mảng lưu các tags: ["GenZ", "Thời trang"]
+  createdAt     DateTime       @default(now())
+  applications  Application[]
+  milestones    Milestone[]
+  reviews       Review[]
   conversations Conversation[]
+  transactions  Transaction[]
 }
 
 model Application {
-  id          String   @id @default(cuid())
-  jobId       String
-  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  creatorId   String
-  creator     User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  matchRate   Int      @default(0) // Tỉ lệ % phù hợp do AI tính toán (Ví dụ: 85%)
-  status      String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
-  
+  id        String @id @default(cuid())
+  jobId     String
+  job       Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  creatorId String
+  creator   User   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  matchRate Int    @default(0) // Tỉ lệ % phù hợp do AI tính toán (Ví dụ: 85%)
+  status    String @default("PENDING") // PENDING, ACCEPTED, REJECTED
+
   contractDocumentId String?
   contractStatus     String? // "PENDING", "COMPLETED", "DECLINED"
   contractUrl        String?
   auditTrailUrl      String?
   signUrl            String? // Link ký trực tiếp trên web
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Transaction {
-  id          String            @id @default(cuid())
-  userId      String
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount      Float             // Số tiền giao dịch
-  fee         Float             @default(0) // Phí trung gian 3% thu của hệ thống
-  type        String            // "DEPOSIT" (Nạp tiền), "WITHDRAW" (Rút tiền), "PAY_JOB" (Trả tiền job)
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  jobId String?
+  job   Job?    @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  // ── Quan hệ 1-1 với Milestone ──
+  milestoneId String?    @unique
+  milestone   Milestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+
+  amount    Decimal
+  fee       Decimal  @default(0)
+  netAmount Decimal?
+
+  type        String
   status      TransactionStatus @default(PENDING)
-  createdAt   DateTime          @default(now())
+  description String?
+
+  createdAt DateTime @default(now())
 }
 
 model Milestone {
-  id          String   @id @default(cuid())
-  jobId       String
-  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  title       String   // Tên bước: "Lên kịch bản", "Quay video", "Chỉnh sửa"
-  type        String   @default("SCRIPT") // SCRIPT, VIDEO, LINK, PAYMENT
-  status      String   @default("PENDING") // PENDING, IN_PROGRESS, REVIEWING, COMPLETED, REJECTED
-  submission  String?  // Nội dung Creator nộp (Text kịch bản, Link Google Drive, Link TikTok...)
-  feedback    String?  // Chỗ để Shop note lại yêu cầu chỉnh sửa
-  order       Int      @default(0) // Thứ tự hiển thị
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
+  id String @id @default(cuid())
+
+  jobId String
+  job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  title      String
+  type       String  @default("SCRIPT")
+  status     String  @default("PENDING")
+  submission String?
+  feedback   String?
+  order      Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ── Quan hệ 1-1 với Transaction (chỉ khai báo đơn giản) ──
+  paymentTransactionId String?      @unique
+  transaction          Transaction?
 }
 
 model Review {
-  id          String   @id @default(cuid())
-  shopId      String   // Shop người viết đánh giá
-  shop        User     @relation("ShopReviews", fields: [shopId], references: [id], onDelete: Cascade)
-  
-  creatorId   String   // Creator nhận đánh giá
-  creator     User     @relation("CreatorReviews", fields: [creatorId], references: [id], onDelete: Cascade)
-  
-  jobId       String?  // Có thể đánh giá thông qua một Job cụ thể
-  job         Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  id     String @id @default(cuid())
+  shopId String // Shop người viết đánh giá
+  shop   User   @relation("ShopReviews", fields: [shopId], references: [id], onDelete: Cascade)
 
-  rating      Int      @default(5) // Điểm đánh giá (1-5 sao)
-  content     String   // Nội dung đánh giá
-  createdAt   DateTime @default(now())
+  creatorId String // Creator nhận đánh giá
+  creator   User   @relation("CreatorReviews", fields: [creatorId], references: [id], onDelete: Cascade)
+
+  jobId String? // Có thể đánh giá thông qua một Job cụ thể
+  job   Job?    @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  rating    Int      @default(5) // Điểm đánh giá (1-5 sao)
+  content   String // Nội dung đánh giá
+  createdAt DateTime @default(now())
 }
 
 model Conversation {
-  id            String    @id @default(cuid())
-  shopId        String    
-  creatorId     String    
-  jobId         String?   
-  
-  shop          User      @relation("ShopConversations", fields: [shopId], references: [id], onDelete: Cascade)
-  creator       User      @relation("CreatorConversations", fields: [creatorId], references: [id], onDelete: Cascade)
-  job           Job?      @relation(fields: [jobId], references: [id], onDelete: SetNull)
-  
-  messages      Message[]
-  
-  lastMessageAt DateTime  @default(now())
-  createdAt     DateTime  @default(now())
-  
+  id        String  @id @default(cuid())
+  shopId    String
+  creatorId String
+  jobId     String?
+
+  shop    User @relation("ShopConversations", fields: [shopId], references: [id], onDelete: Cascade)
+  creator User @relation("CreatorConversations", fields: [creatorId], references: [id], onDelete: Cascade)
+  job     Job? @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  messages Message[]
+
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+
   @@unique([shopId, creatorId, jobId])
 }
 
@@ -196,16 +229,16 @@ model Message {
   id             String       @id @default(cuid())
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  
-  senderId       String       
-  sender         User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  
-  content        String?      
-  attachmentUrl  String?      
-  messageType    String       @default("TEXT") // TEXT, IMAGE, FILE, SYSTEM
-  
-  isRead         Boolean      @default(false)
-  readAt         DateTime?    
-  
-  createdAt      DateTime     @default(now())
+
+  senderId String
+  sender   User   @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  content       String?
+  attachmentUrl String?
+  messageType   String  @default("TEXT") // TEXT, IMAGE, FILE, SYSTEM
+
+  isRead Boolean   @default(false)
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
 }

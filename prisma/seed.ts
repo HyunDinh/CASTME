@@ -70,7 +70,20 @@ async function main() {
   await prisma.creatorProfile.deleteMany();
   await prisma.user.deleteMany();
 
-  console.log("👥 2. Đang tạo các Shop ngẫu nhiên...");
+  console.log("👥 2. Đang tạo tài khoản admin mặc định...");
+  await prisma.user.create({
+    data: {
+      name: "Admin",
+      email: "admin@castme.vn",
+      password: bcrypt.hashSync("Admin@123", 10),
+      role: Role.ADMIN,
+      balance: 0,
+      hearts: 0,
+      connects: 0,
+    },
+  });
+
+  console.log("👥 3. Đang tạo các Shop ngẫu nhiên...");
   const createdShops = [];
   
   // Tạo Yame Studio (Shop chính cố định)

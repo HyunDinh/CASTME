@@ -58,7 +58,13 @@ export default function AuthModals() {
       } else if (res?.success) {
         setSuccess("Đăng nhập thành công! Đang chuyển hướng...");
         setTimeout(() => {
-          window.location.href = res.role === "SHOP" ? "/shop-dashboard" : "/creator-dashboard";
+          if (res.role === "ADMIN") {
+            window.location.href = "/admin";
+          } else if (res.role === "SHOP") {
+            window.location.href = "/shop-dashboard";
+          } else {
+            window.location.href = "/creator-dashboard";
+          }
         }, 1000);
       }
     });
