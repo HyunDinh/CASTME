@@ -141,19 +141,30 @@ export async function handleWithdrawRequest(transactionId, action, reason = "") 
     return { success: false, error: "Yêu cầu này không còn ở trạng thái chờ xử lý" };
   }
 
+  const withdrawAmount = Number(transaction.netAmount ?? transaction.amount ?? 0);
+
   if (action === "APPROVE") {
-    await prisma.transaction.update({
-      where: { id: transactionId },
-      data: {
-        status: "SUCCESS",
-        description: transaction.description || "Đã chuyển tiền cho creator",
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.transaction.update({
+        where: { id: transactionId },
+        data: {
+          status: "SUCCESS",
+          description: transaction.description || "Đã chuyển tiền cho creator",
+        },
+      });
+
+      if (withdrawAmount > 0) {
+        await tx.user.update({
+          where: { id: transaction.userId },
+          data: { balance: { decrement: withdrawAmount } },
+        });
+      }
     });
 
     return { success: true, message: "Đã đánh dấu là đã chuyển" };
   }
 
-  const restoreAmount = Number(transaction.netAmount ?? transaction.amount ?? 0);
+  const restoreAmount = withdrawAmount;
 
   await prisma.$transaction(async (tx) => {
     await tx.transaction.update({

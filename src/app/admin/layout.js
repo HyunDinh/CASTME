@@ -19,8 +19,8 @@ export default async function AdminLayout({ children }) {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", color: "#0f172a" }}>
-      {children}
+    <div className="admin-shell">
+      <div className="admin-container">{children}</div>
     </div>
   );
 }
